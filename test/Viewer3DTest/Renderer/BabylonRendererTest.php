@@ -41,6 +41,7 @@ class BabylonRendererTest extends TestCase
         );
         $this->assertStringContainsString('data-camera="arcRotate"', $html, 'Default camera is arcRotate');
         $this->assertStringContainsString('data-lighting="hemispheric"', $html, 'Default lighting is hemispheric');
+        $this->assertStringContainsString('data-lighting-mode="model"', $html, 'Default lights fixed to the model');
         $this->assertStringContainsString('data-environment="none"', $html, 'Default environment is none');
         $this->assertStringContainsString('data-auto-rotate="true"', $html, 'Default auto-rotate enabled');
         $this->assertStringContainsString('data-enable-xr="false"', $html, 'Default XR disabled');
@@ -95,6 +96,7 @@ class BabylonRendererTest extends TestCase
             'threedviewer_babylon_enable_xr' => true,
             'threedviewer_show_grid' => true,
             'threedviewer_babylon_show_toolbar' => true,
+            'threedviewer_lighting_mode' => 'viewer',
         ]);
 
         $media = new MediaRepresentation(
@@ -110,6 +112,7 @@ class BabylonRendererTest extends TestCase
         $this->assertStringContainsString('data-auto-rotate="false"', $html);
         $this->assertStringContainsString('data-camera="universal"', $html);
         $this->assertStringContainsString('data-lighting="directional"', $html);
+        $this->assertStringContainsString('data-lighting-mode="viewer"', $html);
         $this->assertStringContainsString('data-environment="studio"', $html);
         $this->assertStringContainsString('data-enable-xr="true"', $html);
         $this->assertStringContainsString('data-show-grid="true"', $html);
