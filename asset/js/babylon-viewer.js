@@ -164,7 +164,6 @@
         createLighting(scene, canvas.dataset.lighting);
         // Only the preset's lights, not any the model brings with it
         const presetLights = scene.lights.slice();
-        createEnvironment(scene, canvas.dataset.environment);
 
         const loadingElement = canvas.dataset.loadingId ? document.getElementById(canvas.dataset.loadingId) : null;
 
@@ -206,6 +205,11 @@
                     camera.maxZ = Math.max(radius * 200, offset * 20);
                 }
             }
+
+            // Only now: the environment helper sizes its skybox and ground from the scene once, when it
+            // is created. Created before the model loaded, it fell back to a 20-unit skybox and a
+            // 15-unit ground at the origin, inside models measured in millimetres.
+            createEnvironment(scene, canvas.dataset.environment);
 
             // After framing, so the first view is lit exactly as in the default mode
             if (canvas.dataset.lightingMode === 'viewer') {
