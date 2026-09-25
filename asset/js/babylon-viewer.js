@@ -47,7 +47,7 @@
             framingBehavior.radiusScale = 1.2;
 
             if (boundingInfo) {
-                framingBehavior.zoomOnBoundingInfo(boundingInfo, true);
+                framingBehavior.zoomOnBoundingInfo(boundingInfo.minimum, boundingInfo.maximum);
             }
         }
     }
