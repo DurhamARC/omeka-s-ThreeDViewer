@@ -87,7 +87,8 @@
     /**
      * Keep lights fixed relative to the camera, so the model turns under them. Each light's
      * direction and position are recorded in the camera's frame, then carried round with the
-     * camera before every frame. Image-based lighting from the environment stays in the scene.
+     * camera before every frame. The environment's image-based lighting, if any, turns with the
+     * camera in the same way; its skybox and ground stay in the scene.
      */
     function attachLightsToCamera(scene, camera, lights) {
         const worldToCamera = camera.getViewMatrix(true);
@@ -99,8 +100,19 @@
             };
         });
 
+        const cameraToWorld0 = camera.getWorldMatrix().getRotationMatrix();
+
         scene.onBeforeRenderObservable.add(function () {
             const cameraToWorld = camera.getWorldMatrix();
+            // The environment is sampled through its reflection matrix, so turning it with the camera
+            // means sampling through the inverse turn: from the current camera frame back to the
+            // initial one (Babylon.js matrices apply left to right).
+            const environment = scene.environmentTexture;
+            if (environment && environment.setReflectionTextureMatrix) {
+                environment.setReflectionTextureMatrix(
+                    camera.getViewMatrix().getRotationMatrix().multiply(cameraToWorld0)
+                );
+            }
             local.forEach(function (entry) {
                 if (entry.direction) {
                     entry.light.direction = BABYLON.Vector3.TransformNormal(entry.direction, cameraToWorld);
