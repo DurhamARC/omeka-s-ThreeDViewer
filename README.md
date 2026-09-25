@@ -19,6 +19,7 @@ This module allows users to view and interact with 3D models (STL and GLB files)
 - Customizable display options including background color
 - Optional auto-rotation for better visualization
 - Grid display option for better spatial reference
+- Lighting fixed to the model or to the viewer, so that every side of a model can be lit as it is turned
 - Toggle between the original Three.js/model-viewer pipeline and an experimental Babylon.js renderer
 - Babylon.js renderer with configurable cameras, lighting, and WebXR support
 
@@ -46,6 +47,13 @@ See general end user documentation for [Installing a module](http://omeka.org/s/
 4. The module settings allow administrators to choose the default viewing library. Select the legacy Three.js/model-viewer
    stack for the original experience or opt into Babylon.js for advanced camera behaviour, lighting presets, optional
    environment ground/skybox, WebXR (VR/AR) support, and an inspector toolbar for fine-tuning scenes on demand.
+5. The **Lighting** setting chooses what the lights are fixed to as the model is rotated:
+   - **Fixed to the model** (default): the lights stay put in the scene and the camera moves around the model,
+     so the lit side turns with the model and the side facing away from the lights is always in shadow.
+   - **Fixed to the viewer**: the lights keep their place relative to the viewer, so the model turns under them
+     and each side can be brought into the light, as when turning an object in the hand.
+     The first view is lit exactly as before. It applies to model-viewer's environment lighting, the STL viewer's
+     directional light and Babylon.js's lighting presets; Babylon.js environment reflections stay fixed in the scene.
 
 ## Local Development with Docker
 
