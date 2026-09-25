@@ -75,6 +75,7 @@ return [
             'threedviewer_foreground_color' => '#0000FF',
             'threedviewer_background_color' => '#b5b5b5',
             'threedviewer_show_grid' => false,
+            'threedviewer_lighting_mode' => 'model',
             'threedviewer_babylon_camera' => 'arcRotate',
             'threedviewer_babylon_lighting' => 'hemispheric',
             'threedviewer_babylon_environment' => 'none',

@@ -97,6 +97,21 @@ class ConfigForm extends Form
         ]);
 
         $this->add([
+            'name' => 'threedviewer_lighting_mode',
+            'type' => Element\Select::class,
+            'options' => [
+                'label' => 'Lighting', // @translate
+                'info' => 'Whether the lights stay fixed to the model, so the lit side turns with it as the '
+                    . 'model is rotated, or to the viewer, so the model turns under fixed lights and every '
+                    . 'side can be lit in turn.', // @translate
+                'value_options' => [
+                    'model' => 'Fixed to the model', // @translate
+                    'viewer' => 'Fixed to the viewer', // @translate
+                ],
+            ],
+        ]);
+
+        $this->add([
             'name' => 'threedviewer_babylon_camera',
             'type' => Element\Select::class,
             'options' => [

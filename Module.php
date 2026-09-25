@@ -104,6 +104,7 @@ class Module extends AbstractModule
             'threedviewer_foreground_color' => $settings->get('threedviewer_foreground_color', '#0000FF'),
             'threedviewer_background_color' => $settings->get('threedviewer_background_color', '#b5b5b5'),
             'threedviewer_show_grid' => $settings->get('threedviewer_show_grid', false) ? '1' : '0',
+            'threedviewer_lighting_mode' => $settings->get('threedviewer_lighting_mode', 'model'),
             'threedviewer_babylon_camera' => $settings->get('threedviewer_babylon_camera', 'arcRotate'),
             'threedviewer_babylon_lighting' => $settings->get('threedviewer_babylon_lighting', 'hemispheric'),
             'threedviewer_babylon_environment' => $settings->get('threedviewer_babylon_environment', 'none'),
@@ -140,6 +141,10 @@ class Module extends AbstractModule
             'threedviewer_show_grid',
             isset($config['threedviewer_show_grid'])
                 && $config['threedviewer_show_grid'] === '1'
+        );
+        $settings->set(
+            'threedviewer_lighting_mode',
+            ($config['threedviewer_lighting_mode'] ?? 'model') === 'viewer' ? 'viewer' : 'model'
         );
         $settings->set('threedviewer_babylon_camera', $config['threedviewer_babylon_camera'] ?? 'arcRotate');
         $settings->set('threedviewer_babylon_lighting', $config['threedviewer_babylon_lighting'] ?? 'hemispheric');
