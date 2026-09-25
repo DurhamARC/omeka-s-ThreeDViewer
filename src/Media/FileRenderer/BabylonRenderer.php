@@ -70,6 +70,7 @@ class BabylonRenderer extends Abstract3DRenderer implements RendererInterface
             . 'data-auto-rotate="' . ($config['autoRotate'] ? 'true' : 'false') . '" '
             . 'data-camera="' . $view->escapeHtmlAttr($config['babylonCamera']) . '" '
             . 'data-lighting="' . $view->escapeHtmlAttr($config['babylonLighting']) . '" '
+            . 'data-lighting-mode="' . $view->escapeHtmlAttr($config['lightingMode']) . '" '
             . 'data-environment="' . $view->escapeHtmlAttr($config['babylonEnvironment']) . '" '
             . 'data-enable-xr="' . ($config['babylonEnableXR'] ? 'true' : 'false') . '" '
             . 'data-show-grid="' . ($config['showGrid'] ? 'true' : 'false') . '" '

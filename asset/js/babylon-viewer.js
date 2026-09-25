@@ -84,6 +84,38 @@
         }
     }
 
+    /**
+     * Keep lights fixed relative to the camera, so that the model turns under them. Each light's
+     * direction and position are recorded in the camera's frame as it is now, then carried round
+     * with the camera before every frame. Image-based lighting from the environment stays fixed.
+     */
+    function attachLightsToCamera(scene, camera, sceneLights) {
+        const worldToCamera = camera.getViewMatrix(true);
+        const lights = sceneLights.map(function (light) {
+            return {
+                light: light,
+                direction: light.direction
+                    ? BABYLON.Vector3.TransformNormal(light.direction, worldToCamera)
+                    : null,
+                position: light.position
+                    ? BABYLON.Vector3.TransformCoordinates(light.position, worldToCamera)
+                    : null
+            };
+        });
+
+        scene.onBeforeRenderObservable.add(function () {
+            const cameraToWorld = camera.getWorldMatrix();
+            lights.forEach(function (entry) {
+                if (entry.direction) {
+                    entry.light.direction = BABYLON.Vector3.TransformNormal(entry.direction, cameraToWorld);
+                }
+                if (entry.position) {
+                    entry.light.position = BABYLON.Vector3.TransformCoordinates(entry.position, cameraToWorld);
+                }
+            });
+        });
+    }
+
     function createEnvironment(scene, option) {
         if (option === 'studio') {
             return scene.createDefaultEnvironment({ enableGroundShadow: true, createSkybox: true });
@@ -134,6 +166,8 @@
         }
 
         createLighting(scene, canvas.dataset.lighting);
+        // Only the preset's lights, not any the model brings with it
+        const presetLights = scene.lights.slice();
         createEnvironment(scene, canvas.dataset.environment);
 
         const loadingElement = canvas.dataset.loadingId ? document.getElementById(canvas.dataset.loadingId) : null;
@@ -175,6 +209,11 @@
                     camera.minZ = Math.max(radius * 0.02, 0.001);
                     camera.maxZ = Math.max(radius * 200, offset * 20);
                 }
+            }
+
+            // Once the camera is framed on the model, so that the first view is lit as before
+            if (canvas.dataset.lightingMode === 'viewer') {
+                attachLightsToCamera(scene, camera, presetLights);
             }
 
             if (canvas.dataset.showInspector === 'true' && scene.debugLayer) {
