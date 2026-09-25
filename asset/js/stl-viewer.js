@@ -20,7 +20,8 @@ function init(modelUrl, options = {}) {
     foregroundColor: options.foregroundColor || "#FFFFFF",
     backgroundColor: options.backgroundColor || "#000000",
     autoRotate: options.autoRotate === "true" || false,
-    showGrid: options.showGrid === "true" || false
+    showGrid: options.showGrid === "true" || false,
+    lightingMode: options.lightingMode === "viewer" ? "viewer" : "model"
   };
   
   // Convert hex color strings to Three.js color objects
@@ -138,6 +139,10 @@ function init(modelUrl, options = {}) {
       camera.position.set(distance, distance, distance);
       camera.lookAt(0, 0, 0);
       controls.update();
+
+      if (config.lightingMode === 'viewer') {
+        attachLightToCamera(directionalLight);
+      }
       
       // Trigger a resize to ensure proper rendering
       onWindowResize();
@@ -178,6 +183,27 @@ function init(modelUrl, options = {}) {
     // Fallback for browsers that don't support ResizeObserver
     window.addEventListener('resize', onWindowResize, false);
   }
+}
+
+/**
+ * Moves a directional light onto the camera, keeping the direction it shines in the current view,
+ * so that it stays fixed relative to the viewer as the camera orbits and the model turns under it
+ *
+ * @param {THREE.DirectionalLight} light - A light added to the scene, with its target at the origin
+ */
+function attachLightToCamera(light) {
+  camera.updateMatrixWorld();
+  const direction = light.position.clone()
+    .sub(light.target.position)
+    .transformDirection(camera.matrixWorldInverse);
+
+  // A directional light shines from its position towards its target, so with both on the camera
+  // its direction is fixed in the view whatever the camera does
+  light.position.copy(direction);
+  light.target.position.set(0, 0, 0);
+  camera.add(light);
+  camera.add(light.target);
+  scene.add(camera);
 }
 
 /**
@@ -268,6 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const backgroundColor = loadingElement.dataset.backgroundColor;
   const autoRotate = loadingElement.dataset.autoRotate;
   const showGrid = loadingElement.dataset.showGrid;
+  const lightingMode = loadingElement.dataset.lightingMode;
   
   // Verify we have a valid URL
   if (!stlUrl) {
@@ -281,7 +308,8 @@ document.addEventListener('DOMContentLoaded', () => {
     foregroundColor: foregroundColor,
     backgroundColor: backgroundColor,
     autoRotate: autoRotate,
-    showGrid: showGrid
+    showGrid: showGrid,
+    lightingMode: lightingMode
   });
   
   // Start the animation loop
