@@ -161,7 +161,8 @@
         // viewers do: otherwise a wheel over the canvas zooms the model and scrolls the page at once
         camera.attachControl(canvas, false);
 
-        if (camera.inputs && camera.inputs.addMouseWheel) {
+        // Only where the camera has no wheel input yet: the Arc Rotate camera comes with one
+        if (camera.inputs && camera.inputs.addMouseWheel && !camera.inputs.attached.mousewheel) {
             camera.inputs.addMouseWheel();
         }
 
