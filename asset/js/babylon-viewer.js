@@ -157,7 +157,9 @@
 
         const camera = createCamera(scene, canvas, canvas.dataset.camera);
         camera.setTarget(BABYLON.Vector3.Zero());
-        camera.attachControl(canvas, true);
+        // Let the camera prevent the default of the events it uses, as the model-viewer and STL
+        // viewers do: otherwise a wheel over the canvas zooms the model and scrolls the page at once
+        camera.attachControl(canvas, false);
 
         if (camera.inputs && camera.inputs.addMouseWheel) {
             camera.inputs.addMouseWheel();
