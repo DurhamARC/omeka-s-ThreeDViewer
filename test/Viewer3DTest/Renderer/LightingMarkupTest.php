@@ -23,10 +23,11 @@ class LightingMarkupTest extends TestCase
      *
      * @return array{0: string, 1: DummyPhpRenderer}
      */
-    private function render(string $file, array $settings): array
+    private function render(string $file, array $settings, ?array $siteSettings = null): array
     {
         $view = new DummyPhpRenderer();
         $view->setSettings($settings);
+        $view->setSiteSettings($siteSettings);
         $media = new MediaRepresentation('https://example.org/files/original/' . $file, 'Sample', $file);
         return [(new Viewer3DRenderer())->render($view, $media, []), $view];
     }
@@ -122,5 +123,31 @@ class LightingMarkupTest extends TestCase
             $this->assertStringContainsString('data-light-brightness="2"', $html, $name);
             $this->assertContains('/modules/ThreeDViewer/js/lighting-rig.js', $view->headScript()->files, $name);
         }
+    }
+
+    public function testSiteSettingsOverrideTheModuleOnTheSite(): void
+    {
+        $site = ['threedviewer_light_brightness' => '0.5', 'threedviewer_lighting_mode' => 'viewer'];
+
+        [$html] = $this->render('mesh.stl', ['threedviewer_light_brightness' => 2], $site);
+        $this->assertStringContainsString('data-light-brightness="0.5"', $html);
+        $this->assertStringContainsString('data-lighting-mode="viewer"', $html);
+
+        $empty = ['threedviewer_light_brightness' => ''];
+        [$html] = $this->render('mesh.stl', ['threedviewer_light_brightness' => 2], $empty);
+        $this->assertStringContainsString('data-light-brightness="2"', $html, 'Empty: the module setting');
+    }
+
+    public function testASiteCanReplaceOrDropTheModulesRig(): void
+    {
+        [$html] = $this->render('model.glb', self::RIG, ['threedviewer_lights' => 'default']);
+        $this->assertStringNotContainsString('data-lights', $html);
+
+        $own = ['threedviewer_lights' => 'custom', 'threedviewer_light_count' => 4];
+        [$html] = $this->render('model.glb', self::RIG, $own);
+        $this->assertSame(1, preg_match('/data-lights="([^"]*)"/', $html, $match));
+        $rig = json_decode(html_entity_decode($match[1], ENT_QUOTES), true);
+        $this->assertCount(4, $rig['lights']);
+        $this->assertSame('#ffffff', $rig['ambient']['color'], 'The site rig does not take the module ambient colour');
     }
 }

@@ -128,4 +128,85 @@ class LightingTest extends TestCase
             ['color' => '#ff0000', 'strength' => 0.4, 'azimuth' => 60, 'elevation' => 20],
         ], $rig['lights']);
     }
+
+    private static function reader(array $values): callable
+    {
+        return function (string $key) use ($values) {
+            return $values[$key] ?? null;
+        };
+    }
+
+    public function testWithoutASiteTheModuleSettingsApply(): void
+    {
+        $module = self::reader(['threedviewer_light_brightness' => 2, 'threedviewer_lights' => 'custom']);
+        $resolved = Lighting::resolve($module);
+        $this->assertSame(2.0, $resolved['threedviewer_light_brightness']);
+        $this->assertSame('custom', $resolved['threedviewer_lights']);
+    }
+
+    public function testNonEmptySiteSettingsOverrideTheModuleOneByOne(): void
+    {
+        $module = self::reader([
+            'threedviewer_light_brightness' => 2,
+            'threedviewer_lighting_mode' => 'viewer',
+            'threedviewer_babylon_lighting' => 'point',
+        ]);
+        $site = self::reader([
+            'threedviewer_light_brightness' => '0.5',
+            'threedviewer_lighting_mode' => '',
+            'threedviewer_babylon_lighting' => null,
+            'threedviewer_model_viewer_environment' => 'legacy',
+        ]);
+        $resolved = Lighting::resolve($module, $site);
+        $this->assertSame(0.5, $resolved['threedviewer_light_brightness']);
+        $this->assertSame('viewer', $resolved['threedviewer_lighting_mode'], 'Empty keeps the module setting');
+        $this->assertSame('point', $resolved['threedviewer_babylon_lighting'], 'Unset keeps the module setting');
+        $this->assertSame('legacy', $resolved['threedviewer_model_viewer_environment']);
+    }
+
+    public function testASiteUsesTheModulesRigUnlessItChoosesItsOwnLights(): void
+    {
+        $module = self::reader([
+            'threedviewer_lights' => 'custom',
+            'threedviewer_light_count' => 3,
+            'threedviewer_light_1_color' => '#ff0000',
+        ]);
+        // Rig fields saved with the site's form are ignored while the site keeps the module's lights
+        $site = self::reader(['threedviewer_lights' => '', 'threedviewer_light_count' => 1]);
+        $inherit = Lighting::resolve($module, $site);
+        $this->assertSame(3, $inherit['threedviewer_light_count']);
+        $this->assertSame('#ff0000', $inherit['threedviewer_light_1_color']);
+
+        $own = Lighting::resolve($module, self::reader(['threedviewer_lights' => 'default']));
+        $this->assertNull(Lighting::rig($own), 'A site can return to each viewer\'s own lights');
+    }
+
+    public function testASitesOwnRigNeverMixesWithTheModules(): void
+    {
+        $module = self::reader([
+            'threedviewer_lights' => 'custom',
+            'threedviewer_light_count' => 3,
+            'threedviewer_light_1_color' => '#ff0000',
+            'threedviewer_light_2_strength' => 2,
+        ]);
+        $site = self::reader([
+            'threedviewer_lights' => 'custom',
+            'threedviewer_light_count' => '2',
+            'threedviewer_light_1_color' => '#00ff00',
+        ]);
+        $rig = Lighting::rig(Lighting::resolve($module, $site));
+        $this->assertCount(2, $rig['lights']);
+        $this->assertSame('#00ff00', $rig['lights'][0]['color']);
+        $this->assertSame(0.4, $rig['lights'][1]['strength'], 'A blank site field takes the default, not the module');
+    }
+
+    public function testRigKeysAreTheAmbientLightTheCountAndEachLight(): void
+    {
+        $keys = Lighting::rigKeys();
+        $this->assertCount(3 + 4 * Lighting::MAX_LIGHTS, $keys);
+        $this->assertContains('threedviewer_light_count', $keys);
+        $this->assertContains('threedviewer_light_4_elevation', $keys);
+        $this->assertNotContains('threedviewer_light_brightness', $keys);
+        $this->assertNotContains('threedviewer_lights', $keys);
+    }
 }

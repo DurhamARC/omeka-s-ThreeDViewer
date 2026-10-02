@@ -46,14 +46,12 @@ abstract class Abstract3DRenderer implements RendererInterface
                 'threedviewer_babylon_show_toolbar',
                 $default['babylonShowToolbar']
             );
-            foreach (Lighting::keys() as $key) {
-                $lighting[$key] = $setting($key);
-            }
+            $lighting = Lighting::resolve($setting, $this->siteSettingReader($view));
         } catch (\Throwable $e) {
             error_log('Error getting settings: ' . $e->getMessage());
         }
 
-        $lighting = Lighting::normalise($lighting);
+        $lighting = $lighting ?: Lighting::normalise([]);
         $default['lighting'] = $lighting;
         $default['lightingMode'] = $lighting['threedviewer_lighting_mode'];
         $default['babylonLighting'] = $lighting['threedviewer_babylon_lighting'];
@@ -61,6 +59,24 @@ abstract class Abstract3DRenderer implements RendererInterface
         $default['rig'] = Lighting::rig($lighting);
 
         return $default;
+    }
+
+    /**
+     * Reads the current site's settings, or null where there is no current site (admin pages),
+     * where Omeka's siteSetting helper cannot be used.
+     */
+    protected function siteSettingReader(PhpRenderer $view): ?callable
+    {
+        try {
+            $currentSite = $view->plugin('currentSite');
+            if (!is_callable($currentSite) || !$currentSite()) {
+                return null;
+            }
+            $siteSetting = $view->plugin('siteSetting');
+            return is_callable($siteSetting) ? $siteSetting : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     /**

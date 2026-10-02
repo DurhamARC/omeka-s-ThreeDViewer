@@ -9,6 +9,11 @@ use Laminas\ServiceManager\ServiceManager;
 use Laminas\View\Renderer\PhpRenderer;
 use Laminas\Mvc\Controller\AbstractController;
 use PHPUnit\Framework\TestCase;
+use Laminas\EventManager\Event;
+use Laminas\EventManager\SharedEventManagerInterface;
+use Laminas\Form\Form;
+use Laminas\InputFilter\InputFilter;
+use ThreeDViewer\Settings\Lighting;
 
 class ModuleTest extends TestCase
 {
@@ -186,6 +191,63 @@ class ModuleTest extends TestCase
         $this->assertSame('', $values['threedviewer_model_viewer_environment_url']);
         $this->assertSame('directional', $values['threedviewer_babylon_lighting']);
         $this->assertSame('none', $values['threedviewer_babylon_environment']);
+    }
+
+    public function testListensToTheSiteSettingsForm(): void
+    {
+        $shared = $this->createMock(SharedEventManagerInterface::class);
+        $attached = [];
+        $shared->method('attach')->willReturnCallback(function ($id, $event, $callback) use (&$attached) {
+            $attached[] = [$id, $event, $callback[1]];
+        });
+        $this->module->attachListeners($shared);
+        $this->assertSame([
+            ['Omeka\\Form\\SiteSettingsForm', 'form.add_elements', 'addSiteSettings'],
+            ['Omeka\\Form\\SiteSettingsForm', 'form.add_input_filters', 'addSiteSettingsInputFilters'],
+        ], $attached);
+    }
+
+    public function testSiteSettingsFormGetsTheLightingGroupWithTheSitesValues(): void
+    {
+        $siteSettings = new class {
+            public $values = ['threedviewer_light_brightness' => 1.5, 'threedviewer_light_2_color' => '#00ff00'];
+
+            public function get($key, $default = null)
+            {
+                return $this->values[$key] ?? $default;
+            }
+        };
+        $this->services->setAllowOverride(true);
+        $this->services->setService('Omeka\\Settings\\Site', $siteSettings);
+        $form = new Form();
+        $form->setOption('element_groups', ['general' => 'General']);
+
+        $this->module->addSiteSettings(new Event('form.add_elements', $form));
+
+        $this->assertSame(
+            ['general' => 'General', 'threedviewer' => '3D viewer lighting'],
+            $form->getOption('element_groups')
+        );
+        foreach (Lighting::keys() as $name) {
+            $this->assertSame('threedviewer', $form->get($name)->getOption('element_group'), $name);
+        }
+        $this->assertEquals(1.5, $form->get('threedviewer_light_brightness')->getValue());
+        $this->assertSame('', $form->get('threedviewer_lighting_mode')->getValue(), 'Unset: the module setting');
+        $this->assertSame('#00ff00', $form->get('threedviewer_light_2_color')->getValue());
+        $this->assertSame('#ffffff', $form->get('threedviewer_light_1_color')->getValue(), 'Unset rig field: default');
+        $this->assertEquals(45, $form->get('threedviewer_light_1_elevation')->getValue());
+    }
+
+    public function testSiteLightingFieldsMayBeLeftEmpty(): void
+    {
+        $inputFilter = new InputFilter();
+        $this->module->addSiteSettingsInputFilters(
+            new Event('form.add_input_filters', null, ['inputFilter' => $inputFilter])
+        );
+        foreach (Lighting::keys() as $name) {
+            $this->assertFalse($inputFilter->get($name)->isRequired(), $name);
+            $this->assertTrue($inputFilter->get($name)->allowEmpty(), $name);
+        }
     }
 
     private function submit(array $post): void
