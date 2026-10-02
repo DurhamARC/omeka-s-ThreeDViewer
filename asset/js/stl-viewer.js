@@ -6,6 +6,8 @@
 
 // Global variables
 let scene, camera, renderer, controls;
+// Set by the lighting controls while the lighting is fixed to the viewer: moves the lights each frame
+let followCamera = null;
 
 /**
  * Initializes the 3D scene, camera and renderer
@@ -23,7 +25,8 @@ function init(modelUrl, options = {}) {
     showGrid: options.showGrid === "true" || false,
     lightingMode: options.lightingMode === "viewer" ? "viewer" : "model",
     brightness: options.brightness === undefined ? 1 : options.brightness,
-    rig: options.rig || null
+    rig: options.rig || null,
+    controls: options.controls || null
   };
   
   // Convert hex color strings to Three.js color objects
@@ -83,7 +86,7 @@ function init(modelUrl, options = {}) {
 
   // Add lighting to the scene: the light rig if there is one, else an ambient light for overall
   // illumination and a directional light from the front and above
-  const directionalLights = config.rig ? addRig(config.rig, config.brightness) : addDefaultLights(config.brightness);
+  const lights = config.rig ? addRig(config.rig, config.brightness) : addDefaultLights(config.brightness);
 
   // Load the STL file using Three.js STLLoader
   const loader = new THREE.STLLoader();
@@ -137,10 +140,12 @@ function init(modelUrl, options = {}) {
       controls.update();
 
       if (config.rig) {
-        aimRig(directionalLights, config.rig);
+        aimRig(lights.directional, config.rig);
       }
-      if (config.lightingMode === 'viewer') {
-        directionalLights.forEach(attachLightToCamera);
+      if (config.controls) {
+        setUpLightingControls(config.controls, lights, config);
+      } else if (config.lightingMode === 'viewer') {
+        lights.directional.forEach(attachLightToCamera);
       }
       
       // Trigger a resize to ensure proper rendering
@@ -188,15 +193,16 @@ function init(modelUrl, options = {}) {
  * The viewer's own lights: ambient, and a directional light from the front and 45 degrees up
  *
  * @param {number} brightness - Multiplier for both lights
- * @return {THREE.DirectionalLight[]} The directional light
+ * @return {{ambient: THREE.AmbientLight, directional: THREE.DirectionalLight[]}} The lights
  */
 function addDefaultLights(brightness) {
-  scene.add(new THREE.AmbientLight(0xffffff, 0.6 * brightness));
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6 * brightness);
+  scene.add(ambientLight);
 
   const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8 * brightness);
   directionalLight.position.set(0, 50, 50).normalize();
   scene.add(directionalLight);
-  return [directionalLight];
+  return { ambient: ambientLight, directional: [directionalLight] };
 }
 
 /**
@@ -205,17 +211,19 @@ function addDefaultLights(brightness) {
  *
  * @param {Object} rig - From ThreeDViewerLighting.parse()
  * @param {number} brightness - Multiplier for every light
- * @return {THREE.DirectionalLight[]} The directional lights, in the rig's order
+ * @return {{ambient: THREE.AmbientLight, directional: THREE.DirectionalLight[]}} The lights, in the rig's order
  */
 function addRig(rig, brightness) {
-  scene.add(new THREE.AmbientLight(new THREE.Color(rig.ambient.color), rig.ambient.strength * brightness));
+  const ambientLight = new THREE.AmbientLight(new THREE.Color(rig.ambient.color), rig.ambient.strength * brightness);
+  scene.add(ambientLight);
 
-  return rig.lights.map(function (light) {
+  const directional = rig.lights.map(function (light) {
     const directionalLight = new THREE.DirectionalLight(new THREE.Color(light.color), light.strength * brightness);
     directionalLight.position.set(0, 0, 1);
     scene.add(directionalLight);
     return directionalLight;
   });
+  return { ambient: ambientLight, directional: directional };
 }
 
 /**
@@ -229,6 +237,115 @@ function aimRig(lights, rig) {
   lights.forEach(function (light, i) {
     const d = ThreeDViewerLighting.direction(rig.lights[i].azimuth, rig.lights[i].elevation, back, false);
     light.position.set(d.x, d.y, d.z);
+  });
+}
+
+/**
+ * Lighting controls (lighting-controls.js): report the lights, then apply each change to them.
+ *
+ * A light's direction is kept as angles from the default view, turned by a frame. The frame stays
+ * put while the lighting is fixed to the model; fixed to the viewer, it turns with the camera from
+ * where it was at the switch. Switching back keeps the frame where it has got to, so the lights
+ * never jump.
+ *
+ * @param {HTMLElement} element - The element the controls send their changes to
+ * @param {{ambient: THREE.AmbientLight, directional: THREE.DirectionalLight[]}} lights
+ * @param {Object} config - The viewer's configuration
+ */
+function setUpLightingControls(element, lights, config) {
+  const lighting = ThreeDViewerLighting;
+  const back = lighting.backFrom(camera.position, new THREE.Vector3(0, 0, 0));
+  const entries = [{ id: 'ambient', kind: 'ambient', light: lights.ambient }];
+  lights.directional.forEach(function (light, i) {
+    const angles = lighting.angles(light.position, back, false);
+    entries.push({
+      id: config.rig ? 'light' + (i + 1) : 'key',
+      kind: config.rig ? 'light' : 'key',
+      light: light,
+      azimuth: angles.azimuth,
+      elevation: angles.elevation
+    });
+  });
+
+  let mode = 'model';
+  let frame = new THREE.Quaternion();
+  let attached = null;   // While fixed to the viewer: the camera's turn and the frame at the switch
+
+  function currentFrame() {
+    if (!attached) {
+      return frame;
+    }
+    return camera.quaternion.clone().multiply(attached.camera.clone().inverse()).multiply(attached.frame);
+  }
+
+  function place() {
+    const turn = currentFrame();
+    entries.forEach(function (entry) {
+      if (entry.azimuth !== undefined) {
+        const d = lighting.direction(entry.azimuth, entry.elevation, back, false);
+        entry.light.position.set(d.x, d.y, d.z).applyQuaternion(turn);
+      }
+    });
+  }
+
+  function setMode(next) {
+    if (next === mode) {
+      return;
+    }
+    if (next === 'viewer') {
+      attached = { camera: camera.quaternion.clone(), frame: frame.clone() };
+      followCamera = place;
+    } else {
+      frame = currentFrame().clone();
+      attached = null;
+      followCamera = null;
+    }
+    mode = next;
+  }
+
+  setMode(config.lightingMode);
+  place();
+
+  lighting.onChange(element, function (detail) {
+    if (detail.reset) {
+      setMode('model');
+      frame = new THREE.Quaternion();
+    }
+    setMode(detail.mode === 'viewer' ? 'viewer' : 'model');
+    detail.lights.forEach(function (change) {
+      const entry = entries.find(function (e) { return e.id === change.id; });
+      if (!entry) {
+        return;
+      }
+      if (change.color !== undefined) {
+        entry.light.color.set(change.color);
+      }
+      if (change.strength !== undefined) {
+        entry.light.intensity = change.strength;
+      }
+      if (entry.azimuth !== undefined) {
+        entry.azimuth = change.azimuth;
+        entry.elevation = change.elevation;
+      }
+    });
+    place();
+  });
+
+  lighting.ready(element, {
+    mode: mode,
+    lights: entries.map(function (entry) {
+      const report = {
+        id: entry.id,
+        kind: entry.kind,
+        color: '#' + entry.light.color.getHexString(),
+        strength: Math.round(entry.light.intensity * 100) / 100
+      };
+      if (entry.azimuth !== undefined) {
+        report.azimuth = entry.azimuth;
+        report.elevation = entry.elevation;
+      }
+      return report;
+    })
   });
 }
 
@@ -316,6 +433,9 @@ function animate() {
   if (controls) {
     controls.update();
   }
+  if (followCamera) {
+    followCamera();
+  }
   
   // Render the scene
   if (scene && camera && renderer) {
@@ -357,7 +477,8 @@ document.addEventListener('DOMContentLoaded', () => {
     showGrid: showGrid,
     lightingMode: lightingMode,
     brightness: lighting ? lighting.brightness(loadingElement) : 1,
-    rig: lighting ? lighting.parse(loadingElement) : null
+    rig: lighting ? lighting.parse(loadingElement) : null,
+    controls: lighting && lighting.hasControls(loadingElement) ? loadingElement : null
   });
   
   // Start the animation loop

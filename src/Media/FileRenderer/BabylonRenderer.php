@@ -82,6 +82,7 @@ class BabylonRenderer extends Abstract3DRenderer implements RendererInterface
             . 'data-show-inspector="' . ($config['babylonShowToolbar'] ? 'true' : 'false') . '" '
             . 'data-loading-id="' . $view->escapeHtmlAttr($loadingId) . '"'
             . $this->renderLightingAttributes($view, $config) . '></canvas>'
+            . $this->renderLightingControls($view, $config, $canvasId)
             . '</div>';
     }
 }

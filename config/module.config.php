@@ -102,6 +102,7 @@ return [
             'threedviewer_model_viewer_environment_url' => '',
             'threedviewer_model_viewer_shadow_intensity' => 0,
             'threedviewer_model_viewer_shadow_softness' => 1,
+            'threedviewer_lighting_controls' => false,
             'threedviewer_babylon_camera' => 'arcRotate',
             'threedviewer_babylon_lighting' => 'hemispheric',
             'threedviewer_babylon_environment' => 'none',

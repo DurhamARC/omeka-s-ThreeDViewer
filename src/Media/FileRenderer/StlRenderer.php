@@ -55,6 +55,7 @@ class StlRenderer extends Abstract3DRenderer implements RendererInterface
              . '" data-show-grid="' . ($config['showGrid'] ? 'true' : 'false')
              . '" data-lighting-mode="' . $config['lightingMode'] . '"'
              . $this->renderLightingAttributes($view, $config) . '>'
-             . 'Loading STL model...</div>';
+             . 'Loading STL model...</div>'
+             . $this->renderLightingControls($view, $config, 'loading');
     }
 }

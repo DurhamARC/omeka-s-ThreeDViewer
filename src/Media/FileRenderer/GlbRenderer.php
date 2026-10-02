@@ -21,7 +21,7 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
         );
         $view->headScript()->appendFile($view->assetUrl('js/viewer-controls.js', 'ThreeDViewer'));
         $this->appendLightingScripts($view, $config);
-        if ($config['lightingMode'] === 'viewer' || $config['rig'] !== null) {
+        if ($config['lightingMode'] === 'viewer' || $config['rig'] !== null || $config['lightingControls']) {
             $view->headScript()->appendFile($view->assetUrl('js/model-viewer-lighting.js', 'ThreeDViewer'));
         }
 
@@ -36,11 +36,14 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
         $helpLabel = $view->escapeHtmlAttr($view->translate('3D viewer controls'));
         $helpText = $view->escapeHtml($view->translate('Use mouse to rotate, zoom and pan'));
         $gridOverlay = $config['showGrid'] ? '<div class="grid-overlay"></div>' : '';
+        // The lighting controls find the viewer by its id, which it otherwise does not need
+        $viewerId = 'threedviewer-model-' . $media->id();
+        $idAttribute = $config['lightingControls'] ? 'id="' . $viewerId . '" ' : '';
 
         return '<div class="threedviewer-model-stage" style="position: relative; width: 100%; height: '
              . (int) $config['height'] . 'px;">'
              . $gridOverlay
-             . '<model-viewer src="' . $modelViewerSrc . '" '
+             . '<model-viewer ' . $idAttribute . 'src="' . $modelViewerSrc . '" '
              . 'alt="' . $altText . '" camera-controls '
              . 'data-lighting-mode="' . $config['lightingMode'] . '" '
              . $this->renderModelViewerLighting($view, $config)
@@ -51,6 +54,7 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
              . '<button type="button" aria-label="' . $enterFullscreen . '" '
              . 'title="' . $enterFullscreen . '" data-enter-label="' . $enterFullscreen . '" '
              . 'data-exit-label="' . $exitFullscreen . '">⛶</button></div>'
+             . $this->renderLightingControls($view, $config, $viewerId)
              . '<details class="threedviewer-control threedviewer-help">'
              . '<summary aria-label="' . $helpLabel . '">?</summary><p>' . $helpText . '</p></details>'
              . '</div>';

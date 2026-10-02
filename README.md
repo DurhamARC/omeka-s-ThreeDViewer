@@ -24,6 +24,7 @@ This module allows users to view and interact with 3D models (STL and GLB files)
 - Configurable lighting: overall brightness, and an optional light rig (an ambient light plus up to four lights, each
   with its own colour, strength and direction) built the same way in every viewer
 - Per-site lighting: each site can override the module's lighting settings
+- Optional lighting controls on every viewer, so visitors can change each light's colour, strength and direction
 - Toggle between the original Three.js/model-viewer pipeline and an experimental Babylon.js renderer
 - Babylon.js renderer with configurable cameras, lighting, and WebXR support
 
@@ -62,6 +63,12 @@ See general end user documentation for [Installing a module](http://omeka.org/s/
 6. Each site can override the lighting settings in its own settings, under *3D viewer lighting*. A field left as
    *Use the module setting* (or blank) keeps the module's value. The light rig is overridden whole: a site uses the
    module's lights, each viewer's default lights, or a complete rig of its own.
+7. **Show lighting controls on viewers** (off by default) adds a ☀ button to every viewer. It opens a panel listing the
+   scene's lights, each with its colour, strength, direction and height, as the light allows, plus *Fixed to the
+   model / Fixed to the viewer* and *Reset*. Changes affect only that viewer and are never stored: reloading the page
+   restores the configured lighting. Each site can show or hide the controls whatever the module setting.
+   Unlike the Babylon.js toolbar, which embeds the Babylon.js Inspector (a developer tool, for that viewer only), the
+   panel shows only the lights, the same way in all three viewers.
 
 ## Local Development with Docker
 

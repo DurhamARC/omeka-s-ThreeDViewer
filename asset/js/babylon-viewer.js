@@ -114,12 +114,19 @@
     }
 
     /**
+     * The side of the model the camera looks from, as lighting-rig.js's backFrom() gives it.
+     */
+    function viewSide(camera) {
+        return camera instanceof BABYLON.ArcRotateCamera
+            ? { x: Math.cos(camera.alpha), z: Math.sin(camera.alpha) }
+            : window.ThreeDViewerLighting.backFrom(camera.position, camera.getTarget());
+    }
+
+    /**
      * Point each rig light from its direction relative to the camera's default view.
      */
     function aimRig(scene, camera, rigLights) {
-        const back = camera instanceof BABYLON.ArcRotateCamera
-            ? { x: Math.cos(camera.alpha), z: Math.sin(camera.alpha) }
-            : window.ThreeDViewerLighting.backFrom(camera.position, camera.getTarget());
+        const back = viewSide(camera);
         const leftHanded = !scene.useRightHandedSystem;
         rigLights.forEach(function (entry) {
             const d = window.ThreeDViewerLighting.direction(entry.azimuth, entry.elevation, back, leftHanded);
@@ -166,6 +173,171 @@
                 }
             });
         });
+    }
+
+    /**
+     * Lighting controls (lighting-controls.js): report the lights, then apply each change to them.
+     *
+     * A light's direction is kept as angles from the default view, turned by a frame. The frame
+     * stays put while the lighting is fixed to the model; fixed to the viewer, it turns with the
+     * camera from where it was at the switch, as the environment's reflection does. Switching back
+     * keeps the frame where it has got to, so the lights never jump.
+     */
+    function setUpLightingControls(canvas, scene, camera, presetLights, rig) {
+        const lighting = window.ThreeDViewerLighting;
+        const back = viewSide(camera);
+        const leftHanded = !scene.useRightHandedSystem;
+        const target = camera.getTarget ? camera.getTarget().clone() : BABYLON.Vector3.Zero();
+        const toward = function (v) {
+            return lighting.angles({ x: v.x, y: v.y, z: v.z }, back, leftHanded);
+        };
+
+        const entries = [];
+        let rigNumber = 0;
+        presetLights.forEach(function (light) {
+            const entry = { light: light, scale: 1 };
+            if (rig && light.name === 'rigAmbient') {
+                Object.assign(entry, { id: 'ambient', kind: 'ambient' });
+            } else if (rig) {
+                rigNumber++;
+                Object.assign(entry, { id: 'light' + rigNumber, kind: 'light', scale: RIG_LIGHT_SCALE });
+            } else if (light instanceof BABYLON.HemisphericLight) {
+                Object.assign(entry, { id: 'sky' + entries.length, kind: 'sky', ground: true });
+            } else if (light instanceof BABYLON.DirectionalLight) {
+                Object.assign(entry, { id: 'key' + entries.length, kind: 'key' });
+            } else if (light instanceof BABYLON.PointLight) {
+                Object.assign(entry, {
+                    id: 'point' + entries.length,
+                    kind: 'point',
+                    distance: BABYLON.Vector3.Distance(light.position, target)
+                });
+            } else {
+                return;
+            }
+            if (entry.kind !== 'ambient') {
+                const from = entry.kind === 'sky' ? light.direction
+                    : entry.kind === 'point' ? light.position.subtract(target)
+                    : light.direction.negate();
+                Object.assign(entry, toward(from));
+            }
+            entries.push(entry);
+        });
+
+        let mode = 'model';
+        let frame = BABYLON.Matrix.Identity();
+        let attached = null;   // While fixed to the viewer: the camera and the frame at the switch
+        let observer = null;
+
+        function currentFrame() {
+            if (!attached) {
+                return frame;
+            }
+            // Babylon.js matrices apply left to right: the frame, then the camera's turn since the switch
+            return attached.frame.multiply(attached.worldToCamera).multiply(camera.getWorldMatrix().getRotationMatrix());
+        }
+
+        function place() {
+            const turn = currentFrame();
+            entries.forEach(function (entry) {
+                if (entry.azimuth === undefined) {
+                    return;
+                }
+                const d = lighting.direction(entry.azimuth, entry.elevation, back, leftHanded);
+                const from = BABYLON.Vector3.TransformNormal(new BABYLON.Vector3(d.x, d.y, d.z), turn);
+                if (entry.kind === 'sky') {
+                    entry.light.direction = from;
+                } else if (entry.kind === 'point') {
+                    entry.light.position = target.add(from.scale(entry.distance));
+                } else {
+                    entry.light.direction = from.negate();
+                }
+            });
+            const environment = scene.environmentTexture;
+            if (environment && environment.setReflectionTextureMatrix) {
+                // The environment is sampled through its reflection matrix: turning it by the frame
+                // means sampling through the frame's inverse
+                environment.setReflectionTextureMatrix(BABYLON.Matrix.Invert(turn));
+            }
+        }
+
+        function setMode(next) {
+            if (next === mode) {
+                return;
+            }
+            if (next === 'viewer') {
+                attached = { frame: frame.clone(), worldToCamera: camera.getViewMatrix().getRotationMatrix() };
+                observer = scene.onBeforeRenderObservable.add(place);
+            } else {
+                frame = currentFrame().clone();
+                attached = null;
+                scene.onBeforeRenderObservable.remove(observer);
+                observer = null;
+            }
+            mode = next;
+        }
+
+        setMode(canvas.dataset.lightingMode === 'viewer' ? 'viewer' : 'model');
+        place();
+
+        lighting.onChange(canvas, function (detail) {
+            if (detail.reset) {
+                setMode('model');
+                frame = BABYLON.Matrix.Identity();
+            }
+            setMode(detail.mode === 'viewer' ? 'viewer' : 'model');
+            detail.lights.forEach(function (change) {
+                if (change.id === 'environment') {
+                    scene.environmentIntensity = change.strength;
+                    return;
+                }
+                const entry = entries.find(function (e) {
+                    return e.id === change.id;
+                });
+                if (!entry) {
+                    return;
+                }
+                if (change.color !== undefined) {
+                    entry.light.diffuse = BABYLON.Color3.FromHexString(change.color);
+                    if (entry.kind === 'ambient') {
+                        entry.light.groundColor = entry.light.diffuse.clone();
+                    } else if (entry.kind === 'light') {
+                        entry.light.specular = entry.light.diffuse.clone();
+                    }
+                }
+                if (change.groundColor !== undefined && entry.ground) {
+                    entry.light.groundColor = BABYLON.Color3.FromHexString(change.groundColor);
+                }
+                if (change.strength !== undefined) {
+                    entry.light.intensity = change.strength * entry.scale;
+                }
+                if (entry.azimuth !== undefined) {
+                    entry.azimuth = change.azimuth;
+                    entry.elevation = change.elevation;
+                }
+            });
+            place();
+        });
+
+        const lights = entries.map(function (entry) {
+            const report = {
+                id: entry.id,
+                kind: entry.kind,
+                color: entry.light.diffuse.toHexString().toLowerCase(),
+                strength: Math.round(entry.light.intensity / entry.scale * 100) / 100
+            };
+            if (entry.ground) {
+                report.groundColor = entry.light.groundColor.toHexString().toLowerCase();
+            }
+            if (entry.azimuth !== undefined) {
+                report.azimuth = entry.azimuth;
+                report.elevation = entry.elevation;
+            }
+            return report;
+        });
+        if (scene.environmentTexture) {
+            lights.push({ id: 'environment', kind: 'environment', strength: scene.environmentIntensity });
+        }
+        lighting.ready(canvas, { mode: mode, lights: lights });
     }
 
     function createEnvironment(scene, option) {
@@ -287,7 +459,9 @@
             }
 
             // After framing, so the first view is lit exactly as in the default mode
-            if (canvas.dataset.lightingMode === 'viewer') {
+            if (lighting && lighting.hasControls(canvas)) {
+                setUpLightingControls(canvas, scene, camera, presetLights, rig);
+            } else if (canvas.dataset.lightingMode === 'viewer') {
                 attachLightsToCamera(scene, camera, presetLights);
             }
 

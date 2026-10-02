@@ -45,4 +45,16 @@ class ConfigFormTest extends TestCase
             array_keys($this->form->get('threedviewer_model_viewer_environment')->getValueOptions())
         );
     }
+
+    public function testControlsAreACheckboxAfterTheLightingSettings(): void
+    {
+        $this->form->init();
+        $element = $this->form->get('threedviewer_lighting_controls');
+        $this->assertInstanceOf(Element\Checkbox::class, $element);
+        $names = array_keys($this->form->getElements());
+        $this->assertSame(
+            array_search('threedviewer_model_viewer_shadow_softness', $names, true) + 1,
+            array_search('threedviewer_lighting_controls', $names, true)
+        );
+    }
 }

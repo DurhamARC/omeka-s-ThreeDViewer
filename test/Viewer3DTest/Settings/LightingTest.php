@@ -209,4 +209,20 @@ class LightingTest extends TestCase
         $this->assertNotContains('threedviewer_light_brightness', $keys);
         $this->assertNotContains('threedviewer_lights', $keys);
     }
+
+    public function testControlsAreOffUnlessTurnedOnAndASiteMayOverrideEitherWay(): void
+    {
+        $key = 'threedviewer_lighting_controls';
+        $this->assertFalse(Lighting::normalise([])[$key]);
+        $this->assertTrue(Lighting::normalise([$key => '1'])[$key]);
+        $this->assertTrue(Lighting::normalise([$key => true])[$key]);
+        $this->assertFalse(Lighting::normalise([$key => '0'])[$key]);
+        $this->assertFalse(Lighting::normalise([$key => 'yes'])[$key]);
+
+        $on = self::reader([$key => true]);
+        $off = self::reader([$key => false]);
+        $this->assertTrue(Lighting::resolve($on, self::reader([$key => '']))[$key], 'Blank: the module setting');
+        $this->assertFalse(Lighting::resolve($on, self::reader([$key => '0']))[$key], 'A site can hide them');
+        $this->assertTrue(Lighting::resolve($off, self::reader([$key => '1']))[$key], 'A site can show them');
+    }
 }

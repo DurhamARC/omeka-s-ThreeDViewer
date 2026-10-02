@@ -69,6 +69,61 @@ test('direction: relative to the side the camera looks from', () => {
         Math.SQRT1_2, 0, Math.SQRT1_2, 'from an oblique camera');
 });
 
+test('angles: the inverse of direction, in whole degrees', () => {
+    const backs = [{ x: 0, z: 1 }, { x: Math.SQRT1_2, z: Math.SQRT1_2 }, { x: -0.6, z: 0.8 }];
+    for (const back of backs) {
+        for (const leftHanded of [false, true]) {
+            for (const [azimuth, elevation] of [[0, 0], [90, 10], [-135, 45], [180, 30], [37, 89]]) {
+                const d = lighting.direction(azimuth, elevation, back, leftHanded);
+                const a = lighting.angles({ x: d.x * 3, y: d.y * 3, z: d.z * 3 }, back, leftHanded);
+                assert.equal(Math.abs(a.azimuth), Math.abs(azimuth), `azimuth ${azimuth}`);
+                if (Math.abs(azimuth) !== 180) {
+                    assert.equal(a.azimuth, azimuth, `azimuth ${azimuth}`);
+                }
+                assert.equal(a.elevation, elevation, `elevation ${elevation}`);
+            }
+        }
+    }
+    assert.deepEqual(
+        JSON.parse(JSON.stringify(lighting.angles({ x: 0, y: 5, z: 0 }, { x: 0, z: 1 }, false))),
+        { azimuth: 0, elevation: 90 }
+    );
+    assert.equal(lighting.angles({ x: 0, y: -1, z: 1 }, { x: 0, z: 1 }, false).elevation, 0, 'from below: level');
+});
+
+test('ready, onChange and hasControls: the events between a viewer and its controls', () => {
+    const events = [];
+    const listeners = {};
+    const element = {
+        dataset: { lightingControls: 'true' },
+        dispatchEvent: (event) => events.push(event),
+        addEventListener: (type, listener) => { listeners[type] = listener; }
+    };
+    class CustomEvent {
+        constructor(type, init) {
+            this.type = type;
+            this.detail = init.detail;
+        }
+    }
+    const window = {};
+    runInNewContext(source, { window, console, CustomEvent });
+    const helpers = window.ThreeDViewerLighting;
+    const detail = { mode: 'model', lights: [] };
+    helpers.ready(element, detail);
+    assert.equal(element.threedviewerLighting, detail);
+    assert.equal(events[0].type, 'threedviewer:lighting-ready');
+    assert.equal(events[0].detail, detail);
+
+    let applied = null;
+    helpers.onChange(element, (d) => { applied = d; });
+    listeners['threedviewer:lighting']({ detail: { mode: 'viewer' } });
+    assert.deepEqual(applied, { mode: 'viewer' });
+
+    assert.equal(helpers.hasControls(element), true);
+    assert.equal(helpers.hasControls({ dataset: {} }), false);
+    assert.equal(helpers.hasControls(null), false);
+});
+
 test('backFrom: a camera straight above counts as in front', () => {
     assert.deepEqual(
         JSON.parse(JSON.stringify(lighting.backFrom({ x: 0, y: 9, z: 0 }, { x: 0, y: 0, z: 0 }))),
