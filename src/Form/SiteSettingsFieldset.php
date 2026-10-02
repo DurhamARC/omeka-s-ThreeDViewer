@@ -21,9 +21,12 @@ class SiteSettingsFieldset extends Fieldset
         $module = new ConfigForm();
         $module->init();
 
+        $rig = Lighting::rigKeys();
         foreach (Lighting::keys() as $name) {
             $element = clone $module->get($name);
-            if ($element instanceof Element\Select) {
+            // A site's own rig never inherits from the module's (its blank fields take the
+            // defaults), so its light count keeps to numbers
+            if ($element instanceof Element\Select && !in_array($name, $rig, true)) {
                 $inherit = $name === 'threedviewer_lights'
                     ? 'Use the module’s lights' // @translate
                     : 'Use the module setting'; // @translate

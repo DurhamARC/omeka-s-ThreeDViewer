@@ -62,6 +62,9 @@ jobs:
       - name: Test lighting rig
         run: node --test test/lighting-rig.test.cjs
 
+      - name: Test settings form conditions
+        run: node --test test/settings-form.test.cjs
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:

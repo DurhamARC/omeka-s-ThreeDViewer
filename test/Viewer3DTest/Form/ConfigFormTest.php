@@ -57,4 +57,32 @@ class ConfigFormTest extends TestCase
             array_search('threedviewer_lighting_controls', $names, true)
         );
     }
+
+    public function testEachLightingSettingShowsOnlyWhereItApplies(): void
+    {
+        $this->form->init();
+        $condition = function (string $name): array {
+            $element = $this->form->get($name);
+            return array_values(array_filter([
+                $element->getAttribute('data-show-if'),
+                $element->getAttribute('data-show-if-value'),
+                $element->getAttribute('data-show-if-min'),
+            ]));
+        };
+        $this->assertSame([], $condition('threedviewer_light_brightness'), 'Brightness always applies');
+        $this->assertSame([], $condition('threedviewer_lights'));
+        $this->assertSame(['threedviewer_lights', '["custom"]'], $condition('threedviewer_light_ambient_color'));
+        $this->assertSame(['threedviewer_lights', '["custom"]'], $condition('threedviewer_light_count'));
+        $this->assertSame(['threedviewer_light_count', '3'], $condition('threedviewer_light_3_strength'));
+        $this->assertSame(['threedviewer_light_count', '1'], $condition('threedviewer_light_1_color'));
+        $this->assertSame(
+            ['threedviewer_lights', '["","default"]'],
+            $condition('threedviewer_model_viewer_environment')
+        );
+        $this->assertSame(['threedviewer_lights', '["","default"]'], $condition('threedviewer_babylon_lighting'));
+        $this->assertSame(
+            ['threedviewer_model_viewer_environment', '["custom"]'],
+            $condition('threedviewer_model_viewer_environment_url')
+        );
+    }
 }

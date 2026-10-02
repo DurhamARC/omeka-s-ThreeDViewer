@@ -27,7 +27,7 @@ class SiteSettingsFieldsetTest extends TestCase
     public function testEverySelectFirstOffersTheModulesSetting(): void
     {
         foreach ($this->fieldset->getElements() as $name => $element) {
-            if (!$element instanceof Element\Select) {
+            if (!$element instanceof Element\Select || $name === 'threedviewer_light_count') {
                 continue;
             }
             $options = $element->getValueOptions();
@@ -48,5 +48,19 @@ class SiteSettingsFieldsetTest extends TestCase
         $element = $this->fieldset->get('threedviewer_lighting_controls');
         $this->assertInstanceOf(Element\Select::class, $element);
         $this->assertSame(['', '1', '0'], array_map('strval', array_keys($element->getValueOptions())));
+    }
+
+    public function testASitesOwnRigCountsItsLightsWithoutInheriting(): void
+    {
+        $this->assertSame(
+            [1, 2, 3, 4],
+            array_keys($this->fieldset->get('threedviewer_light_count')->getValueOptions())
+        );
+    }
+
+    public function testShowIfConditionsComeWithTheModulesElements(): void
+    {
+        $count = $this->fieldset->get('threedviewer_light_count');
+        $this->assertSame('threedviewer_lights', $count->getAttribute('data-show-if'));
     }
 }
