@@ -5,9 +5,38 @@ namespace ThreeDViewer\Form;
 
 use Laminas\Form\Element;
 use Laminas\Form\Form;
+use ThreeDViewer\Settings\Lighting;
 
 class ConfigForm extends Form
 {
+    /** Labels of each light's elements, written out so that each one can be translated */
+    private const LIGHT_LABELS = [
+        1 => [
+            'Light 1 colour', // @translate
+            'Light 1 strength', // @translate
+            'Light 1 direction (degrees round)', // @translate
+            'Light 1 height (degrees up)', // @translate
+        ],
+        2 => [
+            'Light 2 colour', // @translate
+            'Light 2 strength', // @translate
+            'Light 2 direction (degrees round)', // @translate
+            'Light 2 height (degrees up)', // @translate
+        ],
+        3 => [
+            'Light 3 colour', // @translate
+            'Light 3 strength', // @translate
+            'Light 3 direction (degrees round)', // @translate
+            'Light 3 height (degrees up)', // @translate
+        ],
+        4 => [
+            'Light 4 colour', // @translate
+            'Light 4 strength', // @translate
+            'Light 4 direction (degrees round)', // @translate
+            'Light 4 height (degrees up)', // @translate
+        ],
+    ];
+
     /**
      * Initialize the form elements.
      */
@@ -109,6 +138,8 @@ class ConfigForm extends Form
             ],
         ]);
 
+        $this->addLightingElements();
+
         $this->add([
             'name' => 'threedviewer_stl_up_axis',
             'type' => Element\Select::class,
@@ -142,7 +173,7 @@ class ConfigForm extends Form
             'type' => Element\Select::class,
             'options' => [
                 'label' => 'Babylon.js lighting preset', // @translate
-                'info' => 'Choose the default lighting rig for Babylon.js scenes.', // @translate
+                'info' => 'Choose the Babylon.js lighting used when Lights is Viewer default.', // @translate
                 'value_options' => [
                     'hemispheric' => 'Hemispheric', // @translate
                     'directional' => 'Directional', // @translate
@@ -194,6 +225,154 @@ class ConfigForm extends Form
             'attributes' => [
                 'value' => '0',
             ],
+        ]);
+    }
+
+    /**
+     * Brightness, the light rig and model-viewer's own lighting, after the Lighting select.
+     */
+    private function addLightingElements(): void
+    {
+        $this->add([
+            'name' => 'threedviewer_light_brightness',
+            'type' => Element\Number::class,
+            'options' => [
+                'label' => 'Brightness', // @translate
+                'info' => 'Multiplies the strength of every light. 1 leaves the lighting as it is.', // @translate
+            ],
+            'attributes' => ['min' => 0, 'max' => 3, 'step' => 0.05],
+        ]);
+
+        $this->add([
+            'name' => 'threedviewer_lights',
+            'type' => Element\Select::class,
+            'options' => [
+                'label' => 'Lights', // @translate
+                'info' => 'Custom builds the lights below in every viewer, in place of their own.', // @translate
+                'value_options' => [
+                    'default' => 'Viewer default', // @translate
+                    'custom' => 'Custom', // @translate
+                ],
+            ],
+        ]);
+
+        $this->add([
+            'name' => 'threedviewer_light_ambient_color',
+            'type' => Element\Color::class,
+            'options' => [
+                'label' => 'Ambient light colour', // @translate
+                'info' => 'Light from every side. Used only when Lights is Custom.', // @translate
+            ],
+        ]);
+
+        $this->add([
+            'name' => 'threedviewer_light_ambient_strength',
+            'type' => Element\Number::class,
+            'options' => [
+                'label' => 'Ambient light strength', // @translate
+            ],
+            'attributes' => ['min' => 0, 'max' => 3, 'step' => 0.05],
+        ]);
+
+        $this->add([
+            'name' => 'threedviewer_light_count',
+            'type' => Element\Select::class,
+            'options' => [
+                'label' => 'Number of lights', // @translate
+                'info' => 'Lights above this number keep their settings but are not used.', // @translate
+                'value_options' => array_combine(
+                    range(1, Lighting::MAX_LIGHTS),
+                    array_map('strval', range(1, Lighting::MAX_LIGHTS))
+                ),
+            ],
+        ]);
+
+        for ($n = 1; $n <= Lighting::MAX_LIGHTS; $n++) {
+            $this->addLightElements($n);
+        }
+
+        $this->add([
+            'name' => 'threedviewer_model_viewer_environment',
+            'type' => Element\Select::class,
+            'options' => [
+                'label' => 'model-viewer environment', // @translate
+                'info' => 'The image that lights GLB/glTF models when Lights is Viewer default.', // @translate
+                'value_options' => [
+                    'default' => 'model-viewer default', // @translate
+                    'neutral' => 'Neutral', // @translate
+                    'legacy' => 'Legacy', // @translate
+                    'custom' => 'Custom image', // @translate
+                ],
+            ],
+        ]);
+
+        $this->add([
+            'name' => 'threedviewer_model_viewer_environment_url',
+            'type' => Element\Text::class,
+            'options' => [
+                'label' => 'Custom environment image', // @translate
+                'info' => 'URL of an HDR, JPEG or PNG image, from http(s):// or the site root (/).', // @translate
+            ],
+        ]);
+
+        $this->add([
+            'name' => 'threedviewer_model_viewer_shadow_intensity',
+            'type' => Element\Number::class,
+            'options' => [
+                'label' => 'model-viewer shadow strength', // @translate
+                'info' => 'The shadow under GLB/glTF models. 0 shows none.', // @translate
+            ],
+            'attributes' => ['min' => 0, 'max' => 1, 'step' => 0.05],
+        ]);
+
+        $this->add([
+            'name' => 'threedviewer_model_viewer_shadow_softness',
+            'type' => Element\Number::class,
+            'options' => [
+                'label' => 'model-viewer shadow softness', // @translate
+            ],
+            'attributes' => ['min' => 0, 'max' => 1, 'step' => 0.05],
+        ]);
+    }
+
+    /**
+     * Colour, strength and direction of one light of the rig.
+     */
+    private function addLightElements(int $n): void
+    {
+        [$colour, $strength, $azimuth, $elevation] = self::LIGHT_LABELS[$n];
+
+        $this->add([
+            'name' => "threedviewer_light_{$n}_color",
+            'type' => Element\Color::class,
+            'options' => ['label' => $colour],
+        ]);
+
+        $this->add([
+            'name' => "threedviewer_light_{$n}_strength",
+            'type' => Element\Number::class,
+            'options' => ['label' => $strength],
+            'attributes' => ['min' => 0, 'max' => 3, 'step' => 0.05],
+        ]);
+
+        $this->add([
+            'name' => "threedviewer_light_{$n}_azimuth",
+            'type' => Element\Number::class,
+            'options' => [
+                'label' => $azimuth,
+                'info' => '0 is from the viewer’s side of the model, 90 from the right, 180 from behind.', // @translate
+            ],
+            'attributes' => ['min' => -180, 'max' => 180, 'step' => 1],
+        ]);
+
+        $this->add([
+            'name' => "threedviewer_light_{$n}_elevation",
+            'type' => Element\Number::class,
+            'options' => [
+                'label' => $elevation,
+                'info' => '0 is level with the model, 90 is overhead.', // @translate
+            ],
+            'attributes' => ['min' => 0, 'max' => 90, 'step' => 1],
         ]);
     }
 }

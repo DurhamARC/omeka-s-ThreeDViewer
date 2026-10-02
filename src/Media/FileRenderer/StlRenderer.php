@@ -17,6 +17,7 @@ class StlRenderer extends Abstract3DRenderer implements RendererInterface
         $view->headScript()->appendFile($view->assetUrl('vendor/three/three.min.js', 'ThreeDViewer'));
         $view->headScript()->appendFile($view->assetUrl('vendor/three/STLLoader.js', 'ThreeDViewer'));
         $view->headScript()->appendFile($view->assetUrl('vendor/three/OrbitControls.js', 'ThreeDViewer'));
+        $this->appendLightingScripts($view, $config);
         $view->headScript()->appendFile($view->assetUrl('js/stl-viewer.js', 'ThreeDViewer'));
 
         $view->headStyle()->appendStyle('
@@ -54,7 +55,8 @@ class StlRenderer extends Abstract3DRenderer implements RendererInterface
              . '" data-auto-rotate="' . ($config['autoRotate'] ? 'true' : 'false')
              . '" data-show-grid="' . ($config['showGrid'] ? 'true' : 'false')
              . '" data-lighting-mode="' . $config['lightingMode'] . '"'
-             . $this->renderStlUpAxis($view, $config, $media) . '>'
+             . $this->renderStlUpAxis($view, $config, $media)
+             . $this->renderLightingAttributes($view, $config) . '>'
              . 'Loading STL model...</div>'
              . '</div>';
     }

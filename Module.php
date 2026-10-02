@@ -12,6 +12,7 @@ use Omeka\Module\AbstractModule;
 use Omeka\Mvc\Controller\Plugin\Messenger;
 use Omeka\Stdlib\Message;
 use ThreeDViewer\Form\ConfigForm;
+use ThreeDViewer\Settings\Lighting;
 
 /**
  * Main class for the 3DViewer module.
@@ -91,31 +92,22 @@ class Module extends AbstractModule
     public function getConfigForm(PhpRenderer $renderer)
     {
         $services = $this->getServiceLocator();
-        $config = $services->get('Config');
         $settings = $services->get('Omeka\Settings');
         
         $form = new ConfigForm;
         $form->init();
         
+        // Each stored value, or its default; checkboxes take '1'/'0'
+        $data = [];
+        foreach (Lighting::defaults() as $key => $default) {
+            $value = $settings->get($key, $default);
+            $data[$key] = is_bool($default) ? ($value ? '1' : '0') : $value;
+        }
         // As saved and rendered: anything but Y or Z keeps current behaviour
-        $stlUpAxis = $settings->get('threedviewer_stl_up_axis', 'current');
-
-        $form->setData([
-            'threedviewer_default_library' => $settings->get('threedviewer_default_library', 'model-viewer'),
-            'threedviewer_viewer_height' => $settings->get('threedviewer_viewer_height', 500),
-            'threedviewer_auto_rotate' => $settings->get('threedviewer_auto_rotate', true) ? '1' : '0',
-            'threedviewer_foreground_color' => $settings->get('threedviewer_foreground_color', '#0000FF'),
-            'threedviewer_background_color' => $settings->get('threedviewer_background_color', '#b5b5b5'),
-            'threedviewer_show_grid' => $settings->get('threedviewer_show_grid', false) ? '1' : '0',
-            'threedviewer_lighting_mode' => $settings->get('threedviewer_lighting_mode', 'model'),
-            'threedviewer_stl_up_axis' => in_array($stlUpAxis, ['y', 'z'], true) ? $stlUpAxis : 'current',
-            'threedviewer_babylon_camera' => $settings->get('threedviewer_babylon_camera', 'arcRotate'),
-            'threedviewer_babylon_lighting' => $settings->get('threedviewer_babylon_lighting', 'hemispheric'),
-            'threedviewer_babylon_environment' => $settings->get('threedviewer_babylon_environment', 'none'),
-            'threedviewer_babylon_enable_xr' => $settings->get('threedviewer_babylon_enable_xr', false) ? '1' : '0',
-            'threedviewer_babylon_show_toolbar' =>
-                $settings->get('threedviewer_babylon_show_toolbar', false) ? '1' : '0',
-        ]);
+        if (!in_array($data['threedviewer_stl_up_axis'], ['y', 'z'], true)) {
+            $data['threedviewer_stl_up_axis'] = 'current';
+        }
+        $form->setData($data);
         
         return $renderer->formCollection($form, false);
     }
@@ -146,15 +138,12 @@ class Module extends AbstractModule
             isset($config['threedviewer_show_grid'])
                 && $config['threedviewer_show_grid'] === '1'
         );
-        $settings->set(
-            'threedviewer_lighting_mode',
-            ($config['threedviewer_lighting_mode'] ?? '') === 'viewer' ? 'viewer' : 'model'
-        );
+        foreach (Lighting::normalise($config) as $key => $value) {
+            $settings->set($key, $value);
+        }
         $stlUpAxis = $config['threedviewer_stl_up_axis'] ?? '';
         $settings->set('threedviewer_stl_up_axis', in_array($stlUpAxis, ['y', 'z'], true) ? $stlUpAxis : 'current');
         $settings->set('threedviewer_babylon_camera', $config['threedviewer_babylon_camera'] ?? 'arcRotate');
-        $settings->set('threedviewer_babylon_lighting', $config['threedviewer_babylon_lighting'] ?? 'hemispheric');
-        $settings->set('threedviewer_babylon_environment', $config['threedviewer_babylon_environment'] ?? 'none');
         $settings->set(
             'threedviewer_babylon_enable_xr',
             isset($config['threedviewer_babylon_enable_xr']) && $config['threedviewer_babylon_enable_xr'] === '1'

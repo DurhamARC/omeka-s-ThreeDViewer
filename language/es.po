@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ThreeDViewer\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 18:28+0000\n"
+"POT-Creation-Date: 2026-11-09 22:08+0000\n"
 "PO-Revision-Date: 2023-11-15 12:00+0000\n"
 "Last-Translator: Área de Tecnología Educativa <ate@gobiernodecanarias.org>\n"
 "Language-Team: Spanish\n"
@@ -12,211 +12,387 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/Media/FileRenderer/GlbRenderer.php:33
+#: src/Media/FileRenderer/GlbRenderer.php:34
 msgid "View 3D model fullscreen"
 msgstr "Ver el modelo 3D en pantalla completa"
 
-#: src/Media/FileRenderer/GlbRenderer.php:34
+#: src/Media/FileRenderer/GlbRenderer.php:35
 msgid "Exit fullscreen 3D model"
 msgstr "Salir de la pantalla completa del modelo 3D"
 
-#: src/Media/FileRenderer/GlbRenderer.php:35
+#: src/Media/FileRenderer/GlbRenderer.php:36
 msgid "3D viewer controls"
 msgstr "Controles del visor 3D"
 
-#: src/Media/FileRenderer/GlbRenderer.php:36
-#: src/Media/FileRenderer/Abstract3DRenderer.php:115
+#: src/Media/FileRenderer/GlbRenderer.php:37
+#: src/Media/FileRenderer/Abstract3DRenderer.php:154
 msgid "Use mouse to rotate, zoom and pan"
 msgstr "Usa el ratón para rotar, hacer zoom y desplazar"
 
-#: src/Media/FileRenderer/BabylonRenderer.php:69
+#: src/Media/FileRenderer/BabylonRenderer.php:70
 msgid "Loading 3D model..."
 msgstr "Cargando modelo 3D..."
 
+#: src/Form/ConfigForm.php:15
+msgid "Light 1 colour"
+msgstr "Color de la luz 1"
+
+#: src/Form/ConfigForm.php:16
+msgid "Light 1 strength"
+msgstr "Intensidad de la luz 1"
+
+#: src/Form/ConfigForm.php:17
+msgid "Light 1 direction (degrees round)"
+msgstr "Dirección de la luz 1 (grados alrededor)"
+
+#: src/Form/ConfigForm.php:18
+msgid "Light 1 height (degrees up)"
+msgstr "Altura de la luz 1 (grados hacia arriba)"
+
 #: src/Form/ConfigForm.php:21
+msgid "Light 2 colour"
+msgstr "Color de la luz 2"
+
+#: src/Form/ConfigForm.php:22
+msgid "Light 2 strength"
+msgstr "Intensidad de la luz 2"
+
+#: src/Form/ConfigForm.php:23
+msgid "Light 2 direction (degrees round)"
+msgstr "Dirección de la luz 2 (grados alrededor)"
+
+#: src/Form/ConfigForm.php:24
+msgid "Light 2 height (degrees up)"
+msgstr "Altura de la luz 2 (grados hacia arriba)"
+
+#: src/Form/ConfigForm.php:27
+msgid "Light 3 colour"
+msgstr "Color de la luz 3"
+
+#: src/Form/ConfigForm.php:28
+msgid "Light 3 strength"
+msgstr "Intensidad de la luz 3"
+
+#: src/Form/ConfigForm.php:29
+msgid "Light 3 direction (degrees round)"
+msgstr "Dirección de la luz 3 (grados alrededor)"
+
+#: src/Form/ConfigForm.php:30
+msgid "Light 3 height (degrees up)"
+msgstr "Altura de la luz 3 (grados hacia arriba)"
+
+#: src/Form/ConfigForm.php:33
+msgid "Light 4 colour"
+msgstr "Color de la luz 4"
+
+#: src/Form/ConfigForm.php:34
+msgid "Light 4 strength"
+msgstr "Intensidad de la luz 4"
+
+#: src/Form/ConfigForm.php:35
+msgid "Light 4 direction (degrees round)"
+msgstr "Dirección de la luz 4 (grados alrededor)"
+
+#: src/Form/ConfigForm.php:36
+msgid "Light 4 height (degrees up)"
+msgstr "Altura de la luz 4 (grados hacia arriba)"
+
+#: src/Form/ConfigForm.php:50
 msgid "3D viewer library"
 msgstr "Biblioteca del visor 3D"
 
-#: src/Form/ConfigForm.php:22
+#: src/Form/ConfigForm.php:51
 msgid "Select which renderer to use for STL/GLB media."
 msgstr "Seleccione qué renderizador usar para los medios STL/GLB."
 
-#: src/Form/ConfigForm.php:24
+#: src/Form/ConfigForm.php:53
 msgid "Three.js & model-viewer (original)"
 msgstr "Three.js y model-viewer (original)"
 
-#: src/Form/ConfigForm.php:25
+#: src/Form/ConfigForm.php:54
 msgid "Babylon.js (experimental)"
 msgstr "Babylon.js (experimental)"
 
-#: src/Form/ConfigForm.php:34
+#: src/Form/ConfigForm.php:63
 msgid "Viewer Height (px)"
 msgstr "Altura del visor (px)"
 
-#: src/Form/ConfigForm.php:35
+#: src/Form/ConfigForm.php:64
 msgid "Default height for the 3D viewer in pixels."
 msgstr "Altura predeterminada del visor 3D en píxeles."
 
-#: src/Form/ConfigForm.php:49
+#: src/Form/ConfigForm.php:78
 msgid "Auto-rotate models"
 msgstr "Rotar modelos automáticamente"
 
-#: src/Form/ConfigForm.php:50
+#: src/Form/ConfigForm.php:79
 msgid "Enable auto-rotation for 3D models."
 msgstr "Habilitar rotación automática para modelos 3D."
 
-#: src/Form/ConfigForm.php:64
+#: src/Form/ConfigForm.php:93
 msgid "Foreground Color"
 msgstr "Color de objeto"
 
-#: src/Form/ConfigForm.php:65
+#: src/Form/ConfigForm.php:94
 msgid "Choose the foreground color for 3D viewers."
 msgstr "Elija el color de objeto para los visores 3D."
 
-#: src/Form/ConfigForm.php:76
+#: src/Form/ConfigForm.php:105
 msgid "Background Color"
 msgstr "Color de fondo"
 
-#: src/Form/ConfigForm.php:77
+#: src/Form/ConfigForm.php:106
 msgid "Choose the background color for 3D viewers."
 msgstr "Elija el color de fondo para los visores 3D."
 
-#: src/Form/ConfigForm.php:88
+#: src/Form/ConfigForm.php:117
 msgid "Show Grid"
 msgstr "Mostrar rejilla"
 
-#: src/Form/ConfigForm.php:89
+#: src/Form/ConfigForm.php:118
 msgid "Display a green grid to help with size perception."
 msgstr "Mostrar una rejilla verde para ayudar con la percepción del tamaño."
 
-#: src/Form/ConfigForm.php:103
+#: src/Form/ConfigForm.php:132
 msgid "Lighting"
 msgstr "Iluminación"
 
-#: src/Form/ConfigForm.php:104
+#: src/Form/ConfigForm.php:133
 msgid "Fixed to the viewer keeps the lights in place as you turn the model."
 msgstr "Fija al visor mantiene las luces en su sitio al girar el modelo."
 
-#: src/Form/ConfigForm.php:106
+#: src/Form/ConfigForm.php:135
 msgid "Fixed to the model"
 msgstr "Fija al modelo"
 
-#: src/Form/ConfigForm.php:107
+#: src/Form/ConfigForm.php:136
 msgid "Fixed to the viewer"
 msgstr "Fija al visor"
 
-#: src/Form/ConfigForm.php:116
+#: src/Form/ConfigForm.php:147
 msgid "STL up axis"
 msgstr "Eje vertical de los STL"
 
-#: src/Form/ConfigForm.php:117
+#: src/Form/ConfigForm.php:148
 msgid "Show STL models the same way up in both libraries. GLB is not affected."
 msgstr ""
 "Muestra los modelos STL con la misma orientación en ambas bibliotecas. No "
 "afecta a GLB."
 
-#: src/Form/ConfigForm.php:119
+#: src/Form/ConfigForm.php:150
 msgid "Keep current behaviour (Three.js: Y up, Babylon.js: Z up)"
 msgstr ""
 "Mantener el comportamiento actual (Three.js: Y arriba, Babylon.js: Z arriba)"
 
-#: src/Form/ConfigForm.php:120
+#: src/Form/ConfigForm.php:151
 msgid "Y up"
 msgstr "Y arriba"
 
-#: src/Form/ConfigForm.php:121
+#: src/Form/ConfigForm.php:152
 msgid "Z up (3D printing convention)"
 msgstr "Z arriba (convención de impresión 3D)"
 
-#: src/Form/ConfigForm.php:130
+#: src/Form/ConfigForm.php:161
 msgid "Babylon.js camera type"
 msgstr "Tipo de cámara de Babylon.js"
 
-#: src/Form/ConfigForm.php:131
+#: src/Form/ConfigForm.php:162
 msgid "Select the default camera when using the Babylon.js renderer."
 msgstr ""
 "Seleccione la cámara predeterminada al usar el renderizador Babylon.js."
 
-#: src/Form/ConfigForm.php:133
+#: src/Form/ConfigForm.php:164
 msgid "Arc rotate (orbit)"
 msgstr "Rotación en arco (órbita)"
 
-#: src/Form/ConfigForm.php:134
+#: src/Form/ConfigForm.php:165
 msgid "Universal (free look)"
 msgstr "Universal (vista libre)"
 
-#: src/Form/ConfigForm.php:135
+#: src/Form/ConfigForm.php:166
 msgid "First-person"
 msgstr "Primera persona"
 
-#: src/Form/ConfigForm.php:144
+#: src/Form/ConfigForm.php:175
 msgid "Babylon.js lighting preset"
 msgstr "Iluminación predefinida de Babylon.js"
 
-#: src/Form/ConfigForm.php:145
-msgid "Choose the default lighting rig for Babylon.js scenes."
-msgstr "Elija la iluminación predeterminada para las escenas de Babylon.js."
+#: src/Form/ConfigForm.php:176
+msgid "Choose the Babylon.js lighting used when Lights is Viewer default."
+msgstr ""
+"Elija la iluminación de Babylon.js que se usa cuando Luces es "
+"Predeterminadas del visor."
 
-#: src/Form/ConfigForm.php:147
+#: src/Form/ConfigForm.php:178
 msgid "Hemispheric"
 msgstr "Hemisférica"
 
-#: src/Form/ConfigForm.php:148
+#: src/Form/ConfigForm.php:179
 msgid "Directional"
 msgstr "Direccional"
 
-#: src/Form/ConfigForm.php:149
+#: src/Form/ConfigForm.php:180
 msgid "Point light"
 msgstr "Luz puntual"
 
-#: src/Form/ConfigForm.php:150
+#: src/Form/ConfigForm.php:181
 msgid "Environment light"
 msgstr "Luz de entorno"
 
-#: src/Form/ConfigForm.php:159
+#: src/Form/ConfigForm.php:190
 msgid "Babylon.js environment"
 msgstr "Entorno de Babylon.js"
 
-#: src/Form/ConfigForm.php:160
+#: src/Form/ConfigForm.php:191
 msgid "Add an optional environment/ground when using Babylon.js."
 msgstr "Añada un entorno/suelo opcional al usar Babylon.js."
 
-#: src/Form/ConfigForm.php:162
+#: src/Form/ConfigForm.php:193
 msgid "None"
 msgstr "Ninguno"
 
-#: src/Form/ConfigForm.php:163
+#: src/Form/ConfigForm.php:194
 msgid "Default environment"
 msgstr "Entorno predeterminado"
 
-#: src/Form/ConfigForm.php:164
+#: src/Form/ConfigForm.php:195
 msgid "Studio with ground shadow"
 msgstr "Estudio con sombra en el suelo"
 
-#: src/Form/ConfigForm.php:173
+#: src/Form/ConfigForm.php:204
 msgid "Enable WebXR (VR/AR) when available"
 msgstr "Activar WebXR (RV/RA) cuando esté disponible"
 
-#: src/Form/ConfigForm.php:174
+#: src/Form/ConfigForm.php:205
 msgid "Attempt to initialise Babylon.js WebXR experience where supported."
 msgstr ""
 "Intenta iniciar la experiencia WebXR de Babylon.js donde sea compatible."
 
-#: src/Form/ConfigForm.php:188
+#: src/Form/ConfigForm.php:219
 msgid "Show Babylon.js toolbar"
 msgstr "Mostrar la barra de herramientas de Babylon.js"
 
-#: src/Form/ConfigForm.php:189
+#: src/Form/ConfigForm.php:220
 msgid ""
 "Show the Babylon.js inspector toolbar with extra camera and scene controls."
 msgstr ""
 "Muestra la barra del inspector de Babylon.js con controles adicionales de "
 "cámara y escena."
 
-#: src/Media/FileRenderer/StlRenderer.php:41
+#: src/Form/ConfigForm.php:240
+msgid "Brightness"
+msgstr "Brillo"
+
+#: src/Form/ConfigForm.php:241
+msgid "Multiplies the strength of every light. 1 leaves the lighting as it is."
+msgstr ""
+"Multiplica la intensidad de todas las luces. Con 1, la iluminación no cambia."
+
+#: src/Form/ConfigForm.php:250
+msgid "Lights"
+msgstr "Luces"
+
+#: src/Form/ConfigForm.php:251
+msgid "Custom builds the lights below in every viewer, in place of their own."
+msgstr ""
+"Personalizadas crea las luces siguientes en todos los visores, en lugar de "
+"las suyas propias."
+
+#: src/Form/ConfigForm.php:253
+msgid "Viewer default"
+msgstr "Predeterminadas del visor"
+
+#: src/Form/ConfigForm.php:254
+msgid "Custom"
+msgstr "Personalizadas"
+
+#: src/Form/ConfigForm.php:263
+msgid "Ambient light colour"
+msgstr "Color de la luz ambiental"
+
+#: src/Form/ConfigForm.php:264
+msgid "Light from every side. Used only when Lights is Custom."
+msgstr "Luz desde todos los lados. Solo se usa cuando Luces es Personalizadas."
+
+#: src/Form/ConfigForm.php:272
+msgid "Ambient light strength"
+msgstr "Intensidad de la luz ambiental"
+
+#: src/Form/ConfigForm.php:281
+msgid "Number of lights"
+msgstr "Número de luces"
+
+#: src/Form/ConfigForm.php:282
+msgid "Lights above this number keep their settings but are not used."
+msgstr ""
+"Las luces por encima de este número conservan sus ajustes, pero no se usan."
+
+#: src/Form/ConfigForm.php:298
+msgid "model-viewer environment"
+msgstr "Entorno de model-viewer"
+
+#: src/Form/ConfigForm.php:299
+msgid "The image that lights GLB/glTF models when Lights is Viewer default."
+msgstr ""
+"La imagen que ilumina los modelos GLB/glTF cuando Luces es Predeterminadas "
+"del visor."
+
+#: src/Form/ConfigForm.php:301
+msgid "model-viewer default"
+msgstr "Predeterminado de model-viewer"
+
+#: src/Form/ConfigForm.php:302
+msgid "Neutral"
+msgstr "Neutro"
+
+#: src/Form/ConfigForm.php:303
+msgid "Legacy"
+msgstr "Clásico"
+
+#: src/Form/ConfigForm.php:304
+msgid "Custom image"
+msgstr "Imagen personalizada"
+
+#: src/Form/ConfigForm.php:313
+msgid "Custom environment image"
+msgstr "Imagen de entorno personalizada"
+
+#: src/Form/ConfigForm.php:314
+msgid "URL of an HDR, JPEG or PNG image, from http(s):// or the site root (/)."
+msgstr ""
+"URL de una imagen HDR, JPEG o PNG, que empiece por http(s):// o por la raíz "
+"del sitio (/)."
+
+#: src/Form/ConfigForm.php:322
+msgid "model-viewer shadow strength"
+msgstr "Intensidad de la sombra de model-viewer"
+
+#: src/Form/ConfigForm.php:323
+msgid "The shadow under GLB/glTF models. 0 shows none."
+msgstr "La sombra bajo los modelos GLB/glTF. Con 0 no se muestra."
+
+#: src/Form/ConfigForm.php:332
+msgid "model-viewer shadow softness"
+msgstr "Suavidad de la sombra de model-viewer"
+
+#: src/Form/ConfigForm.php:363
+msgid ""
+"0 is from the viewer’s side of the model, 90 from the right, 180 from behind."
+msgstr ""
+"0 es desde el lado del modelo que ve el espectador, 90 desde la derecha, 180 "
+"desde detrás."
+
+#: src/Form/ConfigForm.php:373
+msgid "0 is level with the model, 90 is overhead."
+msgstr "0 es a la altura del modelo, 90 es desde arriba."
+
+#: src/Media/FileRenderer/StlRenderer.php:42
 msgid "STL Viewer"
 msgstr "Visor STL"
 
-#: src/Media/FileRenderer/BabylonRenderer.php:56
+#: src/Media/FileRenderer/BabylonRenderer.php:57
 msgid "Babylon.js Viewer"
 msgstr "Visor Babylon.js"
+
+#~ msgid "Choose the default lighting rig for Babylon.js scenes."
+#~ msgstr "Elija la iluminación predeterminada para las escenas de Babylon.js."
