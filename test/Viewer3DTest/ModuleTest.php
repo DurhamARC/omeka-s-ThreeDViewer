@@ -249,6 +249,7 @@ class ModuleTest extends TestCase
         $this->assertSame([
             ['Omeka\\Form\\SiteSettingsForm', 'form.add_elements', 'addSiteSettings'],
             ['Omeka\\Form\\SiteSettingsForm', 'form.add_input_filters', 'addSiteSettingsInputFilters'],
+            ['Omeka\\Controller\\SiteAdmin\\Index', 'view.edit.before', 'addSiteSettingsScript'],
         ], $attached);
     }
 
@@ -314,5 +315,21 @@ class ModuleTest extends TestCase
         };
         $controller->method('params')->willReturn($params);
         $this->module->handleConfigForm($controller);
+    }
+
+    public function testBothSettingsFormsLoadTheShowIfScript(): void
+    {
+        $renderer = new class extends PhpRenderer {
+            public function formCollection($form, $wrap)
+            {
+                return '';
+            }
+        };
+        $this->module->getConfigForm($renderer);
+        $this->assertContains('/modules/ThreeDViewer/js/settings-form.js', $renderer->headScript()->files);
+
+        $view = new PhpRenderer();
+        $this->module->addSiteSettingsScript(new Event('view.edit.before', $view));
+        $this->assertContains('/modules/ThreeDViewer/js/settings-form.js', $view->headScript()->files);
     }
 }

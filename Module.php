@@ -47,6 +47,31 @@ class Module extends AbstractModule
             'form.add_input_filters',
             [$this, 'addSiteSettingsInputFilters']
         );
+        // The site settings form is on the site's edit page
+        $sharedEventManager->attach(
+            'Omeka\Controller\SiteAdmin\Index',
+            'view.edit.before',
+            [$this, 'addSiteSettingsScript']
+        );
+    }
+
+    /**
+     * Show each lighting setting on a site's settings only where it applies.
+     *
+     * @param Event $event
+     */
+    public function addSiteSettingsScript(Event $event)
+    {
+        $this->appendSettingsFormScript($event->getTarget());
+    }
+
+    /**
+     * The script that shows each lighting setting only where it applies (see ConfigForm's
+     * data-show-if conditions).
+     */
+    private function appendSettingsFormScript(PhpRenderer $view): void
+    {
+        $view->headScript()->appendFile($view->assetUrl('js/settings-form.js', 'ThreeDViewer'));
     }
 
     /**
@@ -174,6 +199,7 @@ class Module extends AbstractModule
             $data['threedviewer_stl_up_axis'] = 'current';
         }
         $form->setData($data);
+        $this->appendSettingsFormScript($renderer);
         
         return $renderer->formCollection($form, false);
     }

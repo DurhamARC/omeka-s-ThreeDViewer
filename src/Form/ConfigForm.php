@@ -226,6 +226,8 @@ class ConfigForm extends Form
                 'value' => '0',
             ],
         ]);
+
+        $this->addConditions();
     }
 
     /**
@@ -386,5 +388,43 @@ class ConfigForm extends Form
             ],
             'attributes' => ['min' => 0, 'max' => 90, 'step' => 1],
         ]);
+    }
+
+    /**
+     * Show each lighting setting only where it applies, following AdvancedSearch's data-show-if
+     * (SearchConfigConfigureForm, advanced-search-collection.js): a field whose element names
+     * another element in data-show-if is shown only while that element's value is one of
+     * data-show-if-value (a JSON list) or at least data-show-if-min, and that element's own field is
+     * shown. asset/js/settings-form.js applies them; without JavaScript every field shows. Hidden
+     * fields are still submitted, so their values are kept.
+     */
+    private function addConditions(): void
+    {
+        $rig = ['data-show-if' => 'threedviewer_lights', 'data-show-if-value' => '["custom"]'];
+        // A site's blank Lights keeps the module's lights, which may be either
+        $ownLights = ['data-show-if' => 'threedviewer_lights', 'data-show-if-value' => '["","default"]'];
+
+        $conditions = [
+            'threedviewer_light_ambient_color' => $rig,
+            'threedviewer_light_ambient_strength' => $rig,
+            'threedviewer_light_count' => $rig,
+            'threedviewer_model_viewer_environment' => $ownLights,
+            'threedviewer_model_viewer_environment_url' => [
+                'data-show-if' => 'threedviewer_model_viewer_environment',
+                'data-show-if-value' => '["custom"]',
+            ],
+            'threedviewer_babylon_lighting' => $ownLights,
+        ];
+        for ($n = 1; $n <= Lighting::MAX_LIGHTS; $n++) {
+            foreach (['color', 'strength', 'azimuth', 'elevation'] as $property) {
+                $conditions["threedviewer_light_{$n}_{$property}"] = [
+                    'data-show-if' => 'threedviewer_light_count',
+                    'data-show-if-min' => (string) $n,
+                ];
+            }
+        }
+        foreach ($conditions as $name => $attributes) {
+            $this->get($name)->setAttributes($attributes);
+        }
     }
 }
