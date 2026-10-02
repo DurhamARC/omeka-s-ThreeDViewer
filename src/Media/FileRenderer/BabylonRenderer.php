@@ -83,6 +83,7 @@ class BabylonRenderer extends Abstract3DRenderer implements RendererInterface
             . 'data-loading-id="' . $view->escapeHtmlAttr($loadingId) . '"'
             . $this->renderStlUpAxis($view, $config, $media)
             . $this->renderLightingAttributes($view, $config) . '></canvas>'
+            . $this->renderLightingControls($view, $config, $canvasId)
             . '</div>';
     }
 }

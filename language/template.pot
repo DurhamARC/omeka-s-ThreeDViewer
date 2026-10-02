@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 22:08+0000\n"
+"POT-Creation-Date: 2026-11-09 22:09+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,8 +30,24 @@ msgid "3D viewer controls"
 msgstr ""
 
 #: src/Media/FileRenderer/GlbRenderer.php:37
-#: src/Media/FileRenderer/Abstract3DRenderer.php:170
+#: src/Media/FileRenderer/Abstract3DRenderer.php:244
 msgid "Use mouse to rotate, zoom and pan"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:168
+msgid "Lighting"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:181
+msgid "Fixed to the model"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:183
+msgid "Fixed to the viewer"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:186
+msgid "Reset"
 msgstr ""
 
 #: src/Media/FileRenderer/BabylonRenderer.php:70
@@ -42,11 +58,23 @@ msgstr ""
 msgid "Use the module’s lights"
 msgstr ""
 
-#: src/Form/SiteSettingsFieldset.php:29
+#: src/Form/SiteSettingsFieldset.php:29 src/Form/SiteSettingsFieldset.php:43
 msgid "Use the module setting"
 msgstr ""
 
-#: src/Form/SiteSettingsFieldset.php:37
+#: src/Form/SiteSettingsFieldset.php:41 src/Form/ConfigForm.php:341
+msgid "Show lighting controls on viewers"
+msgstr ""
+
+#: src/Form/SiteSettingsFieldset.php:44
+msgid "Show"
+msgstr ""
+
+#: src/Form/SiteSettingsFieldset.php:45
+msgid "Hide"
+msgstr ""
+
+#: src/Form/SiteSettingsFieldset.php:52
 msgid "Custom lights below replace the module’s whole light rig on this site."
 msgstr ""
 
@@ -170,20 +198,8 @@ msgstr ""
 msgid "Display a green grid to help with size perception."
 msgstr ""
 
-#: src/Form/ConfigForm.php:132
-msgid "Lighting"
-msgstr ""
-
 #: src/Form/ConfigForm.php:133
 msgid "Fixed to the viewer keeps the lights in place as you turn the model."
-msgstr ""
-
-#: src/Form/ConfigForm.php:135
-msgid "Fixed to the model"
-msgstr ""
-
-#: src/Form/ConfigForm.php:136
-msgid "Fixed to the viewer"
 msgstr ""
 
 #: src/Form/ConfigForm.php:147
@@ -243,6 +259,7 @@ msgid "Directional"
 msgstr ""
 
 #: src/Form/ConfigForm.php:180
+#: src/Media/FileRenderer/Abstract3DRenderer.php:157
 msgid "Point light"
 msgstr ""
 
@@ -375,17 +392,62 @@ msgstr ""
 msgid "model-viewer shadow softness"
 msgstr ""
 
-#: src/Form/ConfigForm.php:363
+#: src/Form/ConfigForm.php:342
+msgid "Lets visitors change each light, until they reload the page."
+msgstr ""
+
+#: src/Form/ConfigForm.php:375
 msgid ""
 "0 is from the viewer’s side of the model, 90 from the right, 180 from behind."
 msgstr ""
 
-#: src/Form/ConfigForm.php:373
+#: src/Form/ConfigForm.php:385
 msgid "0 is level with the model, 90 is overhead."
 msgstr ""
 
 #: src/Media/FileRenderer/StlRenderer.php:42
 msgid "STL Viewer"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:153
+msgid "Ambient light"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:154
+#, php-format
+msgid "Light %d"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:155
+msgid "Key light"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:156
+msgid "Sky light"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:158
+msgid "Environment"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:161
+msgid "Colour"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:162
+msgid "Ground colour"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:163
+msgid "Strength"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:164
+msgid "Direction"
+msgstr ""
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:165
+msgid "Height"
 msgstr ""
 
 #: src/Media/FileRenderer/BabylonRenderer.php:57

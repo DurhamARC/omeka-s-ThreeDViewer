@@ -333,6 +333,18 @@ class ConfigForm extends Form
             ],
             'attributes' => ['min' => 0, 'max' => 1, 'step' => 0.05],
         ]);
+
+        $this->add([
+            'name' => 'threedviewer_lighting_controls',
+            'type' => Element\Checkbox::class,
+            'options' => [
+                'label' => 'Show lighting controls on viewers', // @translate
+                'info' => 'Lets visitors change each light, until they reload the page.', // @translate
+                'use_hidden_element' => true,
+                'checked_value' => '1',
+                'unchecked_value' => '0',
+            ],
+        ]);
     }
 
     /**

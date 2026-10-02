@@ -32,6 +32,21 @@ class SiteSettingsFieldset extends Fieldset
             $this->add($element);
         }
 
+        // A site shows or hides the controls whatever the module says, or keeps the module's choice
+        $this->remove('threedviewer_lighting_controls');
+        $this->add([
+            'name' => 'threedviewer_lighting_controls',
+            'type' => Element\Select::class,
+            'options' => [
+                'label' => 'Show lighting controls on viewers', // @translate
+                'value_options' => [
+                    '' => 'Use the module setting', // @translate
+                    '1' => 'Show', // @translate
+                    '0' => 'Hide', // @translate
+                ],
+            ],
+        ]);
+
         $this->get('threedviewer_lights')->setOption(
             'info',
             'Custom lights below replace the module’s whole light rig on this site.' // @translate

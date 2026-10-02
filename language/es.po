@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ThreeDViewer\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 22:08+0000\n"
+"POT-Creation-Date: 2026-11-09 22:09+0000\n"
 "PO-Revision-Date: 2023-11-15 12:00+0000\n"
 "Last-Translator: Área de Tecnología Educativa <ate@gobiernodecanarias.org>\n"
 "Language-Team: Spanish\n"
@@ -25,9 +25,25 @@ msgid "3D viewer controls"
 msgstr "Controles del visor 3D"
 
 #: src/Media/FileRenderer/GlbRenderer.php:37
-#: src/Media/FileRenderer/Abstract3DRenderer.php:170
+#: src/Media/FileRenderer/Abstract3DRenderer.php:244
 msgid "Use mouse to rotate, zoom and pan"
 msgstr "Usa el ratón para rotar, hacer zoom y desplazar"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:168
+msgid "Lighting"
+msgstr "Iluminación"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:181
+msgid "Fixed to the model"
+msgstr "Fija al modelo"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:183
+msgid "Fixed to the viewer"
+msgstr "Fija al visor"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:186
+msgid "Reset"
+msgstr "Restablecer"
 
 #: src/Media/FileRenderer/BabylonRenderer.php:70
 msgid "Loading 3D model..."
@@ -37,11 +53,23 @@ msgstr "Cargando modelo 3D..."
 msgid "Use the module’s lights"
 msgstr "Usar las luces del módulo"
 
-#: src/Form/SiteSettingsFieldset.php:29
+#: src/Form/SiteSettingsFieldset.php:29 src/Form/SiteSettingsFieldset.php:43
 msgid "Use the module setting"
 msgstr "Usar el ajuste del módulo"
 
-#: src/Form/SiteSettingsFieldset.php:37
+#: src/Form/SiteSettingsFieldset.php:41 src/Form/ConfigForm.php:341
+msgid "Show lighting controls on viewers"
+msgstr "Mostrar los controles de iluminación en los visores"
+
+#: src/Form/SiteSettingsFieldset.php:44
+msgid "Show"
+msgstr "Mostrar"
+
+#: src/Form/SiteSettingsFieldset.php:45
+msgid "Hide"
+msgstr "Ocultar"
+
+#: src/Form/SiteSettingsFieldset.php:52
 msgid "Custom lights below replace the module’s whole light rig on this site."
 msgstr ""
 "Las luces personalizadas siguientes sustituyen todas las luces del módulo en "
@@ -167,21 +195,9 @@ msgstr "Mostrar rejilla"
 msgid "Display a green grid to help with size perception."
 msgstr "Mostrar una rejilla verde para ayudar con la percepción del tamaño."
 
-#: src/Form/ConfigForm.php:132
-msgid "Lighting"
-msgstr "Iluminación"
-
 #: src/Form/ConfigForm.php:133
 msgid "Fixed to the viewer keeps the lights in place as you turn the model."
 msgstr "Fija al visor mantiene las luces en su sitio al girar el modelo."
-
-#: src/Form/ConfigForm.php:135
-msgid "Fixed to the model"
-msgstr "Fija al modelo"
-
-#: src/Form/ConfigForm.php:136
-msgid "Fixed to the viewer"
-msgstr "Fija al visor"
 
 #: src/Form/ConfigForm.php:147
 msgid "STL up axis"
@@ -246,6 +262,7 @@ msgid "Directional"
 msgstr "Direccional"
 
 #: src/Form/ConfigForm.php:180
+#: src/Media/FileRenderer/Abstract3DRenderer.php:157
 msgid "Point light"
 msgstr "Luz puntual"
 
@@ -389,20 +406,66 @@ msgstr "La sombra bajo los modelos GLB/glTF. Con 0 no se muestra."
 msgid "model-viewer shadow softness"
 msgstr "Suavidad de la sombra de model-viewer"
 
-#: src/Form/ConfigForm.php:363
+#: src/Form/ConfigForm.php:342
+msgid "Lets visitors change each light, until they reload the page."
+msgstr ""
+"Permite a los visitantes cambiar cada luz hasta que recarguen la página."
+
+#: src/Form/ConfigForm.php:375
 msgid ""
 "0 is from the viewer’s side of the model, 90 from the right, 180 from behind."
 msgstr ""
 "0 es desde el lado del modelo que ve el espectador, 90 desde la derecha, 180 "
 "desde detrás."
 
-#: src/Form/ConfigForm.php:373
+#: src/Form/ConfigForm.php:385
 msgid "0 is level with the model, 90 is overhead."
 msgstr "0 es a la altura del modelo, 90 es desde arriba."
 
 #: src/Media/FileRenderer/StlRenderer.php:42
 msgid "STL Viewer"
 msgstr "Visor STL"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:153
+msgid "Ambient light"
+msgstr "Luz ambiental"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:154
+#, php-format
+msgid "Light %d"
+msgstr "Luz %d"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:155
+msgid "Key light"
+msgstr "Luz principal"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:156
+msgid "Sky light"
+msgstr "Luz del cielo"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:158
+msgid "Environment"
+msgstr "Entorno"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:161
+msgid "Colour"
+msgstr "Color"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:162
+msgid "Ground colour"
+msgstr "Color del suelo"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:163
+msgid "Strength"
+msgstr "Intensidad"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:164
+msgid "Direction"
+msgstr "Dirección"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:165
+msgid "Height"
+msgstr "Altura"
 
 #: src/Media/FileRenderer/BabylonRenderer.php:57
 msgid "Babylon.js Viewer"

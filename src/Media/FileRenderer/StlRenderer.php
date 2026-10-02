@@ -58,6 +58,7 @@ class StlRenderer extends Abstract3DRenderer implements RendererInterface
              . $this->renderStlUpAxis($view, $config, $media)
              . $this->renderLightingAttributes($view, $config) . '>'
              . 'Loading STL model...</div>'
+             . $this->renderLightingControls($view, $config, 'loading')
              . '</div>';
     }
 }

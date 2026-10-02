@@ -80,6 +80,7 @@ class Lighting
             'threedviewer_model_viewer_shadow_softness',
             'threedviewer_babylon_lighting',
             'threedviewer_babylon_environment',
+            'threedviewer_lighting_controls',
         ]);
     }
 
@@ -199,6 +200,11 @@ class Lighting
 
         if (isset(self::OPTIONS[$key])) {
             return in_array($value, self::OPTIONS[$key], true) ? $value : $default;
+        }
+
+        if ($key === 'threedviewer_lighting_controls') {
+            // A checkbox ('1'/'0') in the module's form, a select in a site's
+            return in_array($value, [true, 1, '1'], true) || ($value === null && $default);
         }
 
         if (substr($key, -6) === '_color') {

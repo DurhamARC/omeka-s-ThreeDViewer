@@ -150,4 +150,60 @@ class LightingMarkupTest extends TestCase
         $this->assertCount(4, $rig['lights']);
         $this->assertSame('#ffffff', $rig['ambient']['color'], 'The site rig does not take the module ambient colour');
     }
+
+    /**
+     * @dataProvider viewers
+     */
+    public function testControlsAreOffByDefault(string $file, string $library): void
+    {
+        [$html, $view] = $this->render($file, ['threedviewer_default_library' => $library]);
+        $this->assertStringNotContainsString('threedviewer-lighting', $html);
+        $this->assertStringNotContainsString('data-lighting-controls', $html);
+        $this->assertNotContains('/modules/ThreeDViewer/js/lighting-controls.js', $view->headScript()->files);
+        $this->assertNotContains('/modules/ThreeDViewer/css/lighting-controls.css', $view->headLink()->files);
+    }
+
+    /**
+     * @dataProvider viewers
+     */
+    public function testControlsDriveTheirOwnViewer(string $file, string $library): void
+    {
+        [$html, $view] = $this->render($file, [
+            'threedviewer_default_library' => $library,
+            'threedviewer_lighting_controls' => true,
+        ]);
+
+        $this->assertSame(1, preg_match('/data-threedviewer-target="([^"]+)"/', $html, $match));
+        $this->assertStringContainsString('id="' . $match[1] . '"', $html, 'The target exists');
+        $this->assertSame(
+            1,
+            preg_match('/<[^>]*id="' . preg_quote($match[1], '/') . '"[^>]*data-lighting-controls="true"/', $html),
+            'The viewer element knows it has controls'
+        );
+        $this->assertStringContainsString('<details class="threedviewer-lighting" hidden', $html);
+        $this->assertStringContainsString('data-name-light="Light %d"', $html);
+        $this->assertStringContainsString('<template><fieldset class="threedviewer-lighting-light">', $html);
+        foreach (['color', 'groundColor', 'strength', 'azimuth', 'elevation'] as $property) {
+            $this->assertStringContainsString('data-property="' . $property . '"', $html, $property);
+        }
+        $this->assertStringContainsString('value="viewer"> Fixed to the viewer', $html);
+        $this->assertStringContainsString('class="threedviewer-lighting-reset">Reset</button>', $html);
+
+        $files = $view->headScript()->files;
+        $this->assertContains('/modules/ThreeDViewer/js/lighting-controls.js', $files);
+        $this->assertContains('/modules/ThreeDViewer/js/lighting-rig.js', $files);
+        $this->assertContains('/modules/ThreeDViewer/css/lighting-controls.css', $view->headLink()->files);
+    }
+
+    public function testASiteShowsOrHidesTheControls(): void
+    {
+        [$html] = $this->render('model.glb', ['threedviewer_lighting_controls' => true], [
+            'threedviewer_lighting_controls' => '0',
+        ]);
+        $this->assertStringNotContainsString('threedviewer-lighting', $html);
+
+        [$html, $view] = $this->render('model.glb', [], ['threedviewer_lighting_controls' => '1']);
+        $this->assertStringContainsString('id="threedviewer-model-1"', $html);
+        $this->assertContains('/modules/ThreeDViewer/js/model-viewer-lighting.js', $view->headScript()->files);
+    }
 }

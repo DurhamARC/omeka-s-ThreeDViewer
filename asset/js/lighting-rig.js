@@ -113,6 +113,51 @@
         };
     }
 
+    /**
+     * The azimuth and elevation, in whole degrees, of a direction from the model towards a light:
+     * the inverse of direction().
+     */
+    function angles(d, back, leftHanded) {
+        const length = Math.sqrt(d.x * d.x + d.y * d.y + d.z * d.z) || 1;
+        const y = Math.max(-1, Math.min(1, d.y / length));
+        const right = leftHanded ? { x: -back.z, z: back.x } : { x: back.z, z: -back.x };
+        const along = (d.x * back.x + d.z * back.z) / length;
+        const across = (d.x * right.x + d.z * right.z) / length;
+        const level = Math.abs(along) < 1e-9 && Math.abs(across) < 1e-9;
+        return {
+            // || 0: no -0 from a hair to the left
+            azimuth: level ? 0 : Math.round(Math.atan2(across, along) * 180 / Math.PI) || 0,
+            elevation: Math.max(0, Math.round(Math.asin(y) * 180 / Math.PI))
+        };
+    }
+
+    /**
+     * Tell the lighting controls a viewer's lights, once it has made them:
+     * { mode, lights: [{ id, kind, color?, groundColor?, strength, azimuth?, elevation? }] }.
+     * Kept on the element too, for controls that start listening later.
+     */
+    function ready(element, detail) {
+        element.threedviewerLighting = detail;
+        element.dispatchEvent(new CustomEvent('threedviewer:lighting-ready', { detail: detail }));
+    }
+
+    /**
+     * Call apply(detail) with each change from the lighting controls: the whole state, as ready()
+     * gave it, with reset: true when it is the controls' Reset.
+     */
+    function onChange(element, apply) {
+        element.addEventListener('threedviewer:lighting', function (event) {
+            apply(event.detail);
+        });
+    }
+
+    /**
+     * Whether the page shows lighting controls for this viewer element.
+     */
+    function hasControls(element) {
+        return !!(element && element.dataset && element.dataset.lightingControls === 'true');
+    }
+
     function linear(hex) {
         const n = parseInt(hex.slice(1), 16);
         return [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(function (c) {
@@ -209,6 +254,10 @@
         brightness: brightness,
         backFrom: backFrom,
         direction: direction,
+        angles: angles,
+        ready: ready,
+        onChange: onChange,
+        hasControls: hasControls,
         environment: environment,
         rgbe: rgbe
     };
