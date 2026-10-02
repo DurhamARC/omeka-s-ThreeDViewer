@@ -24,6 +24,7 @@ This module allows users to view and interact with 3D models (STL and GLB files)
 - A choice of up axis for STL files (Y or Z), so STL models show the same way up with either library
 - Configurable lighting: overall brightness, and an optional light rig (an ambient light plus up to four lights, each
   with its own colour, strength and direction) built the same way in every viewer
+- Per-site lighting: each site can override the module's lighting settings
 - Toggle between the original Three.js/model-viewer pipeline and an experimental Babylon.js renderer
 - Babylon.js renderer with configurable cameras, lighting, and WebXR support
 
@@ -64,6 +65,9 @@ See general end user documentation for [Installing a module](http://omeka.org/s/
      rig is painted into the environment image that lights the model.
    - **model-viewer environment** (with *Viewer default*): model-viewer's own, `neutral`, `legacy`, or an image URL;
      and the strength and softness of the shadow under the model.
+6. Each site can override the lighting settings in its own settings, under *3D viewer lighting*. A field left as
+   *Use the module setting* (or blank) keeps the module's value. The light rig is overridden whole: a site uses the
+   module's lights, each viewer's default lights, or a complete rig of its own.
 
 ## Local Development with Docker
 

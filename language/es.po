@@ -25,13 +25,27 @@ msgid "3D viewer controls"
 msgstr "Controles del visor 3D"
 
 #: src/Media/FileRenderer/GlbRenderer.php:37
-#: src/Media/FileRenderer/Abstract3DRenderer.php:154
+#: src/Media/FileRenderer/Abstract3DRenderer.php:170
 msgid "Use mouse to rotate, zoom and pan"
 msgstr "Usa el ratón para rotar, hacer zoom y desplazar"
 
 #: src/Media/FileRenderer/BabylonRenderer.php:70
 msgid "Loading 3D model..."
 msgstr "Cargando modelo 3D..."
+
+#: src/Form/SiteSettingsFieldset.php:28
+msgid "Use the module’s lights"
+msgstr "Usar las luces del módulo"
+
+#: src/Form/SiteSettingsFieldset.php:29
+msgid "Use the module setting"
+msgstr "Usar el ajuste del módulo"
+
+#: src/Form/SiteSettingsFieldset.php:37
+msgid "Custom lights below replace the module’s whole light rig on this site."
+msgstr ""
+"Las luces personalizadas siguientes sustituyen todas las luces del módulo en "
+"este sitio."
 
 #: src/Form/ConfigForm.php:15
 msgid "Light 1 colour"
@@ -393,6 +407,10 @@ msgstr "Visor STL"
 #: src/Media/FileRenderer/BabylonRenderer.php:57
 msgid "Babylon.js Viewer"
 msgstr "Visor Babylon.js"
+
+#: Module.php:67
+msgid "3D viewer lighting"
+msgstr "Iluminación del visor 3D"
 
 #~ msgid "Choose the default lighting rig for Babylon.js scenes."
 #~ msgstr "Elija la iluminación predeterminada para las escenas de Babylon.js."

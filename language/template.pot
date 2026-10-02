@@ -30,12 +30,24 @@ msgid "3D viewer controls"
 msgstr ""
 
 #: src/Media/FileRenderer/GlbRenderer.php:37
-#: src/Media/FileRenderer/Abstract3DRenderer.php:154
+#: src/Media/FileRenderer/Abstract3DRenderer.php:170
 msgid "Use mouse to rotate, zoom and pan"
 msgstr ""
 
 #: src/Media/FileRenderer/BabylonRenderer.php:70
 msgid "Loading 3D model..."
+msgstr ""
+
+#: src/Form/SiteSettingsFieldset.php:28
+msgid "Use the module’s lights"
+msgstr ""
+
+#: src/Form/SiteSettingsFieldset.php:29
+msgid "Use the module setting"
+msgstr ""
+
+#: src/Form/SiteSettingsFieldset.php:37
+msgid "Custom lights below replace the module’s whole light rig on this site."
 msgstr ""
 
 #: src/Form/ConfigForm.php:15
@@ -378,4 +390,8 @@ msgstr ""
 
 #: src/Media/FileRenderer/BabylonRenderer.php:57
 msgid "Babylon.js Viewer"
+msgstr ""
+
+#: Module.php:67
+msgid "3D viewer lighting"
 msgstr ""

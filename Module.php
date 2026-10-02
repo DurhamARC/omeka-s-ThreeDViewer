@@ -12,6 +12,7 @@ use Omeka\Module\AbstractModule;
 use Omeka\Mvc\Controller\Plugin\Messenger;
 use Omeka\Stdlib\Message;
 use ThreeDViewer\Form\ConfigForm;
+use ThreeDViewer\Form\SiteSettingsFieldset;
 use ThreeDViewer\Settings\Lighting;
 
 /**
@@ -27,6 +28,71 @@ class Module extends AbstractModule
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
+    }
+
+    /**
+     * Add the lighting settings to each site's settings form.
+     *
+     * @param SharedEventManagerInterface $sharedEventManager
+     */
+    public function attachListeners(SharedEventManagerInterface $sharedEventManager)
+    {
+        $sharedEventManager->attach(
+            'Omeka\Form\SiteSettingsForm',
+            'form.add_elements',
+            [$this, 'addSiteSettings']
+        );
+        $sharedEventManager->attach(
+            'Omeka\Form\SiteSettingsForm',
+            'form.add_input_filters',
+            [$this, 'addSiteSettingsInputFilters']
+        );
+    }
+
+    /**
+     * Add the lighting elements to a site's settings form, in their own group. They are added one
+     * by one, because Omeka saves each top-level element of this form as its own site setting.
+     *
+     * A blank field keeps the module's setting, except in the light rig: a site whose Lights is
+     * Custom has its own whole rig, so its rig fields show the defaults rather than a blank.
+     *
+     * @param Event $event
+     */
+    public function addSiteSettings(Event $event)
+    {
+        $siteSettings = $this->getServiceLocator()->get('Omeka\Settings\Site');
+        $form = $event->getTarget();
+
+        $groups = $form->getOption('element_groups') ?: [];
+        $groups['threedviewer'] = '3D viewer lighting'; // @translate
+        $form->setOption('element_groups', $groups);
+
+        $defaults = Lighting::defaults();
+        $rig = Lighting::rigKeys();
+        $fieldset = new SiteSettingsFieldset();
+        $fieldset->init();
+        foreach ($fieldset->getElements() as $name => $element) {
+            $value = $siteSettings->get($name);
+            if (($value === null || $value === '') && in_array($name, $rig, true)) {
+                $value = $defaults[$name];
+            }
+            $element->setOption('element_group', 'threedviewer');
+            $element->setValue($value ?? '');
+            $form->add($element);
+        }
+    }
+
+    /**
+     * Let every lighting field of a site's settings form be left empty.
+     *
+     * @param Event $event
+     */
+    public function addSiteSettingsInputFilters(Event $event)
+    {
+        $inputFilter = $event->getParam('inputFilter');
+        foreach (Lighting::keys() as $name) {
+            $inputFilter->add(['name' => $name, 'required' => false, 'allow_empty' => true]);
+        }
     }
 
     /**
