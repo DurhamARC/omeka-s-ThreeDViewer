@@ -6,6 +6,7 @@ namespace ThreeDViewer\Media\FileRenderer;
 use Omeka\Api\Representation\MediaRepresentation;
 use Laminas\View\Renderer\PhpRenderer;
 use Omeka\Media\FileRenderer\RendererInterface;
+use ThreeDViewer\Settings\Lighting;
 
 abstract class Abstract3DRenderer implements RendererInterface
 {
@@ -14,20 +15,19 @@ abstract class Abstract3DRenderer implements RendererInterface
      */
     protected function getViewerConfig(PhpRenderer $view): array
     {
+        $defaults = Lighting::defaults();
         $default = [
-            'height' => 500,
-            'autoRotate' => true,
-            'foregroundColor' => '#0000FF',
-            'backgroundColor' => '#b5b5b5',
-            'showGrid' => false,
-            'lightingMode' => 'model',
-            'defaultLibrary' => 'model-viewer',
-            'babylonCamera' => 'arcRotate',
-            'babylonLighting' => 'hemispheric',
-            'babylonEnvironment' => 'none',
-            'babylonEnableXR' => false,
-            'babylonShowToolbar' => false,
+            'height' => $defaults['threedviewer_viewer_height'],
+            'autoRotate' => $defaults['threedviewer_auto_rotate'],
+            'foregroundColor' => $defaults['threedviewer_foreground_color'],
+            'backgroundColor' => $defaults['threedviewer_background_color'],
+            'showGrid' => $defaults['threedviewer_show_grid'],
+            'defaultLibrary' => $defaults['threedviewer_default_library'],
+            'babylonCamera' => $defaults['threedviewer_babylon_camera'],
+            'babylonEnableXR' => $defaults['threedviewer_babylon_enable_xr'],
+            'babylonShowToolbar' => $defaults['threedviewer_babylon_show_toolbar'],
         ];
+        $lighting = [];
 
         try {
             $setting = $view->plugin('setting');
@@ -36,16 +36,8 @@ abstract class Abstract3DRenderer implements RendererInterface
             $default['foregroundColor'] = $setting('threedviewer_foreground_color', $default['foregroundColor']);
             $default['backgroundColor'] = $setting('threedviewer_background_color', $default['backgroundColor']);
             $default['showGrid'] = $setting('threedviewer_show_grid', $default['showGrid']);
-            if ($setting('threedviewer_lighting_mode') === 'viewer') {
-                $default['lightingMode'] = 'viewer';
-            }
             $default['defaultLibrary'] = $setting('threedviewer_default_library', $default['defaultLibrary']);
             $default['babylonCamera'] = $setting('threedviewer_babylon_camera', $default['babylonCamera']);
-            $default['babylonLighting'] = $setting('threedviewer_babylon_lighting', $default['babylonLighting']);
-            $default['babylonEnvironment'] = $setting(
-                'threedviewer_babylon_environment',
-                $default['babylonEnvironment']
-            );
             $default['babylonEnableXR'] = (bool) $setting(
                 'threedviewer_babylon_enable_xr',
                 $default['babylonEnableXR']
@@ -54,11 +46,58 @@ abstract class Abstract3DRenderer implements RendererInterface
                 'threedviewer_babylon_show_toolbar',
                 $default['babylonShowToolbar']
             );
+            foreach (Lighting::keys() as $key) {
+                $lighting[$key] = $setting($key);
+            }
         } catch (\Throwable $e) {
             error_log('Error getting settings: ' . $e->getMessage());
         }
 
+        $lighting = Lighting::normalise($lighting);
+        $default['lighting'] = $lighting;
+        $default['lightingMode'] = $lighting['threedviewer_lighting_mode'];
+        $default['babylonLighting'] = $lighting['threedviewer_babylon_lighting'];
+        $default['babylonEnvironment'] = $lighting['threedviewer_babylon_environment'];
+        $default['rig'] = Lighting::rig($lighting);
+
         return $default;
+    }
+
+    /**
+     * Data attributes carrying brightness and the light rig, each only when it differs from the
+     * default, so a viewer with untouched settings gets exactly the markup it always had.
+     */
+    protected function renderLightingAttributes(PhpRenderer $view, array $config, bool $withBrightness = true): string
+    {
+        $html = '';
+        $brightness = $config['lighting']['threedviewer_light_brightness'];
+        if ($withBrightness && $brightness != 1) {
+            $html .= ' data-light-brightness="' . $this->formatNumber($brightness) . '"';
+        }
+        if ($config['rig'] !== null) {
+            $html .= ' data-lights="' . $view->escapeHtmlAttr((string) json_encode($config['rig'])) . '"';
+        }
+        return $html;
+    }
+
+    /**
+     * The shared lighting script, which reads brightness and the light rig for every viewer.
+     */
+    protected function appendLightingScripts(PhpRenderer $view, array $config): void
+    {
+        if ($config['rig'] !== null || $config['lighting']['threedviewer_light_brightness'] != 1) {
+            $view->headScript()->appendFile($view->assetUrl('js/lighting-rig.js', 'ThreeDViewer'));
+        }
+    }
+
+    /**
+     * A number for an attribute: at most two decimals, no trailing zeros.
+     *
+     * @param int|float $number
+     */
+    protected function formatNumber($number): string
+    {
+        return rtrim(rtrim(number_format((float) $number, 2, '.', ''), '0'), '.');
     }
 
     /**

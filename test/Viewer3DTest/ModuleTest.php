@@ -135,6 +135,59 @@ class ModuleTest extends TestCase
         ];
     }
 
+    public function testFormShowsLightingDefaultsAndStoredValues(): void
+    {
+        $renderer = new class extends PhpRenderer {
+            public $form;
+
+            public function formCollection($form, $wrap)
+            {
+                $this->form = $form;
+                return '';
+            }
+        };
+        $this->module->getConfigForm($renderer);
+        $form = $renderer->form;
+        $this->assertEquals(1, $form->get('threedviewer_light_brightness')->getValue());
+        $this->assertSame('default', $form->get('threedviewer_lights')->getValue());
+        $this->assertSame('#ffffff', $form->get('threedviewer_light_ambient_color')->getValue());
+        $this->assertEquals(1, $form->get('threedviewer_light_count')->getValue());
+        $this->assertEquals(45, $form->get('threedviewer_light_1_elevation')->getValue());
+        $this->assertSame('1', $form->get('threedviewer_auto_rotate')->getValue(), 'Auto-rotate follows the config');
+
+        $this->settings->values['threedviewer_lights'] = 'custom';
+        $this->settings->values['threedviewer_light_3_color'] = '#123456';
+        $this->module->getConfigForm($renderer);
+        $this->assertSame('custom', $renderer->form->get('threedviewer_lights')->getValue());
+        $this->assertSame('#123456', $renderer->form->get('threedviewer_light_3_color')->getValue());
+    }
+
+    public function testSubmissionCleansLightingSettings(): void
+    {
+        $this->submit(['threedviewer_viewer_height' => 500, 'threedviewer_foreground_color' => '#000000',
+            'threedviewer_background_color' => '#ffffff',
+            'threedviewer_light_brightness' => '9',
+            'threedviewer_lights' => 'custom',
+            'threedviewer_light_count' => '3',
+            'threedviewer_light_1_color' => '#ABCDEF',
+            'threedviewer_light_1_azimuth' => '-90',
+            'threedviewer_model_viewer_environment' => 'custom',
+            'threedviewer_model_viewer_environment_url' => 'javascript:alert(1)',
+            'threedviewer_babylon_lighting' => 'directional',
+        ]);
+        $values = $this->settings->values;
+        $this->assertSame(3.0, $values['threedviewer_light_brightness']);
+        $this->assertSame('custom', $values['threedviewer_lights']);
+        $this->assertSame(3, $values['threedviewer_light_count']);
+        $this->assertSame('#abcdef', $values['threedviewer_light_1_color']);
+        $this->assertSame(-90, $values['threedviewer_light_1_azimuth']);
+        $this->assertSame(0.3, $values['threedviewer_light_4_strength'], 'Missing values are saved as defaults');
+        $this->assertSame('default', $values['threedviewer_model_viewer_environment']);
+        $this->assertSame('', $values['threedviewer_model_viewer_environment_url']);
+        $this->assertSame('directional', $values['threedviewer_babylon_lighting']);
+        $this->assertSame('none', $values['threedviewer_babylon_environment']);
+    }
+
     private function submit(array $post): void
     {
         $controller = $this->getMockBuilder(AbstractController::class)

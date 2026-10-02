@@ -20,7 +20,8 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
             'module'
         );
         $view->headScript()->appendFile($view->assetUrl('js/viewer-controls.js', 'ThreeDViewer'));
-        if ($config['lightingMode'] === 'viewer') {
+        $this->appendLightingScripts($view, $config);
+        if ($config['lightingMode'] === 'viewer' || $config['rig'] !== null) {
             $view->headScript()->appendFile($view->assetUrl('js/model-viewer-lighting.js', 'ThreeDViewer'));
         }
 
@@ -42,6 +43,7 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
              . '<model-viewer src="' . $modelViewerSrc . '" '
              . 'alt="' . $altText . '" camera-controls '
              . 'data-lighting-mode="' . $config['lightingMode'] . '" '
+             . $this->renderModelViewerLighting($view, $config)
              . $autoRotate
              . 'style="width: 100%; height: 100%; background-color: ' . $background . ';">'
              . '</model-viewer>'
@@ -52,5 +54,35 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
              . '<details class="threedviewer-control threedviewer-help">'
              . '<summary aria-label="' . $helpLabel . '">?</summary><p>' . $helpText . '</p></details>'
              . '</div>';
+    }
+
+    /**
+     * model-viewer's own lighting attributes, each only when it differs from model-viewer's default.
+     * Brightness is model-viewer's exposure. With a light rig the environment is generated from the
+     * rig in the browser, so the environment setting is not used.
+     */
+    private function renderModelViewerLighting(PhpRenderer $view, array $config): string
+    {
+        $lighting = $config['lighting'];
+        $attributes = [];
+        if ($lighting['threedviewer_light_brightness'] != 1) {
+            $attributes[] = 'exposure="' . $this->formatNumber($lighting['threedviewer_light_brightness']) . '"';
+        }
+        $environment = $lighting['threedviewer_model_viewer_environment'];
+        if ($config['rig'] === null && $environment !== 'default') {
+            $image = $environment === 'custom' ? $lighting['threedviewer_model_viewer_environment_url'] : $environment;
+            $attributes[] = 'environment-image="' . $view->escapeHtmlAttr($image) . '"';
+        }
+        if ($lighting['threedviewer_model_viewer_shadow_intensity'] != 0) {
+            $attributes[] = 'shadow-intensity="'
+                . $this->formatNumber($lighting['threedviewer_model_viewer_shadow_intensity']) . '"';
+        }
+        if ($lighting['threedviewer_model_viewer_shadow_softness'] != 1) {
+            $attributes[] = 'shadow-softness="'
+                . $this->formatNumber($lighting['threedviewer_model_viewer_shadow_softness']) . '"';
+        }
+        $html = $attributes ? implode(' ', $attributes) . ' ' : '';
+        $rig = $this->renderLightingAttributes($view, $config, false);
+        return $html . ($rig !== '' ? ltrim($rig) . ' ' : '');
     }
 }

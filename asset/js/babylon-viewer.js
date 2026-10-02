@@ -85,6 +85,50 @@
     }
 
     /**
+     * Babylon.js's PBR materials (glTF) divide a directional light's intensity by pi (Lambert's
+     * 1/pi), but not a hemispheric light's. Measured on a matte sphere: a rig light of a given
+     * strength lights as brightly as in the other viewers only when multiplied by pi.
+     */
+    const RIG_LIGHT_SCALE = Math.PI;
+
+    /**
+     * The light rig: a hemispheric light with the same sky and ground colour, which lights evenly
+     * from every side, for the ambient light, and a directional light per rig light, aimed by
+     * aimRig() once the camera is framed.
+     */
+    function createRig(scene, rig, brightness) {
+        const ambientColour = BABYLON.Color3.FromHexString(rig.ambient.color);
+        const ambient = new BABYLON.HemisphericLight('rigAmbient', new BABYLON.Vector3(0, 1, 0), scene);
+        ambient.diffuse = ambientColour;
+        ambient.groundColor = ambientColour.clone();
+        ambient.specular = BABYLON.Color3.Black();
+        ambient.intensity = rig.ambient.strength * brightness;
+
+        return rig.lights.map(function (settings, i) {
+            const light = new BABYLON.DirectionalLight('rigLight' + (i + 1), new BABYLON.Vector3(0, 0, -1), scene);
+            light.diffuse = BABYLON.Color3.FromHexString(settings.color);
+            light.specular = light.diffuse.clone();
+            light.intensity = settings.strength * brightness * RIG_LIGHT_SCALE;
+            return { light: light, azimuth: settings.azimuth, elevation: settings.elevation };
+        });
+    }
+
+    /**
+     * Point each rig light from its direction relative to the camera's default view.
+     */
+    function aimRig(scene, camera, rigLights) {
+        const back = camera instanceof BABYLON.ArcRotateCamera
+            ? { x: Math.cos(camera.alpha), z: Math.sin(camera.alpha) }
+            : window.ThreeDViewerLighting.backFrom(camera.position, camera.getTarget());
+        const leftHanded = !scene.useRightHandedSystem;
+        rigLights.forEach(function (entry) {
+            const d = window.ThreeDViewerLighting.direction(entry.azimuth, entry.elevation, back, leftHanded);
+            // A directional light's direction is the way its light travels: towards the model
+            entry.light.direction = new BABYLON.Vector3(-d.x, -d.y, -d.z);
+        });
+    }
+
+    /**
      * Keep lights fixed relative to the camera, so the model turns under them. Each light's
      * direction and position are recorded in the camera's frame, then carried round with the
      * camera before every frame. The environment's image-based lighting, if any, turns with the
@@ -176,8 +220,19 @@
             }
         }
 
-        createLighting(scene, canvas.dataset.lighting);
-        // Only the preset's lights, not any the model brings with it
+        const lighting = window.ThreeDViewerLighting;
+        const brightness = lighting ? lighting.brightness(canvas) : 1;
+        const rig = lighting ? lighting.parse(canvas) : null;
+        let rigLights = null;
+        if (rig) {
+            rigLights = createRig(scene, rig, brightness);
+        } else {
+            createLighting(scene, canvas.dataset.lighting);
+            scene.lights.forEach(function (light) {
+                light.intensity *= brightness;
+            });
+        }
+        // Only the preset's or the rig's lights, not any the model brings with it
         const presetLights = scene.lights.slice();
 
         const loadingElement = canvas.dataset.loadingId ? document.getElementById(canvas.dataset.loadingId) : null;
@@ -225,6 +280,11 @@
             // is created. Created before the model loaded, it fell back to a 20-unit skybox and a
             // 15-unit ground at the origin, inside models measured in millimetres.
             createEnvironment(scene, canvas.dataset.environment);
+            scene.environmentIntensity = brightness;
+
+            if (rigLights) {
+                aimRig(scene, camera, rigLights);
+            }
 
             // After framing, so the first view is lit exactly as in the default mode
             if (canvas.dataset.lightingMode === 'viewer') {
