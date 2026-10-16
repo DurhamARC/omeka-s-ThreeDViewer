@@ -61,8 +61,9 @@ class BabylonRenderer extends Abstract3DRenderer implements RendererInterface
         $rawUrl = $media->originalUrl();
         $protocolRelativeUrl = preg_replace('/^https?:/', '', $rawUrl);
 
-        $canvasId = 'babylon-canvas-' . $media->id();
-        $loadingId = 'babylon-loading-' . $media->id();
+        $suffix = $this->idSuffix($view, $media);
+        $canvasId = 'babylon-canvas-' . $media->id() . $suffix;
+        $loadingId = 'babylon-loading-' . $media->id() . $suffix;
 
         return '<div class="threedviewer-babylon-container">'
             . $infoPanel

@@ -11,6 +11,13 @@ use ThreeDViewer\Settings\Lighting;
 abstract class Abstract3DRenderer implements RendererInterface
 {
     /**
+     * How often each media has been rendered on each page (view)
+     *
+     * @var \SplObjectStorage<PhpRenderer, array<string,int>>|null
+     */
+    private static $rendered;
+
+    /**
      * Get configuration from global and site settings.
      */
     protected function getViewerConfig(PhpRenderer $view): array
@@ -179,6 +186,22 @@ abstract class Abstract3DRenderer implements RendererInterface
             $html .= '</label>';
         }
         return $html . '</fieldset></template></div></details>';
+    }
+
+    /**
+     * A suffix that keeps a viewer's element ids unique on the page: nothing the first time a
+     * media is rendered, then -2, -3 and so on, for a page that shows the same media twice.
+     */
+    protected function idSuffix(PhpRenderer $view, MediaRepresentation $media): string
+    {
+        if (self::$rendered === null) {
+            self::$rendered = new \SplObjectStorage();
+        }
+        $counts = self::$rendered->contains($view) ? self::$rendered[$view] : [];
+        $key = (string) $media->id();
+        $counts[$key] = ($counts[$key] ?? 0) + 1;
+        self::$rendered[$view] = $counts;
+        return $counts[$key] > 1 ? '-' . $counts[$key] : '';
     }
 
     /**

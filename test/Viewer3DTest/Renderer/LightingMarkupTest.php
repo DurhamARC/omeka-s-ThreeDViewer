@@ -200,6 +200,42 @@ class LightingMarkupTest extends TestCase
         $this->assertContains('/modules/ThreeDViewer/css/lighting-controls.css', $view->headLink()->files);
     }
 
+    public function viewersWithIds(): array
+    {
+        return [
+            'model-viewer' => ['model.glb', 'model-viewer'],
+            'Babylon.js' => ['model.gltf', 'babylon'],
+        ];
+    }
+
+    /**
+     * @dataProvider viewersWithIds
+     */
+    public function testTheSameMediaTwiceOnAPageGetsTwoIds(string $file, string $library): void
+    {
+        $view = new DummyPhpRenderer();
+        $view->setSettings(['threedviewer_default_library' => $library, 'threedviewer_lighting_controls' => true]);
+        $media = new MediaRepresentation('https://example.org/files/original/' . $file, 'Sample', $file);
+        $html = (new Viewer3DRenderer())->render($view, $media, [])
+            . (new Viewer3DRenderer())->render($view, $media, []);
+
+        preg_match_all('/\sid="([^"]+)"/', $html, $ids);
+        $this->assertSame(array_unique($ids[1]), $ids[1], 'No id is used twice');
+        preg_match_all('/data-threedviewer-target="([^"]+)"/', $html, $targets);
+        $this->assertCount(2, array_unique($targets[1]), 'Each panel drives its own viewer');
+        foreach ($targets[1] as $target) {
+            $this->assertContains($target, $ids[1]);
+        }
+
+        $other = new DummyPhpRenderer();
+        $other->setSettings(['threedviewer_default_library' => $library, 'threedviewer_lighting_controls' => true]);
+        $this->assertStringContainsString(
+            'id="' . $targets[1][0] . '"',
+            (new Viewer3DRenderer())->render($other, $media, []),
+            'Another page starts again'
+        );
+    }
+
     public function testASiteShowsOrHidesTheControls(): void
     {
         [$html] = $this->render('model.glb', ['threedviewer_lighting_controls' => true], [

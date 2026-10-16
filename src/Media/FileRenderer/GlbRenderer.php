@@ -38,7 +38,7 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
         $helpText = $view->escapeHtml($view->translate('Use mouse to rotate, zoom and pan'));
         $gridOverlay = $config['showGrid'] ? '<div class="grid-overlay"></div>' : '';
         // The lighting controls find the viewer by its id, which it otherwise does not need
-        $viewerId = 'threedviewer-model-' . $media->id();
+        $viewerId = 'threedviewer-model-' . $media->id() . $this->idSuffix($view, $media);
         $idAttribute = $config['lightingControls'] ? 'id="' . $viewerId . '" ' : '';
 
         return '<div class="threedviewer-model-stage" style="position: relative; width: 100%; height: '
