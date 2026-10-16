@@ -36,6 +36,12 @@ class Lighting
     /** Numbers kept whole: the light count and the angles, in degrees */
     private const WHOLE = ['count', 'azimuth', 'elevation'];
 
+    /**
+     * The step of every other number: their fields' step, which a browser will not submit a value
+     * off, so a value stored by other means must be on it too
+     */
+    private const STEP = 0.05;
+
     /** @var array<string,mixed>|null */
     private static $defaults;
 
@@ -223,7 +229,10 @@ class Lighting
                     $value = $default;
                 }
                 $number = max($min, min($max, (float) $value));
-                return in_array($suffix, self::WHOLE, true) ? (int) round($number) : round($number, 2);
+                if (in_array($suffix, self::WHOLE, true)) {
+                    return (int) round($number);
+                }
+                return round(round($number / self::STEP) * self::STEP, 2);
             }
         }
 
