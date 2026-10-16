@@ -166,3 +166,146 @@ test('rgbe: a Radiance header, then four bytes per pixel that decode to the radi
     assert.deepEqual(decode(0), [0.5, 0.25, 0]);
     close(decode(4)[0], 10, 'bright red');
 });
+
+/**
+ * A viewer for controller(): its turns are angles about the up axis, its camera an angle that the
+ * test sets, and it records what the controller asks of it.
+ */
+function fakeViewer(options) {
+    const listeners = {};
+    const events = [];
+    const element = {
+        dataset: options.controls ? { lightingControls: 'true' } : {},
+        addEventListener: (type, listener) => { listeners[type] = listener; },
+        dispatchEvent: (event) => events.push(event)
+    };
+    class CustomEvent {
+        constructor(type, init) {
+            this.type = type;
+            this.detail = init.detail;
+        }
+    }
+    const window = {};
+    runInNewContext(source, { window, console, CustomEvent });
+    const viewer = {
+        element,
+        camera: 0,
+        follow: null,
+        set: [],
+        placed: null,
+        ready: () => events.find((event) => event.type === 'threedviewer:lighting-ready'),
+        change: (detail) => listeners['threedviewer:lighting']({ detail }),
+        frame: () => viewer.placed.frame
+    };
+    window.ThreeDViewerLighting.controller(element, {
+        lights: options.lights,
+        back: { x: 0, z: 1 },
+        leftHanded: false,
+        mode: options.mode || 'model',
+        turns: options.turns === null ? null : {
+            identity: () => 0,
+            clone: (turn) => turn,
+            then: (first, second) => first + second,
+            camera: () => viewer.camera,
+            since: (start) => viewer.camera - start
+        },
+        follow: (update) => { viewer.follow = update; },
+        set: (light) => viewer.set.push(JSON.parse(JSON.stringify(light))),
+        place: (lights, frame) => { viewer.placed = { lights: JSON.parse(JSON.stringify(lights)), frame }; }
+    });
+    return viewer;
+}
+
+// A light 54.7 degrees up, as the Babylon.js directional preset: shown as 55
+const PRESET = [
+    { id: 'ambient', kind: 'ambient', color: '#ffffff', strength: 0.6 },
+    { id: 'key', kind: 'key', color: '#ffffff', strength: 0.8333, direction: { x: 1, y: 2, z: -1 } }
+];
+const lightsOf = (viewer) => JSON.parse(JSON.stringify(viewer.ready().detail.lights));
+
+test('controller: reports the lights as the controls show them, and places them as given', () => {
+    const viewer = fakeViewer({ controls: true, lights: PRESET });
+    assert.deepEqual(viewer.ready().detail.mode, 'model');
+    assert.deepEqual(lightsOf(viewer), [
+        { id: 'ambient', kind: 'ambient', color: '#ffffff', strength: 0.6 },
+        { id: 'key', kind: 'key', color: '#ffffff', strength: 0.83, azimuth: 135, elevation: 55 }
+    ]);
+    assert.deepEqual(viewer.placed.lights[1].direction, { x: 1, y: 2, z: -1 }, 'Exactly as given');
+    assert.equal(viewer.frame(), 0);
+});
+
+test('controller: a change applies only what it changes, so the rest stay exact', () => {
+    const viewer = fakeViewer({ controls: true, lights: PRESET });
+    const shown = lightsOf(viewer);
+
+    shown[0].strength = 1.2;
+    viewer.change({ mode: 'model', lights: shown });
+    assert.equal(viewer.set.length, 1);
+    assert.equal(viewer.set[0].strength, 1.2);
+    assert.equal(viewer.placed.lights[1].strength, 0.8333, 'Not the rounded 0.83');
+    assert.deepEqual(viewer.placed.lights[1].direction, { x: 1, y: 2, z: -1 }, 'Not the rounded angles');
+
+    shown[1].elevation = 90;
+    viewer.change({ mode: 'model', lights: shown });
+    const direction = viewer.placed.lights[1].direction;
+    close(direction.y, 1, 'Moved overhead');
+    assert.equal(viewer.set.length, 2, 'A moved light is set too');
+});
+
+test('controller: fixed to the viewer, the frame turns with the camera from the switch, both ways', () => {
+    const viewer = fakeViewer({ controls: true, lights: PRESET });
+    const shown = lightsOf(viewer);
+
+    viewer.camera = 10;
+    viewer.change({ mode: 'viewer', lights: shown });
+    assert.equal(typeof viewer.follow, 'function');
+    viewer.camera = 40;
+    viewer.follow();
+    assert.equal(viewer.frame(), 30, 'Turned as far as the camera since the switch');
+
+    viewer.change({ mode: 'model', lights: shown });
+    assert.equal(viewer.follow, null);
+    viewer.camera = 100;
+    viewer.change({ mode: 'model', lights: shown });
+    assert.equal(viewer.frame(), 30, 'Kept where it had got to');
+
+    viewer.change({ mode: 'viewer', lights: shown });
+    viewer.camera = 110;
+    viewer.follow();
+    assert.equal(viewer.frame(), 40, 'And on from there, without a jump');
+});
+
+test('controller: Reset restores the lights and frame, in the starting mode', () => {
+    const viewer = fakeViewer({ controls: true, lights: PRESET, mode: 'viewer' });
+    assert.equal(viewer.ready().detail.mode, 'viewer');
+    assert.equal(typeof viewer.follow, 'function', 'Following from the start');
+    const initial = lightsOf(viewer);
+    const shown = lightsOf(viewer);
+
+    viewer.camera = 50;
+    shown[1].azimuth = 0;
+    shown[1].color = '#ff0000';
+    viewer.change({ mode: 'model', lights: shown });
+    assert.equal(viewer.frame(), 50);
+
+    viewer.camera = 70;
+    viewer.change({ reset: true, mode: 'viewer', lights: initial });
+    viewer.follow();
+    assert.equal(viewer.frame(), 0, 'Back to the default view');
+    assert.deepEqual(viewer.placed.lights[1].direction, { x: 1, y: 2, z: -1 });
+    assert.equal(viewer.placed.lights[1].color, '#ffffff');
+    assert.equal(viewer.set.slice(-2)[1].color, '#ffffff', 'Each light set again');
+});
+
+test('controller: without controls it only keeps the lighting fixed; without turns, to the model', () => {
+    const viewer = fakeViewer({ controls: false, lights: PRESET, mode: 'viewer' });
+    assert.equal(viewer.ready(), undefined, 'Nothing reported');
+    viewer.camera = 25;
+    viewer.follow();
+    assert.equal(viewer.frame(), 25);
+
+    const fixed = fakeViewer({ controls: true, lights: PRESET, mode: 'viewer', turns: null });
+    assert.equal(fixed.follow, null);
+    assert.equal(fixed.ready().detail.mode, 'model');
+    assert.equal(fixed.frame(), null);
+});

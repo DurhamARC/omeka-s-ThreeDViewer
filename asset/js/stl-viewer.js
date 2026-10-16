@@ -6,7 +6,7 @@
 
 // Global variables
 let scene, camera, renderer, controls;
-// Set by the lighting controls while the lighting is fixed to the viewer: moves the lights each frame
+// Set while the lighting is fixed to the viewer: moves the lights each frame
 let followCamera = null;
 
 /**
@@ -26,7 +26,7 @@ function init(modelUrl, options = {}) {
     lightingMode: options.lightingMode === "viewer" ? "viewer" : "model",
     brightness: options.brightness === undefined ? 1 : options.brightness,
     rig: options.rig || null,
-    controls: options.controls || null
+    element: options.element || null
   };
   
   // Convert hex color strings to Three.js color objects
@@ -142,10 +142,8 @@ function init(modelUrl, options = {}) {
       if (config.rig) {
         aimRig(lights.directional, config.rig);
       }
-      if (config.controls) {
-        setUpLightingControls(config.controls, lights, config);
-      } else if (config.lightingMode === 'viewer') {
-        lights.directional.forEach(attachLightToCamera);
+      if (window.ThreeDViewerLighting && config.element) {
+        setUpLighting(config.element, lights, config);
       }
       
       // Trigger a resize to ensure proper rendering
@@ -241,131 +239,56 @@ function aimRig(lights, rig) {
 }
 
 /**
- * Lighting controls (lighting-controls.js): report the lights, then apply each change to them.
- *
- * A light's direction is kept as angles from the default view, turned by a frame. The frame stays
- * put while the lighting is fixed to the model; fixed to the viewer, it turns with the camera from
- * where it was at the switch. Switching back keeps the frame where it has got to, so the lights
- * never jump.
+ * The lights fixed to the model or to the viewer, and changed by the lighting controls where the
+ * page shows them: see ThreeDViewerLighting.controller() in lighting-rig.js
  *
  * @param {HTMLElement} element - The element the controls send their changes to
  * @param {{ambient: THREE.AmbientLight, directional: THREE.DirectionalLight[]}} lights
  * @param {Object} config - The viewer's configuration
  */
-function setUpLightingControls(element, lights, config) {
-  const lighting = ThreeDViewerLighting;
-  const back = lighting.backFrom(camera.position, new THREE.Vector3(0, 0, 0));
-  const entries = [{ id: 'ambient', kind: 'ambient', light: lights.ambient }];
+function setUpLighting(element, lights, config) {
+  const byId = { ambient: lights.ambient };
+  const described = [{ id: 'ambient', kind: 'ambient' }];
   lights.directional.forEach(function (light, i) {
-    const angles = lighting.angles(light.position, back, false);
-    entries.push({
-      id: config.rig ? 'light' + (i + 1) : 'key',
-      kind: config.rig ? 'light' : 'key',
-      light: light,
-      azimuth: angles.azimuth,
-      elevation: angles.elevation
-    });
+    const id = config.rig ? 'light' + (i + 1) : 'key';
+    byId[id] = light;
+    // Its target is at the origin, so its position is the way to the light
+    const p = light.position;
+    described.push({ id: id, kind: config.rig ? 'light' : 'key', direction: { x: p.x, y: p.y, z: p.z } });
   });
 
-  let mode = 'model';
-  let frame = new THREE.Quaternion();
-  let attached = null;   // While fixed to the viewer: the camera's turn and the frame at the switch
-
-  function currentFrame() {
-    if (!attached) {
-      return frame;
+  ThreeDViewerLighting.controller(element, {
+    lights: described.map(function (light) {
+      return Object.assign(light, {
+        color: '#' + byId[light.id].color.getHexString(),
+        strength: byId[light.id].intensity
+      });
+    }),
+    back: ThreeDViewerLighting.backFrom(camera.position, new THREE.Vector3(0, 0, 0)),
+    leftHanded: false,
+    mode: config.lightingMode,
+    turns: {
+      identity: function () { return new THREE.Quaternion(); },
+      clone: function (turn) { return turn.clone(); },
+      then: function (first, second) { return second.clone().multiply(first); },
+      camera: function () { return camera.quaternion.clone(); },
+      since: function (start) { return camera.quaternion.clone().multiply(start.clone().inverse()); }
+    },
+    follow: function (update) {
+      followCamera = update;
+    },
+    set: function (light) {
+      byId[light.id].color.set(light.color);
+      byId[light.id].intensity = light.strength;
+    },
+    place: function (all, turn) {
+      all.forEach(function (light) {
+        if (light.direction) {
+          byId[light.id].position.set(light.direction.x, light.direction.y, light.direction.z).applyQuaternion(turn);
+        }
+      });
     }
-    return camera.quaternion.clone().multiply(attached.camera.clone().inverse()).multiply(attached.frame);
-  }
-
-  function place() {
-    const turn = currentFrame();
-    entries.forEach(function (entry) {
-      if (entry.azimuth !== undefined) {
-        const d = lighting.direction(entry.azimuth, entry.elevation, back, false);
-        entry.light.position.set(d.x, d.y, d.z).applyQuaternion(turn);
-      }
-    });
-  }
-
-  function setMode(next) {
-    if (next === mode) {
-      return;
-    }
-    if (next === 'viewer') {
-      attached = { camera: camera.quaternion.clone(), frame: frame.clone() };
-      followCamera = place;
-    } else {
-      frame = currentFrame().clone();
-      attached = null;
-      followCamera = null;
-    }
-    mode = next;
-  }
-
-  setMode(config.lightingMode);
-  place();
-
-  lighting.onChange(element, function (detail) {
-    if (detail.reset) {
-      setMode('model');
-      frame = new THREE.Quaternion();
-    }
-    setMode(detail.mode === 'viewer' ? 'viewer' : 'model');
-    detail.lights.forEach(function (change) {
-      const entry = entries.find(function (e) { return e.id === change.id; });
-      if (!entry) {
-        return;
-      }
-      if (change.color !== undefined) {
-        entry.light.color.set(change.color);
-      }
-      if (change.strength !== undefined) {
-        entry.light.intensity = change.strength;
-      }
-      if (entry.azimuth !== undefined) {
-        entry.azimuth = change.azimuth;
-        entry.elevation = change.elevation;
-      }
-    });
-    place();
   });
-
-  lighting.ready(element, {
-    mode: mode,
-    lights: entries.map(function (entry) {
-      const report = {
-        id: entry.id,
-        kind: entry.kind,
-        color: '#' + entry.light.color.getHexString(),
-        strength: Math.round(entry.light.intensity * 100) / 100
-      };
-      if (entry.azimuth !== undefined) {
-        report.azimuth = entry.azimuth;
-        report.elevation = entry.elevation;
-      }
-      return report;
-    })
-  });
-}
-
-/**
- * Moves a directional light onto the camera, keeping the direction it shines from in the current
- * view, so the light stays fixed relative to the viewer and the model turns under it
- *
- * @param {THREE.DirectionalLight} light - A light in the scene, with its target at the origin
- */
-function attachLightToCamera(light) {
-  camera.updateMatrixWorld();
-  const direction = light.position.clone()
-    .sub(light.target.position)
-    .transformDirection(camera.matrixWorldInverse);
-
-  light.position.copy(direction);
-  light.target.position.set(0, 0, 0);
-  camera.add(light);
-  camera.add(light.target);
-  scene.add(camera);
 }
 
 /**
@@ -478,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
     lightingMode: lightingMode,
     brightness: lighting ? lighting.brightness(loadingElement) : 1,
     rig: lighting ? lighting.parse(loadingElement) : null,
-    controls: lighting && lighting.hasControls(loadingElement) ? loadingElement : null
+    element: loadingElement
   });
   
   // Start the animation loop

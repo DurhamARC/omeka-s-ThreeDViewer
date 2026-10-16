@@ -79,6 +79,18 @@ class LightingMarkupTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider viewers
+     */
+    public function testViewerFixedLightingLoadsTheSharedScript(string $file, string $library): void
+    {
+        [, $view] = $this->render($file, [
+            'threedviewer_default_library' => $library,
+            'threedviewer_lighting_mode' => 'viewer',
+        ]);
+        $this->assertContains('/modules/ThreeDViewer/js/lighting-rig.js', $view->headScript()->files);
+    }
+
     public function testModelViewerGetsItsEnvironmentWithoutARig(): void
     {
         [$html, $view] = $this->render('model.glb', [
