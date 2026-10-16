@@ -84,6 +84,11 @@
                         input.closest('.threedviewer-lighting-control').remove();
                         return;
                     }
+                    // Brightness can take a strength past the slider's end: lengthen it, rather
+                    // than show less and lower the light at the first touch
+                    if (input.type === 'range' && Number(light[property]) > Number(input.max)) {
+                        input.max = String(Math.ceil(light[property]));
+                    }
                     input.value = light[property];
                     showValue(input);
                     input.addEventListener('input', function () {
