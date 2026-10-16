@@ -161,6 +161,7 @@
      * The lights fixed to the model or to the viewer, and changed by the lighting controls where the
      * page shows them: see ThreeDViewerLighting.controller() in lighting-rig.js. The environment's
      * image-based lighting, if any, turns with the lights; its skybox and ground stay in the scene.
+     * With a rig the environment gives no light, so the controls do not show it.
      */
     function setUpLighting(canvas, scene, camera, presetLights, rig) {
         const lighting = window.ThreeDViewerLighting;
@@ -215,7 +216,7 @@
             }
             lights.push(described);
         });
-        if (scene.environmentTexture) {
+        if (scene.environmentTexture && !rig) {
             lights.push({ id: 'environment', kind: 'environment', strength: scene.environmentIntensity });
         }
 
@@ -421,7 +422,9 @@
             // is created. Created before the model loaded, it fell back to a 20-unit skybox and a
             // 15-unit ground at the origin, inside models measured in millimetres.
             createEnvironment(scene, canvas.dataset.environment);
-            scene.environmentIntensity = brightness;
+            // A rig lights the model in place of the viewer's own lighting, the environment's too:
+            // its skybox and ground stay, as a backdrop
+            scene.environmentIntensity = rig ? 0 : brightness;
 
             if (rigLights) {
                 aimRig(scene, camera, rigLights);
