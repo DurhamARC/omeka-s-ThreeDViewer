@@ -33,12 +33,24 @@
         }
     }
 
+    /**
+     * The viewer element a panel drives: the one beside it, which is the one it was rendered with
+     * even where the page has another of the same id, else any on the page.
+     */
+    function targetOf(panel) {
+        const id = panel.dataset.threedviewerTarget;
+        const beside = panel.parentNode && window.CSS && CSS.escape
+            ? panel.parentNode.querySelector('#' + CSS.escape(id))
+            : null;
+        return beside || document.getElementById(id);
+    }
+
     function install(panel) {
         if (panel.dataset.lightingControlsReady) {
             return;
         }
         panel.dataset.lightingControlsReady = 'true';
-        const target = document.getElementById(panel.dataset.threedviewerTarget);
+        const target = targetOf(panel);
         const list = panel.querySelector('.threedviewer-lighting-lights');
         const template = panel.querySelector('template');
         const modes = panel.querySelectorAll('.threedviewer-lighting-mode input');
