@@ -101,14 +101,15 @@ abstract class Abstract3DRenderer implements RendererInterface
     }
 
     /**
-     * The shared lighting script, which reads brightness and the light rig for every viewer, and
-     * the lighting controls where the page shows them.
+     * The shared lighting script, which reads the light rig, and brightness where the viewer takes
+     * it from data-light-brightness; and the lighting controls where the page shows them.
+     *
+     * @param bool $brightnessInScript False where the viewer is given brightness some other way
      */
-    protected function appendLightingScripts(PhpRenderer $view, array $config): void
+    protected function appendLightingScripts(PhpRenderer $view, array $config, bool $brightnessInScript = true): void
     {
-        if ($config['rig'] !== null || $config['lighting']['threedviewer_light_brightness'] != 1
-            || $config['lightingControls']
-        ) {
+        $brightness = $brightnessInScript && $config['lighting']['threedviewer_light_brightness'] != 1;
+        if ($config['rig'] !== null || $brightness || $config['lightingControls']) {
             $view->headScript()->appendFile($view->assetUrl('js/lighting-rig.js', 'ThreeDViewer'));
         }
         if ($config['lightingControls']) {

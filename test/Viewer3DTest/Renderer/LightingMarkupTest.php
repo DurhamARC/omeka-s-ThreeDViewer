@@ -94,6 +94,11 @@ class LightingMarkupTest extends TestCase
         $this->assertStringContainsString('shadow-softness="0.25"', $html);
         $this->assertStringNotContainsString('data-light-brightness', $html, 'model-viewer uses exposure');
         $this->assertNotContains('/modules/ThreeDViewer/js/model-viewer-lighting.js', $view->headScript()->files);
+        $this->assertNotContains(
+            '/modules/ThreeDViewer/js/lighting-rig.js',
+            $view->headScript()->files,
+            'Nothing reads brightness from it'
+        );
     }
 
     public function testModelViewerCustomEnvironmentIsEscapedAndGivesWayToARig(): void
