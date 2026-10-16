@@ -158,6 +158,153 @@
         return !!(element && element.dataset && element.dataset.lightingControls === 'true');
     }
 
+    /** The values of a light that the lighting controls show, besides its direction */
+    const SHOWN = ['color', 'groundColor', 'strength'];
+
+    function copyLight(light) {
+        const copy = Object.assign({}, light);
+        if (light.direction) {
+            copy.direction = { x: light.direction.x, y: light.direction.y, z: light.direction.z };
+        }
+        return copy;
+    }
+
+    /** A light as the lighting controls show it: its values, with no more than two decimals */
+    function shown(light) {
+        const report = { id: light.id, kind: light.kind };
+        SHOWN.forEach(function (key) {
+            if (light[key] !== undefined) {
+                report[key] = key === 'strength' ? Math.round(light[key] * 100) / 100 : light[key];
+            }
+        });
+        if (light.direction) {
+            report.azimuth = light.azimuth;
+            report.elevation = light.elevation;
+        }
+        return report;
+    }
+
+    /**
+     * The lighting of one viewer: fixed to the model or to the viewer, and changed by its lighting
+     * controls where the page shows them.
+     *
+     * A light's direction is kept as it is in the default view, turned by a frame. The frame stays
+     * put while the lighting is fixed to the model; fixed to the viewer, it turns with the camera
+     * from where it was at the switch. Switching back keeps the frame where it has got to, so the
+     * lights never jump. Each value is kept exactly as the viewer gave it until the controls change
+     * it, so that showing them changes nothing until they are used, although they show directions
+     * in whole degrees and strengths to two decimals.
+     *
+     * @param {HTMLElement} element - The viewer element, which the controls send their changes to
+     * @param {Object} options
+     * @param {Object[]} options.lights - { id, kind, color?, groundColor?, strength, direction? },
+     *     the direction pointing from the model towards the light in the default view, y up
+     * @param {{x: number, z: number}} options.back - From backFrom()
+     * @param {boolean} options.leftHanded - As for direction()
+     * @param {string} options.mode - 'model' or 'viewer', to start with
+     * @param {Object|null} options.turns - The viewer's rotations, or null where it cannot turn its
+     *     lighting, which then stays fixed to the model: identity(), clone(turn), then(first, second)
+     *     (the turn by first, then by second), camera() (the camera's orientation, to measure from)
+     *     and since(camera) (the camera's turn since then)
+     * @param {function(?function())} options.follow - Call the given function whenever the camera
+     *     moves, or stop with null
+     * @param {function(Object)} options.set - A light has changed: apply its colour and strength
+     *     (place() follows, to apply its direction)
+     * @param {function(Object[], *)} options.place - Aim the lights by their directions (or angles,
+     *     azimuth and elevation), turned by the frame (null without turns)
+     */
+    function controller(element, options) {
+        const turns = options.turns;
+        const initial = options.lights.map(function (light) {
+            const copy = copyLight(light);
+            if (light.direction) {
+                Object.assign(copy, angles(light.direction, options.back, options.leftHanded));
+            }
+            return copy;
+        });
+        let lights = initial.map(copyLight);
+        let showing = initial.map(shown);
+
+        let mode = 'model';
+        let frame = turns ? turns.identity() : null;
+        let attached = null;   // While fixed to the viewer: the camera and the frame at the switch
+
+        function currentFrame() {
+            return attached ? turns.then(attached.frame, turns.since(attached.camera)) : frame;
+        }
+
+        function place() {
+            options.place(lights, turns ? currentFrame() : null);
+        }
+
+        function setMode(next) {
+            if (next === mode || !turns) {
+                return;
+            }
+            if (next === 'viewer') {
+                attached = { camera: turns.camera(), frame: turns.clone(frame) };
+                options.follow(place);
+            } else {
+                frame = turns.clone(currentFrame());
+                attached = null;
+                options.follow(null);
+            }
+            mode = next;
+        }
+
+        /** Take each value the controls have changed from what they showed */
+        function merge(change) {
+            const i = lights.findIndex(function (light) {
+                return light.id === change.id;
+            });
+            if (i < 0) {
+                return;
+            }
+            const light = lights[i];
+            const was = showing[i];
+            let changed = false;
+            SHOWN.forEach(function (key) {
+                if (was[key] !== undefined && change[key] !== undefined && change[key] !== was[key]) {
+                    light[key] = was[key] = change[key];
+                    changed = true;
+                }
+            });
+            if (light.direction && (change.azimuth !== was.azimuth || change.elevation !== was.elevation)
+                && change.azimuth !== undefined && change.elevation !== undefined
+            ) {
+                light.azimuth = was.azimuth = change.azimuth;
+                light.elevation = was.elevation = change.elevation;
+                light.direction = direction(change.azimuth, change.elevation, options.back, options.leftHanded);
+                changed = true;
+            }
+            if (changed) {
+                options.set(light);
+            }
+        }
+
+        setMode(options.mode === 'viewer' ? 'viewer' : 'model');
+        place();
+
+        if (!hasControls(element)) {
+            return;
+        }
+
+        onChange(element, function (detail) {
+            if (detail.reset) {
+                setMode('model');
+                frame = turns ? turns.identity() : null;
+                lights = initial.map(copyLight);
+                showing = initial.map(shown);
+                lights.forEach(options.set);
+            }
+            setMode(detail.mode === 'viewer' ? 'viewer' : 'model');
+            (detail.lights || []).forEach(merge);
+            place();
+        });
+
+        ready(element, { mode: mode, lights: initial.map(shown) });
+    }
+
     function linear(hex) {
         const n = parseInt(hex.slice(1), 16);
         return [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(function (c) {
@@ -258,6 +405,7 @@
         ready: ready,
         onChange: onChange,
         hasControls: hasControls,
+        controller: controller,
         environment: environment,
         rgbe: rgbe
     };

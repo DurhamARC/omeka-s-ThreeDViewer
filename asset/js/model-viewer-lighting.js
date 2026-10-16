@@ -63,62 +63,25 @@
   }
 
   /**
-   * Turn the environment with the camera, so the model turns under the lights.
-   */
-  function followCamera(viewer) {
-    const scene = getScene(viewer);
-    // Scene.environmentRotation was added in three.js r162.
-    if (!scene || !scene.environmentRotation) {
-      console.warn('ThreeDViewer: viewer-fixed lighting is not supported by this model-viewer version.');
-      return;
-    }
-
-    // The first view keeps its lighting; orbiting away rotates the environment by the same amount.
-    let initial = null;
-
-    function update() {
-      if (!initial) {
-        return;
-      }
-      const orbit = viewer.getCameraOrbit();
-      // Camera turn is Ry(theta) Rx(phi - phi0); three.js applies Euler XYZ angles negated,
-      // which is the inverse of Ry(y) Rx(x), so these angles turn the environment with the camera.
-      scene.environmentRotation.set(orbit.phi - initial.phi, orbit.theta - initial.theta, 0, 'XYZ');
-      if (typeof scene.queueRender === 'function') {
-        scene.queueRender();
-      }
-    }
-
-    function start() {
-      initial = viewer.getCameraOrbit();
-      update();
-    }
-
-    viewer.addEventListener('camera-change', update);
-    if (viewer.loaded) {
-      start();
-    } else {
-      viewer.addEventListener('load', start, { once: true });
-    }
-  }
-
-  /**
-   * Lighting controls (lighting-controls.js): report the lights, then apply each change to them.
+   * The lighting fixed to the model or to the viewer, and changed by the lighting controls where
+   * the page shows them: see ThreeDViewerLighting.controller() in lighting-rig.js.
    *
-   * With a rig, each change repaints the environment. With model-viewer's own environment, its
-   * direction and height turn the environment so that its overhead light comes from there. Either
-   * way the environment is turned by a frame: fixed while the lighting is fixed to the model, and
-   * turned with the camera from where it was at the switch while it is fixed to the viewer.
-   * Switching back keeps the frame where it has got to, so the lighting never jumps.
+   * Either way the environment is turned by the controller's frame. With a rig, each change to a
+   * light repaints the environment. With model-viewer's own environment, its direction and height
+   * turn the environment so that its overhead light comes from there.
    *
    * @param {Object|null} rig - The rig as painted, its strengths already multiplied by brightness
    * @param {{x: number, z: number}} side - The side of the model the default view looks from
    */
-  function setUpLightingControls(viewer, rig, side) {
+  function setUpLighting(viewer, rig, side) {
     const lighting = window.ThreeDViewerLighting;
     const scene = getScene(viewer);
-    // model-viewer's three.js classes, which its bundle does not export, from the scene's own objects
+    // model-viewer's three.js classes, which its bundle does not export, from the scene's own objects.
+    // Scene.environmentRotation was added in three.js r162.
     const turnable = scene && scene.environmentRotation && scene.quaternion;
+    if (!turnable && viewer.dataset.lightingMode === 'viewer') {
+      console.warn('ThreeDViewer: viewer-fixed lighting is not supported by this model-viewer version.');
+    }
     const Quaternion = turnable ? scene.quaternion.constructor : null;
     const Euler = turnable ? scene.environmentRotation.constructor : null;
     const degrees = Math.PI / 180;
@@ -127,41 +90,36 @@
     if (rig) {
       lights = [{ id: 'ambient', kind: 'ambient', color: rig.ambient.color, strength: rig.ambient.strength }]
         .concat(rig.lights.map(function (light, i) {
-          return Object.assign({ id: 'light' + (i + 1), kind: 'light' }, light);
+          return {
+            id: 'light' + (i + 1),
+            kind: 'light',
+            color: light.color,
+            strength: light.strength,
+            direction: lighting.direction(light.azimuth, light.elevation, side, false)
+          };
         }));
+      // Each repaint loads a new environment; without this, the loading bar flashes as a slider moves
+      viewer.style.setProperty('--progress-bar-height', '0px');
     } else {
       const environment = { id: 'environment', kind: 'environment', strength: viewer.exposure };
       if (turnable) {
         // Its overhead light, untouched
-        Object.assign(environment, { azimuth: 0, elevation: 90 });
+        environment.direction = { x: 0, y: 1, z: 0 };
       }
       lights = [environment];
     }
-    const state = JSON.parse(JSON.stringify(lights));
-    const back = side;
 
-    let mode = 'model';
-    let frame = turnable ? new Quaternion() : null;
-    let attached = null;   // While fixed to the viewer: the camera orbit and the frame at the switch
-
-    function turnSince(orbit) {
-      const now = viewer.getCameraOrbit();
-      // The camera's turn, as the environment must follow it: Ry(theta) Rx(phi)
-      return new Quaternion().setFromEuler(new Euler(now.phi - orbit.phi, now.theta - orbit.theta, 0, 'YXZ'));
-    }
-
-    function currentFrame() {
-      return attached ? turnSince(attached.orbit).multiply(attached.frame) : frame;
-    }
+    let repaint = 0;
+    let changed = false;
 
     /** Turn the environment by the frame, and model-viewer's own by its direction too */
-    function orient() {
-      if (!turnable) {
+    function orient(all, frame) {
+      if (!frame) {
         return;
       }
-      const turn = currentFrame().clone();
-      const environment = state[0];
-      if (!rig && environment.azimuth !== undefined) {
+      const turn = frame.clone();
+      const environment = all[0];
+      if (!rig && environment.direction) {
         turn.multiply(new Quaternion().setFromEuler(
           new Euler((90 - environment.elevation) * degrees, environment.azimuth * degrees, 0, 'YXZ')
         ));
@@ -174,68 +132,59 @@
       }
     }
 
-    if (rig) {
-      // Each repaint loads a new environment; without this, the loading bar flashes as a slider moves
-      viewer.style.setProperty('--progress-bar-height', '0px');
-    }
-
-    let repaint = 0;
-    function paint() {
-      repaint = 0;
-      applyRig(viewer, {
-        ambient: { color: state[0].color, strength: state[0].strength },
-        lights: state.slice(1)
-      }, back);
-    }
-
-    function setMode(next) {
-      if (next === mode || !turnable) {
-        return;
-      }
-      if (next === 'viewer') {
-        attached = { orbit: viewer.getCameraOrbit(), frame: frame.clone() };
-        viewer.addEventListener('camera-change', orient);
-      } else {
-        frame = currentFrame().clone();
-        attached = null;
-        viewer.removeEventListener('camera-change', orient);
-      }
-      mode = next;
-    }
-
-    setMode(viewer.dataset.lightingMode === 'viewer' ? 'viewer' : 'model');
-    orient();
-
-    lighting.onChange(viewer, function (detail) {
-      if (detail.reset && turnable) {
-        setMode('model');
-        frame = new Quaternion();
-      }
-      setMode(detail.mode === 'viewer' ? 'viewer' : 'model');
-      detail.lights.forEach(function (change) {
-        const light = state.find(function (l) {
-          return l.id === change.id;
-        });
-        if (light) {
-          Object.keys(light).forEach(function (key) {
-            if (key !== 'id' && key !== 'kind' && change[key] !== undefined) {
-              light[key] = change[key];
-            }
+    let listener = null;
+    lighting.controller(viewer, {
+      lights: lights,
+      back: side,
+      leftHanded: false,
+      mode: viewer.dataset.lightingMode,
+      turns: turnable ? {
+        identity: function () {
+          return new Quaternion();
+        },
+        clone: function (turn) {
+          return turn.clone();
+        },
+        then: function (first, second) {
+          return second.clone().multiply(first);
+        },
+        camera: function () {
+          return viewer.getCameraOrbit();
+        },
+        since: function (orbit) {
+          const now = viewer.getCameraOrbit();
+          // The camera's turn, as the environment must follow it: Ry(theta) Rx(phi)
+          return new Quaternion().setFromEuler(new Euler(now.phi - orbit.phi, now.theta - orbit.theta, 0, 'YXZ'));
+        }
+      } : null,
+      follow: function (update) {
+        if (listener) {
+          viewer.removeEventListener('camera-change', listener);
+        }
+        listener = update;
+        if (listener) {
+          viewer.addEventListener('camera-change', listener);
+        }
+      },
+      set: function (light) {
+        if (rig) {
+          changed = true;
+        } else {
+          viewer.exposure = light.strength;
+        }
+      },
+      place: function (all, frame) {
+        // Painting takes a few tens of milliseconds: at most once a frame while a slider moves
+        if (changed && !repaint) {
+          repaint = requestAnimationFrame(function () {
+            repaint = 0;
+            applyRig(viewer, { ambient: all[0], lights: all.slice(1) }, side);
           });
         }
-      });
-      if (rig) {
-        // Painting takes a few tens of milliseconds: at most once a frame while a slider moves
-        if (!repaint) {
-          repaint = requestAnimationFrame(paint);
-        }
-      } else {
-        viewer.exposure = state[0].strength;
+        changed = false;
+        orient(all, frame);
       }
-      orient();
     });
-
-    lighting.ready(viewer, { mode: turnable ? mode : 'model', lights: lights });
   }
 
   function attach(viewer) {
@@ -262,16 +211,14 @@
       applyRig(viewer, rig, side);
     }
 
-    if (controls) {
+    if (lighting && (controls || viewer.dataset.lightingMode === 'viewer')) {
       if (viewer.loaded) {
-        setUpLightingControls(viewer, rig, side);
+        setUpLighting(viewer, rig, side);
       } else {
         viewer.addEventListener('load', function () {
-          setUpLightingControls(viewer, rig, side);
+          setUpLighting(viewer, rig, side);
         }, { once: true });
       }
-    } else if (viewer.dataset.lightingMode === 'viewer') {
-      followCamera(viewer);
     }
   }
 
