@@ -39,6 +39,9 @@ class LightingTest extends TestCase
             'threedviewer_light_ambient_strength' => '-1',
             'threedviewer_light_count' => '9',
             'threedviewer_light_1_strength' => '1.234',
+            'threedviewer_light_2_strength' => '0.33',
+            'threedviewer_light_3_strength' => '0.32',
+            'threedviewer_model_viewer_shadow_softness' => '0.876',
             'threedviewer_light_1_azimuth' => '-200',
             'threedviewer_light_1_elevation' => '44.6',
             'threedviewer_light_2_azimuth' => 'east',
@@ -47,7 +50,11 @@ class LightingTest extends TestCase
         $this->assertSame(3.0, $clean['threedviewer_light_brightness']);
         $this->assertSame(0.0, $clean['threedviewer_light_ambient_strength']);
         $this->assertSame(Lighting::MAX_LIGHTS, $clean['threedviewer_light_count']);
-        $this->assertSame(1.23, $clean['threedviewer_light_1_strength']);
+        // To the fields' step of 0.05, or a browser would refuse to submit the form
+        $this->assertSame(1.25, $clean['threedviewer_light_1_strength']);
+        $this->assertSame(0.35, $clean['threedviewer_light_2_strength']);
+        $this->assertSame(0.3, $clean['threedviewer_light_3_strength']);
+        $this->assertSame(0.9, $clean['threedviewer_model_viewer_shadow_softness']);
         $this->assertSame(-180, $clean['threedviewer_light_1_azimuth']);
         $this->assertSame(45, $clean['threedviewer_light_1_elevation']);
         $this->assertSame(60, $clean['threedviewer_light_2_azimuth'], 'Not a number: the default');
