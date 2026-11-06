@@ -6,6 +6,8 @@
 
 // Global variables
 let scene, camera, renderer, controls;
+// The element the viewer draws in: the one holding its #loading element
+let container;
 
 /**
  * Initializes the 3D scene, camera and renderer
@@ -41,8 +43,9 @@ function init(modelUrl, options = {}) {
     scene.add(gridHelper);
   }
 
-  // Get the container element where the 3D viewer will be rendered
-  const container = document.querySelector('.media-render');
+  // Get the container element where the 3D viewer will be rendered. Other media on the page
+  // have their own .media-render blocks, so it is the one given, not the first on the page
+  container = options.container || document.querySelector('.media-render');
   
   // Configure camera with correct aspect ratio
   camera = new THREE.PerspectiveCamera(
@@ -209,7 +212,6 @@ function attachLightToCamera(light) {
  * Adjusts camera and renderer to maintain proper aspect ratio
  */
 function onWindowResize() {
-  const container = document.querySelector('.media-render');
   if (!container) return;
   
   // Update camera aspect ratio
@@ -303,6 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize the viewer with configuration
   init(stlUrl, {
+    container: loadingElement.parentElement,
     foregroundColor: foregroundColor,
     backgroundColor: backgroundColor,
     autoRotate: autoRotate,
