@@ -45,7 +45,7 @@ function init(modelUrl, options = {}) {
 
   // Get the container element where the 3D viewer will be rendered. Other media on the page
   // have their own .media-render blocks, so it is the one given, not the first on the page
-  container = options.container || document.querySelector('.media-render');
+  container = options.container || document.querySelector('.threedviewer-stl-container');
   
   // Configure camera with correct aspect ratio
   camera = new THREE.PerspectiveCamera(

@@ -70,6 +70,18 @@ class Viewer3DRendererTest extends TestCase
         $this->assertIsString($html);
         $this->assertStringContainsString('data-stl-url="//example.org/files/original/mesh.stl"', $html);
         $this->assertStringContainsString('STL Viewer', $html, 'STL info panel present');
+        $this->assertStringStartsWith('<div class="threedviewer-stl-container">', $html);
+    }
+
+    public function testStlStylesLeaveOtherMediaAlone(): void
+    {
+        $media = new MediaRepresentation('https://example.org/files/original/mesh.stl', 'STL', 'mesh.stl');
+
+        $this->renderer->render($this->view, $media, []);
+
+        $styles = implode("\n", $this->view->headStyle()->styles);
+        $this->assertStringContainsString('.threedviewer-stl-container {', $styles);
+        $this->assertStringNotContainsString('.media-render', $styles, 'Every media on the page has a .media-render');
     }
 
     public function testRendersWithBabylonWhenConfigured(): void
