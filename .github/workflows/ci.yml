@@ -65,6 +65,9 @@ jobs:
       - name: Test settings form conditions
         run: node --test test/settings-form.test.cjs
 
+      - name: Test STL viewer container
+        run: node --test test/stl-viewer.test.cjs
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:
