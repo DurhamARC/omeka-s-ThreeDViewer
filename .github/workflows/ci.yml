@@ -59,6 +59,9 @@ jobs:
       - name: Test Babylon camera inputs
         run: node --test test/babylon-camera-inputs.test.cjs
 
+      - name: Test STL viewer container
+        run: node --test test/stl-viewer.test.cjs
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:
