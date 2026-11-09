@@ -67,7 +67,8 @@ See general end user documentation for [Installing a module](http://omeka.org/s/
    - **model-viewer environment** (with *Viewer default*): model-viewer's own, `neutral`, `legacy`, or an image URL;
      and the strength and softness of the shadow under the model.
    Settings that don't apply are hidden: the light rig until *Lights* is *Custom*, each light beyond *Number of
-   lights*, and the custom environment URL until *Custom image* is chosen.
+   lights*, the custom environment URL until *Custom image* is chosen, and the model-viewer or Babylon.js settings
+   while the other library is selected (in a site's settings, the module's library).
 7. Each site can override the lighting settings in its own settings, under *3D viewer lighting*. A field left as
    *Use the module setting* (or blank) keeps the module's value. The light rig is overridden whole: a site uses the
    module's lights, each viewer's default lights, or a complete rig of its own.

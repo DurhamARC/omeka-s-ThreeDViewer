@@ -282,6 +282,35 @@ class ModuleTest extends TestCase
         $this->assertSame('#00ff00', $form->get('threedviewer_light_2_color')->getValue());
         $this->assertSame('#ffffff', $form->get('threedviewer_light_1_color')->getValue(), 'Unset rig field: default');
         $this->assertEquals(45, $form->get('threedviewer_light_1_elevation')->getValue());
+        $this->assertSame(
+            'model-viewer',
+            $form->get('threedviewer_model_viewer_environment')->getAttribute('data-library'),
+            'Without a library setting: the default library'
+        );
+        $this->assertNull($form->get('threedviewer_light_brightness')->getAttribute('data-library'));
+    }
+
+    public function testSiteLibrarySettingsShowForTheModulesLibrary(): void
+    {
+        $this->settings->values['threedviewer_default_library'] = 'babylon';
+        $this->services->setAllowOverride(true);
+        $this->services->setService('Omeka\\Settings\\Site', new class {
+            public function get($key, $default = null)
+            {
+                return $default;
+            }
+        });
+        $form = new Form();
+
+        $this->module->addSiteSettings(new Event('form.add_elements', $form));
+
+        foreach (['threedviewer_model_viewer_shadow_intensity', 'threedviewer_babylon_environment'] as $name) {
+            $this->assertSame('babylon', $form->get($name)->getAttribute('data-library'), $name);
+        }
+        $this->assertSame(
+            '["model-viewer"]',
+            $form->get('threedviewer_model_viewer_shadow_intensity')->getAttribute('data-show-if-library')
+        );
     }
 
     public function testSiteLightingFieldsMayBeLeftEmpty(): void

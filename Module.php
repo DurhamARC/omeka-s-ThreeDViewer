@@ -80,12 +80,15 @@ class Module extends AbstractModule
      *
      * A blank field keeps the module's setting, except in the light rig: a site whose Lights is
      * Custom has its own whole rig, so its rig fields show the defaults rather than a blank.
+     * Settings of one library show only where it is the module's library.
      *
      * @param Event $event
      */
     public function addSiteSettings(Event $event)
     {
-        $siteSettings = $this->getServiceLocator()->get('Omeka\Settings\Site');
+        $services = $this->getServiceLocator();
+        $siteSettings = $services->get('Omeka\Settings\Site');
+        $library = $services->get('Omeka\Settings')->get('threedviewer_default_library', 'model-viewer');
         $form = $event->getTarget();
 
         $groups = $form->getOption('element_groups') ?: [];
@@ -102,6 +105,10 @@ class Module extends AbstractModule
                 $value = $defaults[$name];
             }
             $element->setOption('element_group', 'threedviewer');
+            // A site has no library of its own: its library settings show for the module's
+            if ($element->getAttribute('data-show-if-library')) {
+                $element->setAttribute('data-library', (string) $library);
+            }
             $element->setValue($value ?? '');
             $form->add($element);
         }

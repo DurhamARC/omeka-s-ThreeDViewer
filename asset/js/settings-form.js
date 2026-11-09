@@ -9,6 +9,10 @@
  * is shown, so conditions chain (a light's fields hide with the light count, which hides with the
  * rig). Elements are found by name, as these forms give them no id.
  *
+ * A field whose element has data-show-if-library (a JSON list) is shown only while the 3D viewer
+ * library is one of them: the library select's value in the module's form, or, in a site's settings,
+ * which have no library select, the module's library given in the element's data-library.
+ *
  * Only the display changes: hidden fields are still submitted, so their values are kept.
  */
 (function (root) {
@@ -18,12 +22,25 @@
         return form.querySelector('select[name="' + name + '"], input[name="' + name + '"]:not([type="hidden"])');
     }
 
+    const SELECTOR = '[data-show-if^="threedviewer_"], [name^="threedviewer_"][data-show-if-library]';
+
+    function library(form, element) {
+        const select = controller(form, 'threedviewer_default_library');
+        return select ? select.value : element.dataset.library;
+    }
+
     function applies(form, element) {
-        const master = controller(form, element.dataset.showIf);
+        if (element.dataset.showIfLibrary) {
+            const current = library(form, element);
+            if (current !== undefined && JSON.parse(element.dataset.showIfLibrary).indexOf(current) === -1) {
+                return false;
+            }
+        }
+        const master = element.dataset.showIf ? controller(form, element.dataset.showIf) : null;
         if (!master) {
             return true;
         }
-        if (master.dataset.showIf && !applies(form, master)) {
+        if (!applies(form, master)) {
             return false;
         }
         if (element.dataset.showIfValue) {
@@ -36,7 +53,7 @@
     }
 
     function applyShowIf(form) {
-        form.querySelectorAll('[data-show-if^="threedviewer_"]').forEach(function (element) {
+        form.querySelectorAll(SELECTOR).forEach(function (element) {
             const field = element.closest('.field');
             if (field) {
                 field.style.display = applies(form, element) ? '' : 'none';
@@ -46,7 +63,7 @@
 
     function install(document) {
         document.querySelectorAll('form').forEach(function (form) {
-            if (form.dataset.threedviewerShowIf || !form.querySelector('[data-show-if^="threedviewer_"]')) {
+            if (form.dataset.threedviewerShowIf || !form.querySelector(SELECTOR)) {
                 return;
             }
             form.dataset.threedviewerShowIf = 'true';

@@ -12,6 +12,9 @@ const source = readFileSync(join(__dirname, '../asset/js/settings-form.js'), 'ut
  * settings-form.js uses: querySelector(All) by name and by data-show-if, closest('.field'),
  * and the form's change listener.
  */
+const conditional = (e) => (e.dataset.showIf && e.dataset.showIf.startsWith('threedviewer_'))
+    || (e.dataset.showIfLibrary && e.name.startsWith('threedviewer_'));
+
 function makeForm(elements) {
     const listeners = {};
     const list = elements.map(function (spec) {
@@ -31,13 +34,13 @@ function makeForm(elements) {
         change: () => listeners.change(),
         querySelector(selector) {
             if (selector.startsWith('[data-show-if')) {
-                return list.find((e) => e.dataset.showIf && e.dataset.showIf.startsWith('threedviewer_')) || null;
+                return list.find(conditional) || null;
             }
             const name = /name="([^"]+)"/.exec(selector)[1];
             return list.find((e) => e.name === name && e.type !== 'hidden') || null;
         },
         querySelectorAll(selector) {
-            return list.filter((e) => e.dataset.showIf && e.dataset.showIf.startsWith('threedviewer_'));
+            return list.filter(conditional);
         }
     };
     return form;
@@ -98,4 +101,61 @@ test('A site keeping the module lights sees the environment settings; changes ap
     form.change();
     assert.equal(shown(form, 'threedviewer_light_3_color'), true);
     assert.equal(shown(form, 'threedviewer_model_viewer_environment'), false);
+});
+
+function libraryForm(library, lights) {
+    return makeForm([
+        { name: 'threedviewer_default_library', value: library },
+        { name: 'threedviewer_lights', value: lights },
+        { name: 'threedviewer_model_viewer_shadow_intensity', type: 'number', value: '0',
+            dataset: { showIfLibrary: '["model-viewer"]' } },
+        { name: 'threedviewer_model_viewer_environment', value: 'custom',
+            dataset: { showIf: 'threedviewer_lights', showIfValue: '["","default"]', showIfLibrary: '["model-viewer"]' } },
+        { name: 'threedviewer_model_viewer_environment_url', type: 'text', value: '',
+            dataset: { showIf: 'threedviewer_model_viewer_environment', showIfValue: '["custom"]',
+                showIfLibrary: '["model-viewer"]' } },
+        { name: 'threedviewer_babylon_camera', value: 'arcRotate', dataset: { showIfLibrary: '["babylon"]' } },
+        { name: 'threedviewer_babylon_lighting', value: 'hemispheric',
+            dataset: { showIf: 'threedviewer_lights', showIfValue: '["","default"]', showIfLibrary: '["babylon"]' } }
+    ]);
+}
+
+test('Babylon.js: the model-viewer settings are hidden, the Babylon.js ones shown', () => {
+    const form = libraryForm('babylon', 'default');
+    install(form);
+    assert.equal(shown(form, 'threedviewer_model_viewer_shadow_intensity'), false);
+    assert.equal(shown(form, 'threedviewer_model_viewer_environment'), false);
+    assert.equal(shown(form, 'threedviewer_model_viewer_environment_url'), false);
+    assert.equal(shown(form, 'threedviewer_babylon_camera'), true);
+    assert.equal(shown(form, 'threedviewer_babylon_lighting'), true);
+});
+
+test('model-viewer: the other way round; both conditions apply', () => {
+    const form = libraryForm('model-viewer', 'custom');
+    install(form);
+    assert.equal(shown(form, 'threedviewer_model_viewer_shadow_intensity'), true);
+    assert.equal(shown(form, 'threedviewer_model_viewer_environment'), false, 'Custom lights');
+    assert.equal(shown(form, 'threedviewer_babylon_camera'), false);
+    assert.equal(shown(form, 'threedviewer_babylon_lighting'), false);
+
+    form.elements[1].value = 'default';
+    form.elements[0].value = 'babylon';
+    form.change();
+    assert.equal(shown(form, 'threedviewer_babylon_lighting'), true, 'changes apply as made');
+    assert.equal(shown(form, 'threedviewer_model_viewer_shadow_intensity'), false);
+});
+
+test('A site, with no library select, follows the module library given on each element', () => {
+    const form = makeForm([
+        { name: 'threedviewer_model_viewer_shadow_intensity', type: 'number', value: '',
+            dataset: { showIfLibrary: '["model-viewer"]', library: 'babylon' } },
+        { name: 'threedviewer_babylon_environment', value: '',
+            dataset: { showIfLibrary: '["babylon"]', library: 'babylon' } },
+        { name: 'threedviewer_babylon_lighting', value: '',
+            dataset: { showIfLibrary: '["babylon"]' } }
+    ]);
+    install(form);
+    assert.equal(shown(form, 'threedviewer_model_viewer_shadow_intensity'), false);
+    assert.equal(shown(form, 'threedviewer_babylon_environment'), true);
+    assert.equal(shown(form, 'threedviewer_babylon_lighting'), true, 'no library known: shown');
 });

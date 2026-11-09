@@ -85,4 +85,30 @@ class ConfigFormTest extends TestCase
             $condition('threedviewer_model_viewer_environment_url')
         );
     }
+
+    public function testEachLibrarysSettingsShowOnlyForThatLibrary(): void
+    {
+        $this->form->init();
+        $library = function (string $name) {
+            return $this->form->get($name)->getAttribute('data-show-if-library');
+        };
+        foreach (['environment', 'environment_url', 'shadow_intensity', 'shadow_softness'] as $setting) {
+            $this->assertSame('["model-viewer"]', $library("threedviewer_model_viewer_{$setting}"), $setting);
+        }
+        foreach (['camera', 'lighting', 'environment', 'enable_xr', 'show_toolbar'] as $setting) {
+            $this->assertSame('["babylon"]', $library("threedviewer_babylon_{$setting}"), $setting);
+        }
+        foreach (['threedviewer_default_library', 'threedviewer_light_brightness', 'threedviewer_lights',
+            'threedviewer_light_1_color', 'threedviewer_lighting_controls', 'threedviewer_stl_up_axis'] as $name) {
+            $this->assertNull($library($name), "{$name} applies to both libraries");
+        }
+        $this->assertSame(
+            ['threedviewer_lights', '["","default"]'],
+            [
+                $this->form->get('threedviewer_babylon_lighting')->getAttribute('data-show-if'),
+                $this->form->get('threedviewer_babylon_lighting')->getAttribute('data-show-if-value'),
+            ],
+            'Both conditions apply'
+        );
+    }
 }
