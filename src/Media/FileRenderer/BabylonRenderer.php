@@ -80,7 +80,7 @@ class BabylonRenderer extends Abstract3DRenderer implements RendererInterface
             . 'data-show-grid="' . ($config['showGrid'] ? 'true' : 'false') . '" '
             . 'data-show-inspector="' . ($config['babylonShowToolbar'] ? 'true' : 'false') . '" '
             . 'data-loading-id="' . $view->escapeHtmlAttr($loadingId) . '"'
-            . $this->renderStlUpAxis($config, $media) . '></canvas>'
+            . $this->renderStlUpAxis($view, $config, $media) . '></canvas>'
             . '</div>';
     }
 }

@@ -173,6 +173,20 @@ class Viewer3DRendererTest extends TestCase
         ];
     }
 
+    public function testStlUpAxisIsEscapedForItsAttribute(): void
+    {
+        $renderer = new class extends \ThreeDViewer\Media\FileRenderer\StlRenderer {
+            public function attribute($view, array $config): string
+            {
+                return $this->renderStlUpAxis($view, $config);
+            }
+        };
+
+        $html = $renderer->attribute(new DummyPhpRenderer(), ['stlUpAxis' => '"><script>']);
+
+        $this->assertSame(' data-stl-up-axis="&quot;&gt;&lt;script&gt;"', $html);
+    }
+
     public function testModelViewerLightingScriptLoadsOnlyForViewerMode(): void
     {
         $media = new MediaRepresentation('https://example.org/files/original/model.glb', 'GLB', 'model.glb');
