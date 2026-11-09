@@ -106,6 +106,10 @@ class ModuleTest extends TestCase
         $this->settings->values['threedviewer_stl_up_axis'] = 'z';
         $this->module->getConfigForm($renderer);
         $this->assertSame('z', $renderer->form->get('threedviewer_stl_up_axis')->getValue());
+        // A value from elsewhere (an import, an old build) shows as what it does: current behaviour
+        $this->settings->values['threedviewer_stl_up_axis'] = 'Z';
+        $this->module->getConfigForm($renderer);
+        $this->assertSame('current', $renderer->form->get('threedviewer_stl_up_axis')->getValue());
     }
 
     public function testSubmissionPersistsSettings(): void

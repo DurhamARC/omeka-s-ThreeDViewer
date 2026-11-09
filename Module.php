@@ -97,6 +97,9 @@ class Module extends AbstractModule
         $form = new ConfigForm;
         $form->init();
         
+        // As saved and rendered: anything but Y or Z keeps current behaviour
+        $stlUpAxis = $settings->get('threedviewer_stl_up_axis', 'current');
+
         $form->setData([
             'threedviewer_default_library' => $settings->get('threedviewer_default_library', 'model-viewer'),
             'threedviewer_viewer_height' => $settings->get('threedviewer_viewer_height', 500),
@@ -105,7 +108,7 @@ class Module extends AbstractModule
             'threedviewer_background_color' => $settings->get('threedviewer_background_color', '#b5b5b5'),
             'threedviewer_show_grid' => $settings->get('threedviewer_show_grid', false) ? '1' : '0',
             'threedviewer_lighting_mode' => $settings->get('threedviewer_lighting_mode', 'model'),
-            'threedviewer_stl_up_axis' => $settings->get('threedviewer_stl_up_axis', 'current'),
+            'threedviewer_stl_up_axis' => in_array($stlUpAxis, ['y', 'z'], true) ? $stlUpAxis : 'current',
             'threedviewer_babylon_camera' => $settings->get('threedviewer_babylon_camera', 'arcRotate'),
             'threedviewer_babylon_lighting' => $settings->get('threedviewer_babylon_lighting', 'hemispheric'),
             'threedviewer_babylon_environment' => $settings->get('threedviewer_babylon_environment', 'none'),
