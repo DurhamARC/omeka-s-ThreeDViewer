@@ -10,6 +10,21 @@ use Omeka\Media\FileRenderer\RendererInterface;
 abstract class Abstract3DRenderer implements RendererInterface
 {
     /**
+     * The chosen STL up axis as an attribute, or nothing where each viewer keeps its own (the
+     * default) or the media is not an STL file.
+     */
+    protected function renderStlUpAxis(array $config, ?MediaRepresentation $media = null): string
+    {
+        if ($config['stlUpAxis'] === 'current') {
+            return '';
+        }
+        if ($media && strtolower(pathinfo($media->filename(), PATHINFO_EXTENSION)) !== 'stl') {
+            return '';
+        }
+        return ' data-stl-up-axis="' . $config['stlUpAxis'] . '"';
+    }
+
+    /**
      * Get configuration from global and site settings.
      */
     protected function getViewerConfig(PhpRenderer $view): array
@@ -21,6 +36,7 @@ abstract class Abstract3DRenderer implements RendererInterface
             'backgroundColor' => '#b5b5b5',
             'showGrid' => false,
             'lightingMode' => 'model',
+            'stlUpAxis' => 'current',
             'defaultLibrary' => 'model-viewer',
             'babylonCamera' => 'arcRotate',
             'babylonLighting' => 'hemispheric',
@@ -38,6 +54,10 @@ abstract class Abstract3DRenderer implements RendererInterface
             $default['showGrid'] = $setting('threedviewer_show_grid', $default['showGrid']);
             if ($setting('threedviewer_lighting_mode') === 'viewer') {
                 $default['lightingMode'] = 'viewer';
+            }
+            $stlUpAxis = $setting('threedviewer_stl_up_axis');
+            if (in_array($stlUpAxis, ['y', 'z'], true)) {
+                $default['stlUpAxis'] = $stlUpAxis;
             }
             $default['defaultLibrary'] = $setting('threedviewer_default_library', $default['defaultLibrary']);
             $default['babylonCamera'] = $setting('threedviewer_babylon_camera', $default['babylonCamera']);

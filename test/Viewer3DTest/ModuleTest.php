@@ -88,6 +88,26 @@ class ModuleTest extends TestCase
         $this->assertSame('viewer', $renderer->form->get('threedviewer_lighting_mode')->getValue());
     }
 
+    public function testFormShowsStlUpAxisKeepingCurrentBehaviourByDefault(): void
+    {
+        $renderer = new class extends PhpRenderer {
+            public $form;
+
+            public function formCollection($form, $wrap)
+            {
+                $this->form = $form;
+                return '';
+            }
+        };
+        $this->module->getConfigForm($renderer);
+        $element = $renderer->form->get('threedviewer_stl_up_axis');
+        $this->assertSame('current', $element->getValue());
+        $this->assertSame(['current', 'y', 'z'], array_keys($element->getValueOptions()));
+        $this->settings->values['threedviewer_stl_up_axis'] = 'z';
+        $this->module->getConfigForm($renderer);
+        $this->assertSame('z', $renderer->form->get('threedviewer_stl_up_axis')->getValue());
+    }
+
     public function testSubmissionPersistsSettings(): void
     {
         $post = ['threedviewer_viewer_height' => 640, 'threedviewer_foreground_color' => '#000000',
@@ -114,6 +134,7 @@ class ModuleTest extends TestCase
         $this->assertFalse($this->settings->values['threedviewer_show_grid']);
         $this->assertSame('arcRotate', $this->settings->values['threedviewer_babylon_camera']);
         $this->assertSame('model', $this->settings->values['threedviewer_lighting_mode']);
+        $this->assertSame('current', $this->settings->values['threedviewer_stl_up_axis']);
     }
 
     /**
@@ -132,6 +153,26 @@ class ModuleTest extends TestCase
             'viewer' => ['viewer', 'viewer'],
             'model' => ['model', 'model'],
             'unknown falls back to model' => ['<script>', 'model'],
+        ];
+    }
+
+    /**
+     * @dataProvider stlUpAxisSubmissions
+     */
+    public function testSubmissionPersistsOnlyKnownStlUpAxes(string $submitted, string $expected): void
+    {
+        $this->submit(['threedviewer_viewer_height' => 500, 'threedviewer_foreground_color' => '#000000',
+            'threedviewer_background_color' => '#ffffff', 'threedviewer_stl_up_axis' => $submitted]);
+        $this->assertSame($expected, $this->settings->values['threedviewer_stl_up_axis']);
+    }
+
+    public function stlUpAxisSubmissions(): array
+    {
+        return [
+            'Y up' => ['y', 'y'],
+            'Z up' => ['z', 'z'],
+            'current behaviour' => ['current', 'current'],
+            'unknown keeps current behaviour' => ['x', 'current'],
         ];
     }
 

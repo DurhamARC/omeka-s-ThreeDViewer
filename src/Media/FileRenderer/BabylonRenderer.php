@@ -79,7 +79,8 @@ class BabylonRenderer extends Abstract3DRenderer implements RendererInterface
             . 'data-enable-xr="' . ($config['babylonEnableXR'] ? 'true' : 'false') . '" '
             . 'data-show-grid="' . ($config['showGrid'] ? 'true' : 'false') . '" '
             . 'data-show-inspector="' . ($config['babylonShowToolbar'] ? 'true' : 'false') . '" '
-            . 'data-loading-id="' . $view->escapeHtmlAttr($loadingId) . '"></canvas>'
+            . 'data-loading-id="' . $view->escapeHtmlAttr($loadingId) . '"'
+            . $this->renderStlUpAxis($config, $media) . '></canvas>'
             . '</div>';
     }
 }

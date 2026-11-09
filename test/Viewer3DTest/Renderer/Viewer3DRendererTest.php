@@ -132,6 +132,47 @@ class Viewer3DRendererTest extends TestCase
         ];
     }
 
+    /**
+     * @dataProvider stlUpAxisCases
+     */
+    public function testStlUpAxisReachesOnlyStlViewers(?string $setting, ?string $expected): void
+    {
+        $viewers = [
+            ['mesh.stl', 'model-viewer', true],
+            ['mesh.stl', 'babylon', true],
+            ['model.glb', 'model-viewer', false],
+            ['model.glb', 'babylon', false],
+            ['model.gltf', 'babylon', false],
+        ];
+        foreach ($viewers as [$file, $library, $isStl]) {
+            $view = new DummyPhpRenderer();
+            $view->setSettings(array_filter([
+                'threedviewer_default_library' => $library,
+                'threedviewer_stl_up_axis' => $setting,
+            ]));
+            $media = new MediaRepresentation('https://example.org/files/original/' . $file, 'Sample', $file);
+
+            $html = $this->renderer->render($view, $media, []);
+
+            if ($expected !== null && $isStl) {
+                $this->assertStringContainsString('data-stl-up-axis="' . $expected . '"', $html, "$file, $library");
+            } else {
+                $this->assertStringNotContainsString('data-stl-up-axis', $html, "$file, $library");
+            }
+        }
+    }
+
+    public function stlUpAxisCases(): array
+    {
+        return [
+            'not set: each viewer keeps its own' => [null, null],
+            'current behaviour' => ['current', null],
+            'unknown keeps current behaviour' => ['x', null],
+            'Y up' => ['y', 'y'],
+            'Z up' => ['z', 'z'],
+        ];
+    }
+
     public function testModelViewerLightingScriptLoadsOnlyForViewerMode(): void
     {
         $media = new MediaRepresentation('https://example.org/files/original/model.glb', 'GLB', 'model.glb');

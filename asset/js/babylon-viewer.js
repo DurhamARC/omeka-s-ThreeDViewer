@@ -124,6 +124,28 @@
         });
     }
 
+    /**
+     * Turn an STL mesh so that the file's Y axis is up. The STL loader swaps Y and Z, which shows a
+     * Z-up file upright in this left-handed scene without mirroring it; turning (x, y, z) to
+     * (x, z, -y) then brings the file's Y up instead. A rotation, so the winding stays as it is.
+     * Not DO_NOT_ALTER_FILE_COORDINATES: unswapped right-handed coordinates would be mirrored here.
+     */
+    function turnStlFileYUp(mesh) {
+        [BABYLON.VertexBuffer.PositionKind, BABYLON.VertexBuffer.NormalKind].forEach(function (kind) {
+            const data = mesh.getVerticesData(kind);
+            if (!data) {
+                return;
+            }
+            for (let i = 0; i < data.length; i += 3) {
+                const y = data[i + 1];
+                data[i + 1] = data[i + 2];
+                data[i + 2] = -y;
+            }
+            mesh.setVerticesData(kind, data);
+        });
+        mesh.refreshBoundingInfo();
+    }
+
     function createEnvironment(scene, option) {
         if (option === 'studio') {
             return scene.createDefaultEnvironment({ enableGroundShadow: true, createSkybox: true });
@@ -188,6 +210,13 @@
         }
 
         const { rootUrl, fileName } = splitUrl(canvas.dataset.modelUrl);
+        // Set only for STL files whose up axis is chosen
+        const stlUpAxis = canvas.dataset.stlUpAxis;
+
+        // The turn below relies on the STL loader's default swap of Y and Z: make sure of it
+        if (stlUpAxis && BABYLON.STLFileLoader) {
+            BABYLON.STLFileLoader.DO_NOT_ALTER_FILE_COORDINATES = false;
+        }
 
         BABYLON.SceneLoader.Append(rootUrl, fileName, scene, function () {
             if (loadingElement) {
@@ -197,6 +226,11 @@
             const meshes = scene.meshes.filter(function (mesh) {
                 return mesh && mesh.name !== '__root__';
             });
+
+            // Before anything measures the model: framing, the environment's ground and skybox
+            if (stlUpAxis === 'y') {
+                meshes.forEach(turnStlFileYUp);
+            }
 
             if (meshes.length) {
                 const minMax = BABYLON.Mesh.MinMax(meshes);

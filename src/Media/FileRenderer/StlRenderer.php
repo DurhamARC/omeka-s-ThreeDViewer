@@ -53,7 +53,8 @@ class StlRenderer extends Abstract3DRenderer implements RendererInterface
              . '" data-background-color="' . $view->escapeHtmlAttr($config['backgroundColor'])
              . '" data-auto-rotate="' . ($config['autoRotate'] ? 'true' : 'false')
              . '" data-show-grid="' . ($config['showGrid'] ? 'true' : 'false')
-             . '" data-lighting-mode="' . $config['lightingMode'] . '">'
+             . '" data-lighting-mode="' . $config['lightingMode'] . '"'
+             . $this->renderStlUpAxis($config) . '>'
              . 'Loading STL model...</div>'
              . '</div>';
     }

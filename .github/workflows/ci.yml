@@ -62,6 +62,9 @@ jobs:
       - name: Test STL viewer container
         run: node --test test/stl-viewer.test.cjs
 
+      - name: Test STL up axis
+        run: node --test test/stl-up-axis.test.cjs
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:
