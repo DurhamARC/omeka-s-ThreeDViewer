@@ -85,16 +85,25 @@
     }
 
     /**
-     * Babylon.js's PBR materials (glTF) divide a directional light's intensity by pi (Lambert's
-     * 1/pi), but not a hemispheric light's. Measured on a matte sphere: a rig light of a given
-     * strength lights as brightly as in the other viewers only when multiplied by pi.
+     * How much a rig light's strength is multiplied by for the model's materials. Babylon.js's PBR
+     * materials (glTF) divide a directional light's intensity by pi (Lambert's 1/pi), but not a
+     * hemispheric light's; measured on a matte sphere, a rig light lights as brightly as in the other
+     * viewers only when multiplied by pi. Its standard material, which STL and OBJ models get, does
+     * not divide, so there the strength is used as it is. Any material but the standard one counts
+     * as PBR, as glTF's are.
      */
-    const RIG_LIGHT_SCALE = Math.PI;
+    function rigLightScale(scene, meshes) {
+        const standard = meshes.length > 0 && meshes.every(function (mesh) {
+            const material = mesh.material || scene.defaultMaterial;
+            return !material || material instanceof BABYLON.StandardMaterial;
+        });
+        return standard ? 1 : Math.PI;
+    }
 
     /**
      * The light rig: a hemispheric light with the same sky and ground colour, which lights evenly
-     * from every side, for the ambient light, and a directional light per rig light, aimed by
-     * aimRig() once the camera is framed.
+     * from every side, for the ambient light, and a directional light per rig light, aimed and
+     * scaled for the model's materials by aimRig() once the model has loaded.
      */
     function createRig(scene, rig, brightness) {
         const ambientColour = BABYLON.Color3.FromHexString(rig.ambient.color);
@@ -108,7 +117,7 @@
             const light = new BABYLON.DirectionalLight('rigLight' + (i + 1), new BABYLON.Vector3(0, 0, -1), scene);
             light.diffuse = BABYLON.Color3.FromHexString(settings.color);
             light.specular = light.diffuse.clone();
-            light.intensity = settings.strength * brightness * RIG_LIGHT_SCALE;
+            light.intensity = settings.strength * brightness;
             return { light: light, azimuth: settings.azimuth, elevation: settings.elevation };
         });
     }
@@ -123,12 +132,14 @@
     }
 
     /**
-     * Point each rig light from its direction relative to the camera's default view.
+     * Point each rig light from its direction relative to the camera's default view, and scale its
+     * strength for the model's materials.
      */
-    function aimRig(scene, camera, rigLights) {
+    function aimRig(scene, camera, rigLights, scale) {
         const back = viewSide(camera);
         const leftHanded = !scene.useRightHandedSystem;
         rigLights.forEach(function (entry) {
+            entry.light.intensity *= scale;
             const d = window.ThreeDViewerLighting.direction(entry.azimuth, entry.elevation, back, leftHanded);
             // A directional light's direction is the way its light travels: towards the model
             entry.light.direction = new BABYLON.Vector3(-d.x, -d.y, -d.z);
@@ -163,7 +174,7 @@
      * image-based lighting, if any, turns with the lights; its skybox and ground stay in the scene.
      * With a rig the environment gives no light, so the controls do not show it.
      */
-    function setUpLighting(canvas, scene, camera, presetLights, rig) {
+    function setUpLighting(canvas, scene, camera, presetLights, rig, rigScale) {
         const lighting = window.ThreeDViewerLighting;
         const target = camera.getTarget ? camera.getTarget().clone() : BABYLON.Vector3.Zero();
 
@@ -182,7 +193,7 @@
                 rigNumber++;
                 id = 'light' + rigNumber;
                 kind = 'light';
-                entry.scale = RIG_LIGHT_SCALE;
+                entry.scale = rigScale;
                 from = light.direction.negate();
             } else if (light instanceof BABYLON.HemisphericLight) {
                 id = 'sky' + lights.length;
@@ -418,6 +429,9 @@
                 }
             }
 
+            // Before the environment's skybox and ground: only the model's own materials count
+            const rigScale = rigLightScale(scene, meshes);
+
             // Only now: the environment helper sizes its skybox and ground from the scene once, when it
             // is created. Created before the model loaded, it fell back to a 20-unit skybox and a
             // 15-unit ground at the origin, inside models measured in millimetres.
@@ -427,12 +441,12 @@
             scene.environmentIntensity = rig ? 0 : brightness;
 
             if (rigLights) {
-                aimRig(scene, camera, rigLights);
+                aimRig(scene, camera, rigLights, rigScale);
             }
 
             // After framing, so the first view is lit exactly as in the default mode
             if (lighting) {
-                setUpLighting(canvas, scene, camera, presetLights, rig);
+                setUpLighting(canvas, scene, camera, presetLights, rig, rigScale);
             }
 
             if (canvas.dataset.showInspector === 'true' && scene.debugLayer) {

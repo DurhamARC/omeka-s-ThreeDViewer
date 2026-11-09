@@ -309,3 +309,98 @@ test('controller: without controls it only keeps the lighting fixed; without tur
     assert.equal(fixed.ready().detail.mode, 'model');
     assert.equal(fixed.frame(), null);
 });
+
+/**
+ * A rig's light strengths in the Babylon.js viewer once a model has loaded, one mesh per material:
+ * 'default' (none of its own, so the scene's default standard material, as STL meshes get),
+ * 'standard' or 'pbr'. Run with lighting-rig.js against just enough of Babylon.js.
+ */
+function babylonRigStrengths(materials) {
+    class Vector3 {
+        constructor(x = 0, y = 0, z = 0) { Object.assign(this, { x, y, z }); }
+        static Zero() { return new Vector3(); }
+        static Center() { return new Vector3(); }
+        static TransformNormal(v) { return v.clone(); }
+        clone() { return new Vector3(this.x, this.y, this.z); }
+        negate() { return new Vector3(-this.x, -this.y, -this.z); }
+        subtract() { return new Vector3(); }
+    }
+    const matrix = { multiply: () => matrix, clone: () => matrix, getRotationMatrix: () => matrix };
+    const colour = { r: 1, g: 1, b: 1, clone: () => colour, toHexString: () => '#FFFFFF' };
+    class Light {
+        constructor(name, vector, scene) {
+            this.name = name;
+            this.direction = vector;
+            this.diffuse = colour;
+            scene.lights.push(this);
+        }
+    }
+    class StandardMaterial {}
+    class PBRMaterial {}
+    class Camera {
+        constructor() { this.alpha = Math.PI / 2; }
+        setTarget() {}
+        attachControl() {}
+        getTarget() { return new Vector3(); }
+        getBehaviorByName() { return null; }
+        getViewMatrix() { return matrix; }
+        getWorldMatrix() { return matrix; }
+    }
+    Camera.prototype.inputs = { attached: { mousewheel: {} } };
+    const make = { default: () => undefined, standard: () => new StandardMaterial(), pbr: () => new PBRMaterial() };
+    const meshes = materials.map((material, i) => ({ name: 'mesh' + i, material: make[material]() }));
+    const BABYLON = {
+        Engine: class { runRenderLoop() {} },
+        Scene: class {
+            constructor() {
+                this.lights = [];
+                this.meshes = [];
+                this.defaultMaterial = new StandardMaterial();
+                this.onBeforeRenderObservable = { add: () => ({}), remove() {} };
+            }
+        },
+        Color3: { FromHexString: () => colour, Black: () => colour },
+        Color4: class {},
+        ArcRotateCamera: Camera,
+        UniversalCamera: class {},
+        HemisphericLight: class extends Light {},
+        DirectionalLight: class extends Light {},
+        PointLight: class extends Light {},
+        StandardMaterial,
+        PBRMaterial,
+        Vector3,
+        Matrix: { Identity: () => matrix, Invert: () => matrix },
+        Mesh: { MinMax: () => ({ min: new Vector3(), max: new Vector3() }) },
+        BoundingInfo: class { constructor() { this.boundingSphere = { radius: 1 }; } },
+        SceneLoader: {
+            Append(root, file, scene, onSuccess) { scene.meshes.push(...meshes); onSuccess(scene); }
+        }
+    };
+    const rig = { ambient: { color: '#ffffff', strength: 0.6 },
+        lights: [{ color: '#ffffff', strength: 0.8, azimuth: 0, elevation: 45 }] };
+    let scene;
+    const canvas = { dataset: { modelUrl: '/files/model', camera: 'arcRotate', environment: 'none',
+        lights: JSON.stringify(rig), lightBrightness: '2' } };
+    const window = { BABYLON, addEventListener() {} };
+    const context = { BABYLON, window, console, CustomEvent: class {},
+        document: { readyState: 'complete', querySelectorAll: () => [canvas], getElementById: () => null } };
+    runInNewContext(source, context);
+    const Scene = BABYLON.Scene;
+    BABYLON.Scene = class extends Scene { constructor() { super(); scene = this; } };
+    runInNewContext(readFileSync(join(__dirname, '../asset/js/babylon-viewer.js'), 'utf8'), context);
+    return Object.fromEntries(scene.lights.map((light) => [light.name, light.intensity]));
+}
+
+test('Babylon.js rig: lights scaled by pi for PBR materials only, as standard materials do not divide', () => {
+    // Brightness 2: the ambient light 0.6 and light 1 0.8 become 1.2 and 1.6 before any scaling
+    for (const [name, materials, scale] of [
+        ['an STL model, on the default material', ['default'], 1],
+        ['standard materials', ['standard', 'default'], 1],
+        ['a glTF model, with PBR materials', ['pbr'], Math.PI],
+        ['standard and PBR materials together', ['standard', 'pbr'], Math.PI]
+    ]) {
+        const strengths = babylonRigStrengths(materials);
+        close(strengths.rigAmbient, 1.2, `${name}: the ambient light is never scaled`);
+        close(strengths.rigLight1, 1.6 * scale, `${name}: light 1`);
+    }
+});
