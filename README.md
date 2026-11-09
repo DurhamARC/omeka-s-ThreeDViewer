@@ -68,10 +68,10 @@ See general end user documentation for [Installing a module](http://omeka.org/s/
      and the strength and softness of the shadow under the model.
    Settings that don't apply are hidden: the light rig until *Lights* is *Custom*, each light beyond *Number of
    lights*, and the custom environment URL until *Custom image* is chosen.
-6. Each site can override the lighting settings in its own settings, under *3D viewer lighting*. A field left as
+7. Each site can override the lighting settings in its own settings, under *3D viewer lighting*. A field left as
    *Use the module setting* (or blank) keeps the module's value. The light rig is overridden whole: a site uses the
    module's lights, each viewer's default lights, or a complete rig of its own.
-7. **Show lighting controls on viewers** (off by default) adds a ☀ button to every viewer. It opens a panel listing the
+8. **Show lighting controls on viewers** (off by default) adds a ☀ button to every viewer. It opens a panel listing the
    scene's lights, each with its colour, strength, direction and height, as the light allows, plus *Fixed to the
    model / Fixed to the viewer* and *Reset*. Changes affect only that viewer and are never stored: reloading the page
    restores the configured lighting. Each site can show or hide the controls whatever the module setting.
