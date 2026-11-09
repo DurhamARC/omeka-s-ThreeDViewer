@@ -18,7 +18,10 @@ const conditional = (e) => (e.dataset.showIf && e.dataset.showIf.startsWith('thr
 function makeForm(elements) {
     const listeners = {};
     const list = elements.map(function (spec) {
-        const field = { style: { display: '' } };
+        const field = { style: { display: '' }, parentNode: spec.group || null, classList: { contains: (c) => c === 'field' } };
+        if (spec.group) {
+            spec.group.children.push(field);
+        }
         return Object.assign({
             tag: spec.tag || 'select',
             type: spec.type || '',
@@ -158,4 +161,32 @@ test('A site, with no library select, follows the module library given on each e
     assert.equal(shown(form, 'threedviewer_model_viewer_shadow_intensity'), false);
     assert.equal(shown(form, 'threedviewer_babylon_environment'), true);
     assert.equal(shown(form, 'threedviewer_babylon_lighting'), true, 'no library known: shown');
+});
+
+const group = () => ({ tagName: 'FIELDSET', children: [{ classList: { contains: () => false }, style: {} }], style: { display: '' } });
+
+test('A group is hidden while all its fields are, and shown again with one', () => {
+    const rig = group();
+    const light3 = group();
+    const form = makeForm([
+        { name: 'threedviewer_lights', value: 'default' },
+        { name: 'threedviewer_light_count', value: '2', group: rig,
+            dataset: { showIf: 'threedviewer_lights', showIfValue: '["custom"]' } },
+        { name: 'threedviewer_light_3_color', type: 'color', value: '#ffffff', group: light3,
+            dataset: { showIf: 'threedviewer_light_count', showIfMin: '3' } },
+        { name: 'threedviewer_light_3_strength', type: 'number', value: '1', group: light3,
+            dataset: { showIf: 'threedviewer_light_count', showIfMin: '3' } }
+    ]);
+    install(form);
+    assert.equal(rig.style.display, 'none');
+    assert.equal(light3.style.display, 'none');
+
+    form.elements[0].value = 'custom';
+    form.change();
+    assert.equal(rig.style.display, '');
+    assert.equal(light3.style.display, 'none', 'two lights');
+
+    form.elements[1].value = '3';
+    form.change();
+    assert.equal(light3.style.display, '');
 });

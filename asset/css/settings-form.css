@@ -1,0 +1,19 @@
+/*
+ * The custom light rig's groups in the module's and a site's settings, set in under the Lights
+ * setting they depend on. Without :has() they show as the other groups do.
+ */
+
+fieldset:has(> .field [name="threedviewer_light_count"]),
+fieldset:has(> .field [name^="threedviewer_light_"][name$="_azimuth"]) {
+    box-sizing: border-box;
+    width: calc(100% - 24px);
+    min-width: 0;
+    margin-left: 24px;
+    padding-left: 16px;
+    border-left: 3px solid #ccc;
+}
+
+fieldset:has(> .field [name="threedviewer_light_count"]) > legend,
+fieldset:has(> .field [name^="threedviewer_light_"][name$="_azimuth"]) > legend {
+    font-size: 1.1em;
+}

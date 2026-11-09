@@ -25,6 +25,7 @@ class SiteSettingsFieldset extends Fieldset
         $controls = new Element\Select('threedviewer_lighting_controls');
         $controls->setOptions([
             'label' => 'Show lighting controls on viewers', // @translate
+            'element_group' => $module->get('threedviewer_lighting_controls')->getOption('element_group'),
             'value_options' => [
                 '' => 'Use the module setting', // @translate
                 '1' => 'Show', // @translate

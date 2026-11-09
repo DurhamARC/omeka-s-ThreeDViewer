@@ -73,6 +73,34 @@ class ModuleTest extends TestCase
         $this->assertSame('babylon', $renderer->form->get('threedviewer_default_library')->getValue());
     }
 
+    public function testFormIsRenderedInItsGroupsWhereOmekaCan(): void
+    {
+        $renderer = new class extends PhpRenderer {
+            public $form;
+
+            public function getHelperPluginManager()
+            {
+                return new class {
+                    public function has($name)
+                    {
+                        return $name === 'formCollectionElementGroups';
+                    }
+                };
+            }
+
+            public function formCollectionElementGroups($form, $wrap)
+            {
+                $this->form = $form;
+                return 'grouped form';
+            }
+        };
+        $this->assertSame('grouped form', $this->module->getConfigForm($renderer));
+        $this->assertSame(
+            'threedviewer_light_2',
+            $renderer->form->get('threedviewer_light_2_color')->getOption('element_group')
+        );
+    }
+
     public function testFormShowsLightingModeDefaultingToModel(): void
     {
         $renderer = new class extends PhpRenderer {
@@ -270,13 +298,26 @@ class ModuleTest extends TestCase
 
         $this->module->addSiteSettings(new Event('form.add_elements', $form));
 
+        $groups = $form->getOption('element_groups');
         $this->assertSame(
-            ['general' => 'General', 'threedviewer' => '3D viewer lighting'],
-            $form->getOption('element_groups')
+            [
+                'general', 'threedviewer', 'threedviewer_custom_lights', 'threedviewer_light_1',
+                'threedviewer_light_2', 'threedviewer_light_3', 'threedviewer_light_4',
+                'threedviewer_model_viewer', 'threedviewer_babylon',
+            ],
+            array_keys($groups)
         );
+        $this->assertSame('3D viewer lighting', $groups['threedviewer'], 'The first group keeps its name');
+        $this->assertSame('3D viewer custom light 3', $groups['threedviewer_light_3']);
         foreach (Lighting::keys() as $name) {
-            $this->assertSame('threedviewer', $form->get($name)->getOption('element_group'), $name);
+            $this->assertArrayHasKey($form->get($name)->getOption('element_group'), $groups, $name);
         }
+        $this->assertSame('threedviewer', $form->get('threedviewer_lighting_controls')->getOption('element_group'));
+        $this->assertSame('threedviewer_light_2', $form->get('threedviewer_light_2_color')->getOption('element_group'));
+        $this->assertSame(
+            'threedviewer_babylon',
+            $form->get('threedviewer_babylon_environment')->getOption('element_group')
+        );
         $this->assertEquals(1.5, $form->get('threedviewer_light_brightness')->getValue());
         $this->assertSame('', $form->get('threedviewer_lighting_mode')->getValue(), 'Unset: the module setting');
         $this->assertSame('#00ff00', $form->get('threedviewer_light_2_color')->getValue());
@@ -360,5 +401,7 @@ class ModuleTest extends TestCase
         $view = new PhpRenderer();
         $this->module->addSiteSettingsScript(new Event('view.edit.before', $view));
         $this->assertContains('/modules/ThreeDViewer/js/settings-form.js', $view->headScript()->files);
+        $this->assertContains('/modules/ThreeDViewer/css/settings-form.css', $view->headLink()->files);
+        $this->assertContains('/modules/ThreeDViewer/css/settings-form.css', $renderer->headLink()->files);
     }
 }

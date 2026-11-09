@@ -9,32 +9,19 @@ use ThreeDViewer\Settings\Lighting;
 
 class ConfigForm extends Form
 {
-    /** Labels of each light's elements, written out so that each one can be translated */
-    private const LIGHT_LABELS = [
-        1 => [
-            'Light 1 colour', // @translate
-            'Light 1 strength', // @translate
-            'Light 1 direction (degrees round)', // @translate
-            'Light 1 height (degrees up)', // @translate
-        ],
-        2 => [
-            'Light 2 colour', // @translate
-            'Light 2 strength', // @translate
-            'Light 2 direction (degrees round)', // @translate
-            'Light 2 height (degrees up)', // @translate
-        ],
-        3 => [
-            'Light 3 colour', // @translate
-            'Light 3 strength', // @translate
-            'Light 3 direction (degrees round)', // @translate
-            'Light 3 height (degrees up)', // @translate
-        ],
-        4 => [
-            'Light 4 colour', // @translate
-            'Light 4 strength', // @translate
-            'Light 4 direction (degrees round)', // @translate
-            'Light 4 height (degrees up)', // @translate
-        ],
+    /**
+     * Groups of settings, each shown in its own fieldset (Omeka's element groups, which keep the
+     * elements' names). The general settings come first, in no group, as they always have.
+     */
+    public const ELEMENT_GROUPS = [
+        'threedviewer_lighting' => 'Lighting for every viewer', // @translate
+        'threedviewer_custom_lights' => 'Custom lights', // @translate
+        'threedviewer_light_1' => 'Custom light 1', // @translate
+        'threedviewer_light_2' => 'Custom light 2', // @translate
+        'threedviewer_light_3' => 'Custom light 3', // @translate
+        'threedviewer_light_4' => 'Custom light 4', // @translate
+        'threedviewer_model_viewer' => 'model-viewer (GLB and glTF)', // @translate
+        'threedviewer_babylon' => 'Babylon.js', // @translate
     ];
 
     /**
@@ -228,6 +215,51 @@ class ConfigForm extends Form
         ]);
 
         $this->addConditions();
+        $this->addGroups();
+    }
+
+    /**
+     * Put each setting but the general ones in its group.
+     */
+    private function addGroups(): void
+    {
+        $groups = [
+            'threedviewer_lighting' => [
+                'threedviewer_lighting_mode',
+                'threedviewer_light_brightness',
+                'threedviewer_lighting_controls',
+                'threedviewer_lights',
+            ],
+            'threedviewer_custom_lights' => [
+                'threedviewer_light_ambient_color',
+                'threedviewer_light_ambient_strength',
+                'threedviewer_light_count',
+            ],
+            'threedviewer_model_viewer' => [
+                'threedviewer_model_viewer_environment',
+                'threedviewer_model_viewer_environment_url',
+                'threedviewer_model_viewer_shadow_intensity',
+                'threedviewer_model_viewer_shadow_softness',
+            ],
+            'threedviewer_babylon' => [
+                'threedviewer_babylon_camera',
+                'threedviewer_babylon_lighting',
+                'threedviewer_babylon_environment',
+                'threedviewer_babylon_enable_xr',
+                'threedviewer_babylon_show_toolbar',
+            ],
+        ];
+        for ($n = 1; $n <= Lighting::MAX_LIGHTS; $n++) {
+            foreach (['color', 'strength', 'azimuth', 'elevation'] as $property) {
+                $groups["threedviewer_light_{$n}"][] = "threedviewer_light_{$n}_{$property}";
+            }
+        }
+        foreach ($groups as $group => $names) {
+            foreach ($names as $name) {
+                $this->get($name)->setOption('element_group', $group);
+            }
+        }
+        $this->setOption('element_groups', self::ELEMENT_GROUPS);
     }
 
     /**
@@ -351,11 +383,14 @@ class ConfigForm extends Form
     }
 
     /**
-     * Colour, strength and direction of one light of the rig.
+     * Colour, strength and direction of one light of the rig. Its group's legend names the light.
      */
     private function addLightElements(int $n): void
     {
-        [$colour, $strength, $azimuth, $elevation] = self::LIGHT_LABELS[$n];
+        $colour = 'Colour'; // @translate
+        $strength = 'Strength'; // @translate
+        $azimuth = 'Direction (degrees round)'; // @translate
+        $elevation = 'Height (degrees up)'; // @translate
 
         $this->add([
             'name' => "threedviewer_light_{$n}_color",

@@ -67,16 +67,18 @@ class Module extends AbstractModule
 
     /**
      * The script that shows each lighting setting only where it applies (see ConfigForm's
-     * data-show-if conditions).
+     * data-show-if conditions), and the styles that set the light rig's groups in under Lights.
      */
     private function appendSettingsFormScript(PhpRenderer $view): void
     {
         $view->headScript()->appendFile($view->assetUrl('js/settings-form.js', 'ThreeDViewer'));
+        $view->headLink()->appendStylesheet($view->assetUrl('css/settings-form.css', 'ThreeDViewer'));
     }
 
     /**
-     * Add the lighting elements to a site's settings form, in their own group. They are added one
-     * by one, because Omeka saves each top-level element of this form as its own site setting.
+     * Add the lighting elements to a site's settings form, in the module form's groups. They are
+     * added one by one, because Omeka saves each top-level element of this form as its own site
+     * setting.
      *
      * A blank field keeps the module's setting, except in the light rig: a site whose Lights is
      * Custom has its own whole rig, so its rig fields show the defaults rather than a blank.
@@ -91,8 +93,25 @@ class Module extends AbstractModule
         $library = $services->get('Omeka\Settings')->get('threedviewer_default_library', 'model-viewer');
         $form = $event->getTarget();
 
+        // The module form's groups, named for the site's settings among other modules'. The first
+        // keeps the name it has always had.
+        $siteGroups = [
+            'threedviewer_lighting' => ['threedviewer', '3D viewer lighting'], // @translate
+            'threedviewer_custom_lights' => ['threedviewer_custom_lights', '3D viewer custom lights'], // @translate
+            'threedviewer_light_1' => ['threedviewer_light_1', '3D viewer custom light 1'], // @translate
+            'threedviewer_light_2' => ['threedviewer_light_2', '3D viewer custom light 2'], // @translate
+            'threedviewer_light_3' => ['threedviewer_light_3', '3D viewer custom light 3'], // @translate
+            'threedviewer_light_4' => ['threedviewer_light_4', '3D viewer custom light 4'], // @translate
+            'threedviewer_model_viewer' => [
+                'threedviewer_model_viewer',
+                '3D viewer model-viewer lighting', // @translate
+            ],
+            'threedviewer_babylon' => ['threedviewer_babylon', '3D viewer Babylon.js lighting'], // @translate
+        ];
         $groups = $form->getOption('element_groups') ?: [];
-        $groups['threedviewer'] = '3D viewer lighting'; // @translate
+        foreach ($siteGroups as [$id, $label]) {
+            $groups[$id] = $label;
+        }
         $form->setOption('element_groups', $groups);
 
         $defaults = Lighting::defaults();
@@ -104,7 +123,7 @@ class Module extends AbstractModule
             if (($value === null || $value === '') && in_array($name, $rig, true)) {
                 $value = $defaults[$name];
             }
-            $element->setOption('element_group', 'threedviewer');
+            $element->setOption('element_group', $siteGroups[$element->getOption('element_group')][0]);
             // A site has no library of its own: its library settings show for the module's
             if ($element->getAttribute('data-show-if-library')) {
                 $element->setAttribute('data-library', (string) $library);
@@ -207,7 +226,13 @@ class Module extends AbstractModule
         }
         $form->setData($data);
         $this->appendSettingsFormScript($renderer);
-        
+
+        // Each group in its fieldset, where Omeka can (formCollectionElementGroups, as the site
+        // settings use); otherwise every element in one list, as before
+        $helpers = method_exists($renderer, 'getHelperPluginManager') ? $renderer->getHelperPluginManager() : null;
+        if ($helpers && $helpers->has('formCollectionElementGroups')) {
+            return $renderer->formCollectionElementGroups($form, false);
+        }
         return $renderer->formCollection($form, false);
     }
     
