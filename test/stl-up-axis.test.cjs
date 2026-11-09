@@ -93,6 +93,8 @@ function babylonCorners(binary, upAxis) {
         normal: swap(Array.from(geometry.attributes.normal.array)) };
     const mesh = { name: 'stlmesh', getVerticesData: (kind) => data[kind],
         setVerticesData: (kind, values) => { data[kind] = values; }, refreshBoundingInfo() {} };
+    // Already in the scene when the model arrives, as WebXR's helpers can be: never to be turned
+    const helper = { name: 'helper', getVerticesData: () => { throw new Error('the helper was turned'); } };
     class Vector3 {
         static Zero() { return new Vector3(); }
         static Center() { return new Vector3(); }
@@ -114,7 +116,10 @@ function babylonCorners(binary, upAxis) {
         BoundingInfo: class { constructor() { this.boundingSphere = { radius: 1 }; } },
         VertexBuffer: { PositionKind: 'position', NormalKind: 'normal' },
         STLFileLoader,
-        SceneLoader: { Append(root, file, scene, onSuccess) { scene.meshes.push(mesh); onSuccess(); } }
+        SceneLoader: {
+            Append(root, file, scene, onSuccess) { scene.meshes.push(helper, mesh); onSuccess(scene); },
+            ImportMesh(names, root, file, scene, onSuccess) { scene.meshes.push(helper, mesh); onSuccess([mesh]); }
+        }
     };
     const canvas = { dataset: { modelUrl: '/files/t.stl', camera: 'arcRotate', environment: 'none',
         stlUpAxis: upAxis } };

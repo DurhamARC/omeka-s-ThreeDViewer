@@ -218,19 +218,20 @@
             BABYLON.STLFileLoader.DO_NOT_ALTER_FILE_COORDINATES = false;
         }
 
-        BABYLON.SceneLoader.Append(rootUrl, fileName, scene, function () {
+        // loadedMeshes: the model's own meshes, where the loader reports them
+        const onLoaded = function (loadedMeshes) {
             if (loadingElement) {
                 loadingElement.classList.add('hidden');
+            }
+
+            // Before anything measures the model: framing, the environment's ground and skybox
+            if (stlUpAxis === 'y') {
+                loadedMeshes.forEach(turnStlFileYUp);
             }
 
             const meshes = scene.meshes.filter(function (mesh) {
                 return mesh && mesh.name !== '__root__';
             });
-
-            // Before anything measures the model: framing, the environment's ground and skybox
-            if (stlUpAxis === 'y') {
-                meshes.forEach(turnStlFileYUp);
-            }
 
             if (meshes.length) {
                 const minMax = BABYLON.Mesh.MinMax(meshes);
@@ -273,13 +274,25 @@
                     console.warn('Unable to show Babylon.js inspector.', error);
                 });
             }
-        }, null, function (_, message, exception) {
+        };
+        const onError = function (_, message, exception) {
             if (loadingElement) {
                 loadingElement.textContent = 'Unable to load 3D model';
                 loadingElement.classList.remove('hidden');
             }
             console.error('Babylon.js loader error:', message, exception);
-        });
+        };
+
+        if (stlUpAxis) {
+            // An STL file holds only meshes, so importing them is the same as appending the file,
+            // and the import lists exactly the model's meshes: the turn leaves alone any others
+            // already in the scene, such as WebXR's helpers
+            BABYLON.SceneLoader.ImportMesh('', rootUrl, fileName, scene, onLoaded, null, onError);
+        } else {
+            BABYLON.SceneLoader.Append(rootUrl, fileName, scene, function () {
+                onLoaded([]);
+            }, null, onError);
+        }
 
         if (canvas.dataset.enableXr === 'true' && navigator.xr) {
             scene.createDefaultXRExperienceAsync({ disableTeleportation: false }).catch(function (error) {
