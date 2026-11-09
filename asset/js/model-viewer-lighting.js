@@ -227,6 +227,12 @@
       }
     }
 
+    /** The camera's orientation from its orbit, Ry(theta) Rx(phi): it turns +y to the camera's side */
+    function orientation() {
+      const orbit = viewer.getCameraOrbit();
+      return new Quaternion().setFromEuler(new Euler(orbit.phi, orbit.theta, 0, 'YXZ'));
+    }
+
     let listener = null;
     lighting.controller(viewer, {
       lights: lights,
@@ -243,13 +249,10 @@
         then: function (first, second) {
           return second.clone().multiply(first);
         },
-        camera: function () {
-          return viewer.getCameraOrbit();
-        },
-        since: function (orbit) {
-          const now = viewer.getCameraOrbit();
-          // The camera's turn, as the environment must follow it: Ry(theta) Rx(phi)
-          return new Quaternion().setFromEuler(new Euler(now.phi - orbit.phi, now.theta - orbit.theta, 0, 'YXZ'));
+        camera: orientation,
+        since: function (start) {
+          // The camera's turn since then, from wherever round the model it was
+          return orientation().multiply(start.clone().invert());
         }
       } : null,
       follow: function (update) {

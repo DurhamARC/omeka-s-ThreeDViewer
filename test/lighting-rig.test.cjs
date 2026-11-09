@@ -404,3 +404,69 @@ test('Babylon.js rig: lights scaled by pi for PBR materials only, as standard ma
         close(strengths.rigLight1, 1.6 * scale, `${name}: light 1`);
     }
 });
+
+/**
+ * model-viewer's environment turn, as a quaternion, once the camera has orbited from `start` to
+ * `orbit` with the lighting fixed to the viewer and then moved to `end`: the turn since the switch.
+ * Runs model-viewer-lighting.js with lighting-rig.js and the vendored three.js's Quaternion and
+ * Euler (r120, which names invert() inverse()), with model-viewer's own environment, untouched.
+ */
+function modelViewerTurn(start, orbit, end) {
+    const three = { window: {}, self: {}, console };
+    three.self = three.window;
+    runInNewContext(readFileSync(join(__dirname, '../asset/vendor/three/three.min.js'), 'utf8'), three);
+    const THREE = three.window.THREE || three.THREE;
+    THREE.Quaternion.prototype.invert = THREE.Quaternion.prototype.inverse;
+    const scene = { environmentRotation: new THREE.Euler(), quaternion: new THREE.Quaternion(), queueRender() {} };
+    const listeners = {};
+    let camera = start;
+    const viewer = {
+        dataset: { lightingMode: 'model', lightingControls: 'true' },
+        style: { setProperty() {} },
+        exposure: 1,
+        loaded: true,
+        getCameraOrbit: () => ({ theta: camera.theta * Math.PI / 180, phi: camera.phi * Math.PI / 180 }),
+        registerEffectComposer: (composer) => composer.setMainScene(scene),
+        unregisterEffectComposer() {},
+        addEventListener: (type, listener) => { listeners[type] = listener; },
+        removeEventListener() {},
+        dispatchEvent() {}
+    };
+    class CustomEvent { constructor(type, init) { this.type = type; this.detail = init.detail; } }
+    const window = { customElements: { whenDefined: () => ({ then: (go) => go() }) } };
+    const context = { window, console, CustomEvent, customElements: window.customElements,
+        document: { readyState: 'complete', querySelectorAll: () => [viewer] } };
+    runInNewContext(source, context);
+    runInNewContext(readFileSync(join(__dirname, '../asset/js/model-viewer-lighting.js'), 'utf8'), context);
+
+    // The environment's turn, from the angles it is sampled through: R_XYZ(-e) is the turn's inverse
+    const turn = () => new THREE.Quaternion().setFromEuler(new THREE.Euler(
+        -scene.environmentRotation.x, -scene.environmentRotation.y, -scene.environmentRotation.z, 'XYZ')).inverse();
+    camera = orbit;
+    listeners['threedviewer:lighting']({ detail: { mode: 'viewer', lights: [] } });
+    const atSwitch = turn();
+    camera = end;
+    listeners['camera-change']();
+    return { THREE, since: turn().multiply(atSwitch.inverse()) };
+}
+
+test('model-viewer: fixed to the viewer after orbiting, the lighting turns as the camera does', () => {
+    // Orbited a quarter round, then fixed to the viewer and dragged upwards: the camera tilts about
+    // the axis across its view, so the environment must too, not about the world's x axis
+    for (const [orbit, end] of [
+        [{ theta: 90, phi: 75 }, { theta: 90, phi: 55 }],
+        [{ theta: -40, phi: 80 }, { theta: 30, phi: 100 }],
+        [{ theta: 0, phi: 75 }, { theta: 60, phi: 60 }]
+    ]) {
+        const { THREE, since } = modelViewerTurn({ theta: 0, phi: 75 }, orbit, end);
+        const side = (o) => new THREE.Vector3(0, 1, 0).applyQuaternion(new THREE.Quaternion().setFromEuler(
+            new THREE.Euler(o.phi * Math.PI / 180, o.theta * Math.PI / 180, 0, 'YXZ')));
+        const expected = new THREE.Quaternion().setFromEuler(new THREE.Euler(end.phi * Math.PI / 180,
+            end.theta * Math.PI / 180, 0, 'YXZ')).multiply(new THREE.Quaternion().setFromEuler(
+            new THREE.Euler(orbit.phi * Math.PI / 180, orbit.theta * Math.PI / 180, 0, 'YXZ')).inverse());
+        const name = `from ${JSON.stringify(orbit)} to ${JSON.stringify(end)}`;
+        close(Math.abs(since.dot(expected)), 1, `${name}: the environment turns as the camera`);
+        const moved = side(orbit).applyQuaternion(since);
+        close(moved.distanceTo(side(end)), 0, `${name}: the camera's side at the switch turns to its side now`);
+    }
+});
