@@ -111,11 +111,14 @@ msgstr "Eje vertical de los STL"
 
 #: src/Form/ConfigForm.php:117
 msgid "Show STL models the same way up in both libraries. GLB is not affected."
-msgstr "Muestra los modelos STL con la misma orientación en ambas bibliotecas. No afecta a GLB."
+msgstr ""
+"Muestra los modelos STL con la misma orientación en ambas bibliotecas. No "
+"afecta a GLB."
 
 #: src/Form/ConfigForm.php:119
 msgid "Keep current behaviour (Three.js: Y up, Babylon.js: Z up)"
-msgstr "Mantener el comportamiento actual (Three.js: Y arriba, Babylon.js: Z arriba)"
+msgstr ""
+"Mantener el comportamiento actual (Three.js: Y arriba, Babylon.js: Z arriba)"
 
 #: src/Form/ConfigForm.php:120
 msgid "Y up"
