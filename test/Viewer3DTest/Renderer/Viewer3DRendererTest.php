@@ -176,15 +176,28 @@ class Viewer3DRendererTest extends TestCase
     public function testStlUpAxisIsEscapedForItsAttribute(): void
     {
         $renderer = new class extends \ThreeDViewer\Media\FileRenderer\StlRenderer {
-            public function attribute($view, array $config): string
+            public function attribute($view, array $config, $media): string
             {
-                return $this->renderStlUpAxis($view, $config);
+                return $this->renderStlUpAxis($view, $config, $media);
             }
         };
+        $stl = new MediaRepresentation('https://example.org/files/original/mesh.stl', 'STL', 'mesh.stl');
 
-        $html = $renderer->attribute(new DummyPhpRenderer(), ['stlUpAxis' => '"><script>']);
+        $html = $renderer->attribute(new DummyPhpRenderer(), ['stlUpAxis' => '"><script>'], $stl);
 
         $this->assertSame(' data-stl-up-axis="&quot;&gt;&lt;script&gt;"', $html);
+    }
+
+    public function testStlViewerAddsTheUpAxisOnlyForStlFiles(): void
+    {
+        $view = new DummyPhpRenderer();
+        $view->setSettings(['threedviewer_stl_up_axis' => 'z']);
+        $renderer = new \ThreeDViewer\Media\FileRenderer\StlRenderer();
+        $glb = new MediaRepresentation('https://example.org/files/original/model.glb', 'GLB', 'model.glb');
+        $stl = new MediaRepresentation('https://example.org/files/original/mesh.STL', 'STL', 'mesh.STL');
+
+        $this->assertStringNotContainsString('data-stl-up-axis', $renderer->render($view, $glb, []));
+        $this->assertStringContainsString('data-stl-up-axis="z"', $renderer->render($view, $stl, []));
     }
 
     public function testModelViewerLightingScriptLoadsOnlyForViewerMode(): void
