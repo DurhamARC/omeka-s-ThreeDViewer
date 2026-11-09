@@ -213,7 +213,9 @@
         // Set only for STL files whose up axis is chosen
         const stlUpAxis = canvas.dataset.stlUpAxis;
 
-        // The turn below relies on the STL loader's default swap of Y and Z: make sure of it
+        // Keep the STL loader swapping Y and Z, as the turn in onLoaded relies on. The flag is a
+        // double negative: false, its default, swaps; true keeps the file's coordinates, which this
+        // left-handed scene would show mirrored. It is page-wide, so it holds for any STL loaded here.
         if (stlUpAxis && BABYLON.STLFileLoader) {
             BABYLON.STLFileLoader.DO_NOT_ALTER_FILE_COORDINATES = false;
         }
