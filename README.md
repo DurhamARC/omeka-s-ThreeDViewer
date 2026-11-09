@@ -69,15 +69,15 @@ See general end user documentation for [Installing a module](http://omeka.org/s/
    Settings that don't apply are hidden: the light rig until *Lights* is *Custom*, each light beyond *Number of
    lights*, the custom environment URL until *Custom image* is chosen, and the model-viewer or Babylon.js settings
    while the other library is selected (in a site's settings, the module's library).
-7. Each site can override the lighting settings in its own settings, under *3D viewer lighting*. A field left as
-   *Use the module setting* (or blank) keeps the module's value. The light rig is overridden whole: a site uses the
-   module's lights, each viewer's default lights, or a complete rig of its own.
-8. **Show lighting controls on viewers** (off by default) adds a ☀ button to every viewer. It opens a panel listing the
+7. **Show lighting controls on viewers** (off by default) adds a ☀ button to every viewer. It opens a panel listing the
    scene's lights, each with its colour, strength, direction and height, as the light allows, plus *Fixed to the
    model / Fixed to the viewer* and *Reset*. Changes affect only that viewer and are never stored: reloading the page
    restores the configured lighting. Each site can show or hide the controls whatever the module setting.
    Unlike the Babylon.js toolbar, which embeds the Babylon.js Inspector (a developer tool, for that viewer only), the
    panel shows only the lights, the same way in all three viewers.
+8. Each site can override the lighting settings in its own settings, under *3D viewer lighting*. A field left as
+   *Use the module setting* (or blank) keeps the module's value. The light rig is overridden whole: a site uses the
+   module's lights, each viewer's default lights, or a complete rig of its own.
 
 ## Local Development with Docker
 

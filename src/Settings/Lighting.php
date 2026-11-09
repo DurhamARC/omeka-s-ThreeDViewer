@@ -69,6 +69,7 @@ class Lighting
         $keys = [
             'threedviewer_lighting_mode',
             'threedviewer_light_brightness',
+            'threedviewer_lighting_controls',
             'threedviewer_lights',
             'threedviewer_light_ambient_color',
             'threedviewer_light_ambient_strength',
@@ -86,7 +87,6 @@ class Lighting
             'threedviewer_model_viewer_shadow_softness',
             'threedviewer_babylon_lighting',
             'threedviewer_babylon_environment',
-            'threedviewer_lighting_controls',
         ]);
     }
 

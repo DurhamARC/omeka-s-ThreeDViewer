@@ -28,8 +28,13 @@ class ConfigFormTest extends TestCase
         $names = array_keys($this->form->getElements());
         $mode = array_search('threedviewer_lighting_mode', $names, true);
         $this->assertSame(
-            ['threedviewer_light_brightness', 'threedviewer_lights', 'threedviewer_light_ambient_color'],
-            array_slice($names, $mode + 1, 3)
+            [
+                'threedviewer_light_brightness',
+                'threedviewer_lighting_controls',
+                'threedviewer_lights',
+                'threedviewer_light_ambient_color',
+            ],
+            array_slice($names, $mode + 1, 4)
         );
         foreach (['color', 'strength', 'azimuth', 'elevation'] as $property) {
             $this->assertTrue($this->form->has("threedviewer_light_4_{$property}"), $property);
@@ -46,16 +51,41 @@ class ConfigFormTest extends TestCase
         );
     }
 
-    public function testControlsAreACheckboxAfterTheLightingSettings(): void
+    public function testControlsAreACheckboxBeforeTheLightRig(): void
     {
         $this->form->init();
         $element = $this->form->get('threedviewer_lighting_controls');
         $this->assertInstanceOf(Element\Checkbox::class, $element);
         $names = array_keys($this->form->getElements());
         $this->assertSame(
-            array_search('threedviewer_model_viewer_shadow_softness', $names, true) + 1,
+            array_search('threedviewer_lights', $names, true) - 1,
             array_search('threedviewer_lighting_controls', $names, true)
         );
+    }
+
+    public function testSettingsRunFromGeneralToLightingToEachLibrary(): void
+    {
+        $this->form->init();
+        $names = array_keys($this->form->getElements());
+        $order = [
+            'threedviewer_default_library',
+            'threedviewer_show_grid',
+            'threedviewer_stl_up_axis',
+            'threedviewer_lighting_mode',
+            'threedviewer_light_4_elevation',
+            'threedviewer_model_viewer_environment',
+            'threedviewer_model_viewer_shadow_softness',
+            'threedviewer_babylon_camera',
+            'threedviewer_babylon_show_toolbar',
+        ];
+        $positions = array_map(function (string $name) use ($names) {
+            return array_search($name, $names, true);
+        }, $order);
+        $sorted = $positions;
+        sort($sorted);
+        $this->assertSame($sorted, $positions);
+        $this->assertSame(array_search('threedviewer_show_grid', $names, true) + 1, $positions[2]);
+        $this->assertSame($positions[2] + 1, $positions[3], 'Lighting follows the general settings');
     }
 
     public function testEachLightingSettingShowsOnlyWhereItApplies(): void

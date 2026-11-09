@@ -21,8 +21,23 @@ class SiteSettingsFieldset extends Fieldset
         $module = new ConfigForm();
         $module->init();
 
+        // A site shows or hides the controls whatever the module says, or keeps the module's choice
+        $controls = new Element\Select('threedviewer_lighting_controls');
+        $controls->setOptions([
+            'label' => 'Show lighting controls on viewers', // @translate
+            'value_options' => [
+                '' => 'Use the module setting', // @translate
+                '1' => 'Show', // @translate
+                '0' => 'Hide', // @translate
+            ],
+        ]);
+
         $rig = Lighting::rigKeys();
         foreach (Lighting::keys() as $name) {
+            if ($name === 'threedviewer_lighting_controls') {
+                $this->add($controls);
+                continue;
+            }
             $element = clone $module->get($name);
             // A site's own rig never inherits from the module's (its blank fields take the
             // defaults), so its light count keeps to numbers
@@ -34,21 +49,6 @@ class SiteSettingsFieldset extends Fieldset
             }
             $this->add($element);
         }
-
-        // A site shows or hides the controls whatever the module says, or keeps the module's choice
-        $this->remove('threedviewer_lighting_controls');
-        $this->add([
-            'name' => 'threedviewer_lighting_controls',
-            'type' => Element\Select::class,
-            'options' => [
-                'label' => 'Show lighting controls on viewers', // @translate
-                'value_options' => [
-                    '' => 'Use the module setting', // @translate
-                    '1' => 'Show', // @translate
-                    '0' => 'Hide', // @translate
-                ],
-            ],
-        ]);
 
         $this->get('threedviewer_lights')->setOption(
             'info',

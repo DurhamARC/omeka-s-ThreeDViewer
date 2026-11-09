@@ -126,6 +126,20 @@ class ConfigForm extends Form
         ]);
 
         $this->add([
+            'name' => 'threedviewer_stl_up_axis',
+            'type' => Element\Select::class,
+            'options' => [
+                'label' => 'STL up axis', // @translate
+                'info' => 'Show STL models the same way up in both libraries. GLB is not affected.', // @translate
+                'value_options' => [
+                    'current' => 'Keep current behaviour (Three.js: Y up, Babylon.js: Z up)', // @translate
+                    'y' => 'Y up', // @translate
+                    'z' => 'Z up (3D printing convention)', // @translate
+                ],
+            ],
+        ]);
+
+        $this->add([
             'name' => 'threedviewer_lighting_mode',
             'type' => Element\Select::class,
             'options' => [
@@ -139,20 +153,6 @@ class ConfigForm extends Form
         ]);
 
         $this->addLightingElements();
-
-        $this->add([
-            'name' => 'threedviewer_stl_up_axis',
-            'type' => Element\Select::class,
-            'options' => [
-                'label' => 'STL up axis', // @translate
-                'info' => 'Show STL models the same way up in both libraries. GLB is not affected.', // @translate
-                'value_options' => [
-                    'current' => 'Keep current behaviour (Three.js: Y up, Babylon.js: Z up)', // @translate
-                    'y' => 'Y up', // @translate
-                    'z' => 'Z up (3D printing convention)', // @translate
-                ],
-            ],
-        ]);
 
         $this->add([
             'name' => 'threedviewer_babylon_camera',
@@ -231,7 +231,8 @@ class ConfigForm extends Form
     }
 
     /**
-     * Brightness, the light rig and model-viewer's own lighting, after the Lighting select.
+     * Brightness, the visitor's controls, the light rig and model-viewer's own lighting, after the
+     * Lighting select: the settings for every viewer first, then the rig, then one library's.
      */
     private function addLightingElements(): void
     {
@@ -243,6 +244,18 @@ class ConfigForm extends Form
                 'info' => 'Multiplies the strength of every light. 1 leaves the lighting as it is.', // @translate
             ],
             'attributes' => ['min' => 0, 'max' => 3, 'step' => 0.05],
+        ]);
+
+        $this->add([
+            'name' => 'threedviewer_lighting_controls',
+            'type' => Element\Checkbox::class,
+            'options' => [
+                'label' => 'Show lighting controls on viewers', // @translate
+                'info' => 'Lets visitors change each light, until they reload the page.', // @translate
+                'use_hidden_element' => true,
+                'checked_value' => '1',
+                'unchecked_value' => '0',
+            ],
         ]);
 
         $this->add([
@@ -334,18 +347,6 @@ class ConfigForm extends Form
                 'label' => 'model-viewer shadow softness', // @translate
             ],
             'attributes' => ['min' => 0, 'max' => 1, 'step' => 0.05],
-        ]);
-
-        $this->add([
-            'name' => 'threedviewer_lighting_controls',
-            'type' => Element\Checkbox::class,
-            'options' => [
-                'label' => 'Show lighting controls on viewers', // @translate
-                'info' => 'Lets visitors change each light, until they reload the page.', // @translate
-                'use_hidden_element' => true,
-                'checked_value' => '1',
-                'unchecked_value' => '0',
-            ],
         ]);
     }
 
