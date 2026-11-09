@@ -110,6 +110,20 @@ class ConfigForm extends Form
         ]);
 
         $this->add([
+            'name' => 'threedviewer_stl_up_axis',
+            'type' => Element\Select::class,
+            'options' => [
+                'label' => 'STL up axis', // @translate
+                'info' => 'Show STL models the same way up in both libraries. GLB is not affected.', // @translate
+                'value_options' => [
+                    'current' => 'Keep current behaviour (Three.js: Y up, Babylon.js: Z up)', // @translate
+                    'y' => 'Y up', // @translate
+                    'z' => 'Z up (3D printing convention)', // @translate
+                ],
+            ],
+        ]);
+
+        $this->add([
             'name' => 'threedviewer_babylon_camera',
             'type' => Element\Select::class,
             'options' => [

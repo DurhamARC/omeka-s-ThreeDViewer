@@ -124,6 +124,28 @@
         });
     }
 
+    /**
+     * Turn an STL mesh so that the file's Y axis is up. The STL loader swaps Y and Z, which shows a
+     * Z-up file upright in this left-handed scene without mirroring it; turning (x, y, z) to
+     * (x, z, -y) then brings the file's Y up instead. A rotation, so the winding stays as it is.
+     * Not DO_NOT_ALTER_FILE_COORDINATES: unswapped right-handed coordinates would be mirrored here.
+     */
+    function turnStlFileYUp(mesh) {
+        [BABYLON.VertexBuffer.PositionKind, BABYLON.VertexBuffer.NormalKind].forEach(function (kind) {
+            const data = mesh.getVerticesData(kind);
+            if (!data) {
+                return;
+            }
+            for (let i = 0; i < data.length; i += 3) {
+                const y = data[i + 1];
+                data[i + 1] = data[i + 2];
+                data[i + 2] = -y;
+            }
+            mesh.setVerticesData(kind, data);
+        });
+        mesh.refreshBoundingInfo();
+    }
+
     function createEnvironment(scene, option) {
         if (option === 'studio') {
             return scene.createDefaultEnvironment({ enableGroundShadow: true, createSkybox: true });
@@ -188,10 +210,25 @@
         }
 
         const { rootUrl, fileName } = splitUrl(canvas.dataset.modelUrl);
+        // Set only for STL files whose up axis is chosen
+        const stlUpAxis = canvas.dataset.stlUpAxis;
 
-        BABYLON.SceneLoader.Append(rootUrl, fileName, scene, function () {
+        // Keep the STL loader swapping Y and Z, as the turn in onLoaded relies on. The flag is a
+        // double negative: false, its default, swaps; true keeps the file's coordinates, which this
+        // left-handed scene would show mirrored. It is page-wide, so it holds for any STL loaded here.
+        if (stlUpAxis && BABYLON.STLFileLoader) {
+            BABYLON.STLFileLoader.DO_NOT_ALTER_FILE_COORDINATES = false;
+        }
+
+        // loadedMeshes: the model's own meshes, where the loader reports them
+        const onLoaded = function (loadedMeshes) {
             if (loadingElement) {
                 loadingElement.classList.add('hidden');
+            }
+
+            // Before anything measures the model: framing, the environment's ground and skybox
+            if (stlUpAxis === 'y') {
+                loadedMeshes.forEach(turnStlFileYUp);
             }
 
             const meshes = scene.meshes.filter(function (mesh) {
@@ -239,13 +276,25 @@
                     console.warn('Unable to show Babylon.js inspector.', error);
                 });
             }
-        }, null, function (_, message, exception) {
+        };
+        const onError = function (_, message, exception) {
             if (loadingElement) {
                 loadingElement.textContent = 'Unable to load 3D model';
                 loadingElement.classList.remove('hidden');
             }
             console.error('Babylon.js loader error:', message, exception);
-        });
+        };
+
+        if (stlUpAxis) {
+            // An STL file holds only meshes, so importing them is the same as appending the file,
+            // and the import lists exactly the model's meshes: the turn leaves alone any others
+            // already in the scene, such as WebXR's helpers
+            BABYLON.SceneLoader.ImportMesh('', rootUrl, fileName, scene, onLoaded, null, onError);
+        } else {
+            BABYLON.SceneLoader.Append(rootUrl, fileName, scene, function () {
+                onLoaded([]);
+            }, null, onError);
+        }
 
         if (canvas.dataset.enableXr === 'true' && navigator.xr) {
             scene.createDefaultXRExperienceAsync({ disableTeleportation: false }).catch(function (error) {

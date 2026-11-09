@@ -23,7 +23,9 @@ function init(modelUrl, options = {}) {
     backgroundColor: options.backgroundColor || "#000000",
     autoRotate: options.autoRotate === "true" || false,
     showGrid: options.showGrid === "true" || false,
-    lightingMode: options.lightingMode === "viewer" ? "viewer" : "model"
+    lightingMode: options.lightingMode === "viewer" ? "viewer" : "model",
+    // STL files don't record which way is up: this viewer shows them Y up unless Z is chosen
+    upAxis: options.upAxis === "z" ? "z" : "y"
   };
   
   // Convert hex color strings to Three.js color objects
@@ -111,6 +113,12 @@ function init(modelUrl, options = {}) {
         shininess: 200
       });
       
+      // Turn a Z-up file so that its Z is up here. A rotation, (x, y, z) -> (x, z, -y), so the
+      // model is not mirrored; before the bounding box, so it is centred and framed as turned
+      if (config.upAxis === 'z') {
+        geometry.rotateX(-Math.PI / 2);
+      }
+
       // Create mesh from geometry and material
       const mesh = new THREE.Mesh(geometry, material);
 
@@ -295,6 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const autoRotate = loadingElement.dataset.autoRotate;
   const showGrid = loadingElement.dataset.showGrid;
   const lightingMode = loadingElement.dataset.lightingMode;
+  const upAxis = loadingElement.dataset.stlUpAxis;
   
   // Verify we have a valid URL
   if (!stlUrl) {
@@ -310,7 +319,8 @@ document.addEventListener('DOMContentLoaded', () => {
     backgroundColor: backgroundColor,
     autoRotate: autoRotate,
     showGrid: showGrid,
-    lightingMode: lightingMode
+    lightingMode: lightingMode,
+    upAxis: upAxis
   });
   
   // Start the animation loop
