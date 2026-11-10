@@ -260,9 +260,13 @@
       const turn = frame.clone();
       const environment = all[0];
       if (!rig && environment.direction) {
-        turn.multiply(new Quaternion().setFromEuler(
-          new Euler((90 - environment.elevation) * degrees, environment.azimuth * degrees, 0, 'YXZ')
-        ));
+        // Its azimuth is from the default view's side, which is theta round from +z
+        turn.multiply(new Quaternion().setFromEuler(new Euler(
+          (90 - environment.elevation) * degrees,
+          environment.azimuth * degrees + Math.atan2(side.x, side.z),
+          0,
+          'YXZ'
+        )));
       }
       // three.js samples the environment through the negated Euler angles: R_XYZ(-e) = turn^-1
       const inverse = new Euler().setFromQuaternion(turn.invert(), 'XYZ');

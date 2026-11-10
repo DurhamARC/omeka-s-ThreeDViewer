@@ -466,12 +466,11 @@ test('Babylon.js rig: lights scaled by pi for PBR materials only, as standard ma
 });
 
 /**
- * model-viewer's environment turn, as a quaternion, once the camera has orbited from `start` to
- * `orbit` with the lighting fixed to the viewer and then moved to `end`: the turn since the switch.
- * Runs model-viewer-lighting.js with lighting-rig.js and the vendored three.js's Quaternion and
- * Euler (r120, which names invert() inverse()), with model-viewer's own environment, untouched.
+ * model-viewer-lighting.js run with lighting-rig.js and the vendored three.js's Quaternion and
+ * Euler (r120, which names invert() inverse()), with model-viewer's own environment, its camera
+ * starting at `start`. turn() is the environment's turn now, as a quaternion.
  */
-function modelViewerTurn(start, orbit, end) {
+function modelViewerHarness(start) {
     const three = { window: {}, self: {}, console };
     three.self = three.window;
     runInNewContext(readFileSync(join(__dirname, '../asset/vendor/three/three.min.js'), 'utf8'), three);
@@ -503,10 +502,19 @@ function modelViewerTurn(start, orbit, end) {
     // The environment's turn, from the angles it is sampled through: R_XYZ(-e) is the turn's inverse
     const turn = () => new THREE.Quaternion().setFromEuler(new THREE.Euler(
         -scene.environmentRotation.x, -scene.environmentRotation.y, -scene.environmentRotation.z, 'XYZ')).inverse();
-    camera = orbit;
+    return { THREE, listeners, turn, move: (to) => { camera = to; } };
+}
+
+/**
+ * model-viewer's environment turn once the camera has orbited from `start` to `orbit` with the
+ * lighting fixed to the viewer and then moved to `end`: the turn since the switch.
+ */
+function modelViewerTurn(start, orbit, end) {
+    const { THREE, listeners, turn, move } = modelViewerHarness(start);
+    move(orbit);
     listeners['threedviewer:lighting']({ detail: { mode: 'viewer', lights: [] } });
     const atSwitch = turn();
-    camera = end;
+    move(end);
     listeners['camera-change']();
     return { THREE, since: turn().multiply(atSwitch.inverse()) };
 }
@@ -529,6 +537,20 @@ test('model-viewer: fixed to the viewer after orbiting, the lighting turns as th
         close(Math.abs(since.dot(expected)), 1, `${name}: the environment turns as the camera`);
         const moved = side(orbit).applyQuaternion(since);
         close(moved.distanceTo(side(end)), 0, `${name}: the camera's side at the switch turns to its side now`);
+    }
+});
+
+test('model-viewer: its own environment\'s light comes from the direction set, wherever the camera starts', () => {
+    for (const theta of [0, 50, -120]) {
+        const { THREE, listeners, turn } = modelViewerHarness({ theta, phi: 75 });
+        // Straight at the camera's side and 30 degrees up, as seen from the default view
+        listeners['threedviewer:lighting']({ detail: { mode: 'model', lights: [
+            { id: 'environment', kind: 'environment', strength: 1, azimuth: 0, elevation: 30 }
+        ] } });
+        const overhead = new THREE.Vector3(0, 1, 0).applyQuaternion(turn());
+        const t = theta * Math.PI / 180, e = Math.PI / 6;
+        const expected = new THREE.Vector3(Math.sin(t) * Math.cos(e), Math.sin(e), Math.cos(t) * Math.cos(e));
+        close(overhead.distanceTo(expected), 0, `camera starting at theta ${theta}`);
     }
 });
 
