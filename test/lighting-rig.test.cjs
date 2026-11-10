@@ -297,12 +297,36 @@ test('controller: Reset restores the lights and frame, in the starting mode', ()
     assert.equal(viewer.frame(), 50);
 
     viewer.camera = 70;
+    const reports = viewer.turned().length;
     viewer.change({ reset: true, mode: 'viewer', lights: initial });
     viewer.follow();
-    assert.equal(viewer.frame(), 0, 'Back to the default view');
+    assert.equal(viewer.frame(), 70, 'Where the untouched lights would be: turned with the camera since the start');
     assert.deepEqual(viewer.placed.lights[1].direction, { x: 1, y: 2, z: -1 });
     assert.equal(viewer.placed.lights[1].color, '#ffffff');
     assert.equal(viewer.set.slice(-2)[1].color, '#ffffff', 'Each light set again');
+    const after = viewer.turned().slice(reports).flat().filter((light) => light.id === 'key').pop();
+    assert.ok(!after || (after.azimuth === initial[1].azimuth && after.elevation === initial[1].elevation),
+        'The sliders show the starting directions');
+    viewer.camera = 100;
+    viewer.follow();
+    assert.equal(viewer.frame(), 100, 'And keeps following the camera');
+});
+
+test('controller: Reset fixed to the model puts the lights back in the scene, wherever the camera is', () => {
+    const viewer = fakeViewer({ controls: true, lights: PRESET, mode: 'model' });
+    const initial = lightsOf(viewer);
+    viewer.camera = 50;
+    viewer.change({ mode: 'viewer', lights: initial });
+    viewer.camera = 80;
+    viewer.follow();
+    assert.equal(viewer.frame(), 30);
+    viewer.change({ reset: true, mode: 'model', lights: initial });
+    assert.equal(viewer.frame(), 0, 'Back where they started in the scene');
+    viewer.camera = 120;
+    viewer.follow && viewer.follow();
+    assert.equal(viewer.frame(), 0, 'And staying there');
+    const shown = viewer.turned().flat().filter((light) => light.id === 'key').pop();
+    assert.equal(shown.azimuth, ((initial[1].azimuth - 120 + 540) % 360) - 180, 'Seen from the camera, turned by its 120 degrees');
 });
 
 test('controller: without controls it only keeps the lighting fixed; without turns, to the model', () => {

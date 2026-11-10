@@ -368,8 +368,17 @@
 
         onChange(element, function (detail) {
             if (detail.reset) {
-                setMode('model');
+                // As the page started, wherever the camera is now: fixed to the model, the lights
+                // where they started in the scene; fixed to the viewer, where they started in the
+                // view, so turned with the camera since then, as they would have been untouched
                 frame = turns ? turns.identity() : null;
+                attached = turns && detail.mode === 'viewer'
+                    ? { camera: start, frame: turns.identity() }
+                    : null;
+                mode = attached ? 'viewer' : 'model';
+                if (turns) {
+                    follow();
+                }
                 lights = initial.map(copyLight);
                 showing = initial.map(shown);
                 lights.forEach(options.set);
@@ -378,7 +387,7 @@
             (detail.lights || []).forEach(merge);
             place();
             if (turns) {
-                // After Reset, the lights are back where they started, wherever the camera is now
+                // After Reset fixed to the model, the camera may see the lights from elsewhere now
                 report();
             }
         });
