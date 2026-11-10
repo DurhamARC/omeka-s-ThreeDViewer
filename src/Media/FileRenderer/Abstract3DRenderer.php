@@ -10,6 +10,16 @@ use ThreeDViewer\Settings\Lighting;
 
 abstract class Abstract3DRenderer implements RendererInterface
 {
+    /** The viewer controls' icons, drawn in a 24-unit square with the current text colour */
+    private const ICONS = [
+        'fullscreen' => '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+        'fullscreen-exit' => '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>',
+        'help' => '<circle cx="12" cy="12" r="9"/>'
+            . '<path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.4M12 17.1v.1"/>',
+        'sun' => '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4'
+            . 'M2.5 12h2M19.5 12h2M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+    ];
+
     /**
      * How often each media has been rendered on each page (view)
      *
@@ -184,7 +194,8 @@ abstract class Abstract3DRenderer implements RendererInterface
         foreach ($names as $kind => $name) {
             $html .= ' data-name-' . $kind . '="' . $view->escapeHtmlAttr($view->translate($name)) . '"';
         }
-        $html .= '><summary aria-label="' . $lighting . '" title="' . $lighting . '">☀</summary>'
+        $html .= '><summary aria-label="' . $lighting . '" title="' . $lighting . '">'
+            . $this->icon('sun') . '</summary>'
             . '<div class="threedviewer-lighting-panel">'
             . '<div class="threedviewer-lighting-lights"></div>'
             . '<fieldset class="threedviewer-lighting-mode"><legend>' . $lighting . '</legend>'
@@ -209,6 +220,16 @@ abstract class Abstract3DRenderer implements RendererInterface
             $html .= '</label>';
         }
         return $html . '</fieldset></template></div></details>';
+    }
+
+    /**
+     * An icon for a viewer control. It is decoration: the control carries the label.
+     */
+    protected function icon(string $name, string $class = ''): string
+    {
+        return '<svg class="threedviewer-icon' . ($class === '' ? '' : ' ' . $class) . '" aria-hidden="true"'
+            . ' focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+            . ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' . self::ICONS[$name] . '</svg>';
     }
 
     /**

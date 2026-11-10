@@ -35,9 +35,9 @@
             if (!button) {
                 return;
             }
+            // The button holds both icons; the stylesheet shows the one for the stage's state
             const expanded = document.fullscreenElement === stage;
             const label = expanded ? button.dataset.exitLabel : button.dataset.enterLabel;
-            button.textContent = expanded ? '×' : '⛶';
             button.setAttribute('aria-label', label);
             button.title = label;
         });

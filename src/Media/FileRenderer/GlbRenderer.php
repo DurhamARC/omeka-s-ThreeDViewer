@@ -54,10 +54,14 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
              . '<div class="threedviewer-control threedviewer-fullscreen">'
              . '<button type="button" aria-label="' . $enterFullscreen . '" '
              . 'title="' . $enterFullscreen . '" data-enter-label="' . $enterFullscreen . '" '
-             . 'data-exit-label="' . $exitFullscreen . '">⛶</button></div>'
+             . 'data-exit-label="' . $exitFullscreen . '">'
+             . $this->icon('fullscreen', 'threedviewer-icon-enter')
+             . $this->icon('fullscreen-exit', 'threedviewer-icon-exit') . '</button></div>'
              . $this->renderLightingControls($view, $config, $viewerId)
              . '<details class="threedviewer-control threedviewer-help">'
-             . '<summary aria-label="' . $helpLabel . '">?</summary><p>' . $helpText . '</p></details>'
+             . '<summary aria-label="' . $helpLabel . '" title="' . $helpLabel . '">'
+             . $this->icon('help') . '</summary>'
+             . '<p>' . $helpText . '</p></details>'
              . '</div>';
     }
 

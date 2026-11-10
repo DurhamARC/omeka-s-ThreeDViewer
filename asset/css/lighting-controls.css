@@ -13,26 +13,51 @@
     left: 12px;
     bottom: 12px;
     z-index: 101;
+    box-sizing: border-box;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 36px;
-    min-height: 36px;
-    border: 1px solid #555;
-    border-radius: 4px;
-    background: #fff;
-    color: #111;
+    width: 42px;
+    height: 42px;
+    margin: 0;
+    padding: 0;
+    border: 3px solid rgba(255, 255, 255, 0.96);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.96);
+    color: #1d2329;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.22);
+    line-height: 1;
     cursor: pointer;
     list-style: none;
+}
+
+.threedviewer-lighting summary:hover {
+    background: #ececec;
+}
+
+.threedviewer-lighting summary:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+}
+
+.threedviewer-lighting[open] summary {
+    background: #1d2329;
+    border-color: #1d2329;
+    color: #fff;
 }
 
 .threedviewer-lighting summary::-webkit-details-marker {
     display: none;
 }
 
-/* After the fullscreen button, where the viewer has one */
+.threedviewer-lighting .threedviewer-icon {
+    display: block;
+    flex: none;
+}
+
+/* After the fullscreen control, where the viewer has one */
 .threedviewer-model-stage .threedviewer-lighting summary {
-    left: 56px;
+    left: 62px;
 }
 
 .threedviewer-lighting-panel {
