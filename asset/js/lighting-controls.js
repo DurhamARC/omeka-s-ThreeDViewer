@@ -2,6 +2,7 @@
  * Lighting controls: a panel on each viewer whose page shows them, opened from a button in the
  * viewer's toolbar, listing the viewer's lights. Each light is a row with its colour and strength,
  * which opens onto its direction and height (and ground colour) where it has them, one light at a time.
+ * Escape closes the panel, as does a click (not a drag) anywhere outside it.
  *
  * The viewer reports its lights (threedviewer:lighting-ready, see lighting-rig.js); the panel
  * builds a row per light from its <template> and sends the whole state back with every change
@@ -164,6 +165,31 @@
         toggle.addEventListener('click', function () {
             open(panel.hidden);
         });
+
+        // Escape, from the panel or its button, closes the panel and returns to the button
+        function escape(event) {
+            if (event.key === 'Escape' && !panel.hidden) {
+                event.preventDefault();
+                open(false);
+                toggle.focus();
+            }
+        }
+        panel.addEventListener('keydown', escape);
+        toggle.addEventListener('keydown', escape);
+
+        // A click anywhere else, on the model or the page, closes it; a drag does not, so that the
+        // model can be turned under the lights with the panel open
+        let down = null;
+        document.addEventListener('pointerdown', function (event) {
+            const inside = panel.contains(event.target) || toggle.contains(event.target);
+            down = panel.hidden || inside ? null : { x: event.clientX, y: event.clientY };
+        }, true);
+        document.addEventListener('pointerup', function (event) {
+            if (down && Math.abs(event.clientX - down.x) + Math.abs(event.clientY - down.y) < 6) {
+                open(false);
+            }
+            down = null;
+        }, true);
         if (close) {
             close.addEventListener('click', function () {
                 open(false);

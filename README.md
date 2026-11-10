@@ -74,8 +74,9 @@ See general end user documentation for [Installing a module](http://omeka.org/s/
 7. **Show lighting controls on viewers** (off by default) adds a *Lighting* button (a sun) to every viewer's toolbar.
    It opens a panel with a row for each of the scene's lights, showing its colour and strength; the row opens onto
    the light's direction and height, as the light allows. The panel also has *Fixed to the model / Fixed to the
-   viewer*, *Reset* and *Close*. Changes affect only that viewer and are never stored: reloading the page
-   restores the configured lighting. Each site can show or hide the controls whatever the module setting.
+   viewer*, *Reset* and *Close*; Escape or a click outside it also closes it, while dragging the model leaves it open.
+   Changes affect only that viewer and are never stored: reloading the page restores the configured lighting. Each
+   site can show or hide the controls whatever the module setting.
    Unlike the Babylon.js toolbar, which embeds the Babylon.js Inspector (a developer tool, for that viewer only), the
    panel shows only the lights, the same way in all three viewers.
 8. Each site can override the lighting settings in its own settings, under *3D viewer lighting* and the groups after
