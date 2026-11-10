@@ -1,6 +1,6 @@
 /*
- * The custom light rig's groups in the module's settings, set in under the Lights setting they
- * depend on. Without :has() they show as the other groups do.
+ * The custom light rig's groups in the module's and a site's settings, set in under the Lights
+ * setting they depend on. Without :has() they show as the other groups do.
  */
 
 fieldset:has(> .field [name="threedviewer_light_count"]),

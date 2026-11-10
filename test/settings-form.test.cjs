@@ -67,7 +67,7 @@ function rigForm(lights, count, environment) {
         { name: 'threedviewer_light_3_color', type: 'color', value: '#ffffff',
             dataset: { showIf: 'threedviewer_light_count', showIfMin: '3' } },
         { name: 'threedviewer_model_viewer_environment', value: environment,
-            dataset: { showIf: 'threedviewer_lights', showIfValue: '["default"]' } },
+            dataset: { showIf: 'threedviewer_lights', showIfValue: '["","default"]' } },
         { name: 'threedviewer_model_viewer_environment_url', type: 'text', value: '',
             dataset: { showIf: 'threedviewer_model_viewer_environment', showIfValue: '["custom"]' } }
     ]);
@@ -92,8 +92,8 @@ test('Custom: lights up to the count, and the environment settings hidden', () =
     assert.equal(shown(form, 'threedviewer_model_viewer_environment_url'), false, 'chained');
 });
 
-test('Changes apply as they are made', () => {
-    const form = rigForm('default', '1', 'neutral');
+test('A site keeping the module lights sees the environment settings; changes apply as made', () => {
+    const form = rigForm('', '1', 'neutral');
     install(form);
     assert.equal(shown(form, 'threedviewer_model_viewer_environment'), true);
     assert.equal(shown(form, 'threedviewer_model_viewer_environment_url'), false);
@@ -146,6 +146,21 @@ test('model-viewer: the other way round; both conditions apply', () => {
     form.change();
     assert.equal(shown(form, 'threedviewer_babylon_lighting'), true, 'changes apply as made');
     assert.equal(shown(form, 'threedviewer_model_viewer_shadow_intensity'), false);
+});
+
+test('A site, with no library select, follows the module library given on each element', () => {
+    const form = makeForm([
+        { name: 'threedviewer_model_viewer_shadow_intensity', type: 'number', value: '',
+            dataset: { showIfLibrary: '["model-viewer"]', library: 'babylon' } },
+        { name: 'threedviewer_babylon_environment', value: '',
+            dataset: { showIfLibrary: '["babylon"]', library: 'babylon' } },
+        { name: 'threedviewer_babylon_lighting', value: '',
+            dataset: { showIfLibrary: '["babylon"]' } }
+    ]);
+    install(form);
+    assert.equal(shown(form, 'threedviewer_model_viewer_shadow_intensity'), false);
+    assert.equal(shown(form, 'threedviewer_babylon_environment'), true);
+    assert.equal(shown(form, 'threedviewer_babylon_lighting'), true, 'no library known: shown');
 });
 
 const group = () => ({ tagName: 'FIELDSET', children: [{ classList: { contains: () => false }, style: {} }], style: { display: '' } });

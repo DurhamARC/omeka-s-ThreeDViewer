@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-10 16:33+0000\n"
+"POT-Creation-Date: 2026-11-10 16:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,12 +30,44 @@ msgid "3D viewer controls"
 msgstr ""
 
 #: src/Media/FileRenderer/GlbRenderer.php:37
-#: src/Media/FileRenderer/Abstract3DRenderer.php:159
+#: src/Media/FileRenderer/Abstract3DRenderer.php:177
 msgid "Use mouse to rotate, zoom and pan"
 msgstr ""
 
 #: src/Media/FileRenderer/BabylonRenderer.php:70
 msgid "Loading 3D model..."
+msgstr ""
+
+#: Module.php:99
+msgid "3D viewer lighting"
+msgstr ""
+
+#: Module.php:100
+msgid "3D viewer custom lights"
+msgstr ""
+
+#: Module.php:101
+msgid "3D viewer custom light 1"
+msgstr ""
+
+#: Module.php:102
+msgid "3D viewer custom light 2"
+msgstr ""
+
+#: Module.php:103
+msgid "3D viewer custom light 3"
+msgstr ""
+
+#: Module.php:104
+msgid "3D viewer custom light 4"
+msgstr ""
+
+#: Module.php:107
+msgid "3D viewer model-viewer lighting"
+msgstr ""
+
+#: Module.php:109
+msgid "3D viewer Babylon.js lighting"
 msgstr ""
 
 #: src/Media/FileRenderer/StlRenderer.php:42
@@ -44,6 +76,18 @@ msgstr ""
 
 #: src/Media/FileRenderer/BabylonRenderer.php:57
 msgid "Babylon.js Viewer"
+msgstr ""
+
+#: src/Form/SiteSettingsFieldset.php:31
+msgid "Use the module’s lights"
+msgstr ""
+
+#: src/Form/SiteSettingsFieldset.php:32
+msgid "Use the module setting"
+msgstr ""
+
+#: src/Form/SiteSettingsFieldset.php:40
+msgid "Custom lights below replace the module’s whole light rig on this site."
 msgstr ""
 
 #: src/Form/ConfigForm.php:17

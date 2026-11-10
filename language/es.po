@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ThreeDViewer\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-10 16:33+0000\n"
+"POT-Creation-Date: 2026-11-10 16:31+0000\n"
 "PO-Revision-Date: 2023-11-15 12:00+0000\n"
 "Last-Translator: Área de Tecnología Educativa <ate@gobiernodecanarias.org>\n"
 "Language-Team: Spanish\n"
@@ -25,13 +25,45 @@ msgid "3D viewer controls"
 msgstr "Controles del visor 3D"
 
 #: src/Media/FileRenderer/GlbRenderer.php:37
-#: src/Media/FileRenderer/Abstract3DRenderer.php:159
+#: src/Media/FileRenderer/Abstract3DRenderer.php:177
 msgid "Use mouse to rotate, zoom and pan"
 msgstr "Usa el ratón para rotar, hacer zoom y desplazar"
 
 #: src/Media/FileRenderer/BabylonRenderer.php:70
 msgid "Loading 3D model..."
 msgstr "Cargando modelo 3D..."
+
+#: Module.php:99
+msgid "3D viewer lighting"
+msgstr "Iluminación del visor 3D"
+
+#: Module.php:100
+msgid "3D viewer custom lights"
+msgstr "Luces personalizadas del visor 3D"
+
+#: Module.php:101
+msgid "3D viewer custom light 1"
+msgstr "Luz personalizada 1 del visor 3D"
+
+#: Module.php:102
+msgid "3D viewer custom light 2"
+msgstr "Luz personalizada 2 del visor 3D"
+
+#: Module.php:103
+msgid "3D viewer custom light 3"
+msgstr "Luz personalizada 3 del visor 3D"
+
+#: Module.php:104
+msgid "3D viewer custom light 4"
+msgstr "Luz personalizada 4 del visor 3D"
+
+#: Module.php:107
+msgid "3D viewer model-viewer lighting"
+msgstr "Iluminación de model-viewer del visor 3D"
+
+#: Module.php:109
+msgid "3D viewer Babylon.js lighting"
+msgstr "Iluminación de Babylon.js del visor 3D"
 
 #: src/Media/FileRenderer/StlRenderer.php:42
 msgid "STL Viewer"
@@ -40,6 +72,20 @@ msgstr "Visor STL"
 #: src/Media/FileRenderer/BabylonRenderer.php:57
 msgid "Babylon.js Viewer"
 msgstr "Visor Babylon.js"
+
+#: src/Form/SiteSettingsFieldset.php:31
+msgid "Use the module’s lights"
+msgstr "Usar las luces del módulo"
+
+#: src/Form/SiteSettingsFieldset.php:32
+msgid "Use the module setting"
+msgstr "Usar el ajuste del módulo"
+
+#: src/Form/SiteSettingsFieldset.php:40
+msgid "Custom lights below replace the module’s whole light rig on this site."
+msgstr ""
+"Las luces personalizadas siguientes sustituyen todas las luces del módulo en "
+"este sitio."
 
 #: src/Form/ConfigForm.php:17
 msgid "Lighting for every viewer"

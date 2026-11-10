@@ -9,6 +9,11 @@ use Laminas\ServiceManager\ServiceManager;
 use Laminas\View\Renderer\PhpRenderer;
 use Laminas\Mvc\Controller\AbstractController;
 use PHPUnit\Framework\TestCase;
+use Laminas\EventManager\Event;
+use Laminas\EventManager\SharedEventManagerInterface;
+use Laminas\Form\Form;
+use Laminas\InputFilter\InputFilter;
+use ThreeDViewer\Settings\Lighting;
 
 class ModuleTest extends TestCase
 {
@@ -261,6 +266,106 @@ class ModuleTest extends TestCase
         $this->assertSame('none', $values['threedviewer_babylon_environment']);
     }
 
+    public function testListensToTheSiteSettingsForm(): void
+    {
+        $shared = $this->createMock(SharedEventManagerInterface::class);
+        $attached = [];
+        $shared->method('attach')->willReturnCallback(function ($id, $event, $callback) use (&$attached) {
+            $attached[] = [$id, $event, $callback[1]];
+        });
+        $this->module->attachListeners($shared);
+        $this->assertSame([
+            ['Omeka\\Form\\SiteSettingsForm', 'form.add_elements', 'addSiteSettings'],
+            ['Omeka\\Form\\SiteSettingsForm', 'form.add_input_filters', 'addSiteSettingsInputFilters'],
+            ['Omeka\\Controller\\SiteAdmin\\Index', 'view.edit.before', 'addSiteSettingsScript'],
+        ], $attached);
+    }
+
+    public function testSiteSettingsFormGetsTheLightingGroupWithTheSitesValues(): void
+    {
+        $siteSettings = new class {
+            public $values = ['threedviewer_light_brightness' => 1.5, 'threedviewer_light_2_color' => '#00ff00'];
+
+            public function get($key, $default = null)
+            {
+                return $this->values[$key] ?? $default;
+            }
+        };
+        $this->services->setAllowOverride(true);
+        $this->services->setService('Omeka\\Settings\\Site', $siteSettings);
+        $form = new Form();
+        $form->setOption('element_groups', ['general' => 'General']);
+
+        $this->module->addSiteSettings(new Event('form.add_elements', $form));
+
+        $groups = $form->getOption('element_groups');
+        $this->assertSame(
+            [
+                'general', 'threedviewer', 'threedviewer_custom_lights', 'threedviewer_light_1',
+                'threedviewer_light_2', 'threedviewer_light_3', 'threedviewer_light_4',
+                'threedviewer_model_viewer', 'threedviewer_babylon',
+            ],
+            array_keys($groups)
+        );
+        $this->assertSame('3D viewer lighting', $groups['threedviewer'], 'The first group keeps its name');
+        $this->assertSame('3D viewer custom light 3', $groups['threedviewer_light_3']);
+        foreach (Lighting::keys() as $name) {
+            $this->assertArrayHasKey($form->get($name)->getOption('element_group'), $groups, $name);
+        }
+        $this->assertSame('threedviewer', $form->get('threedviewer_light_brightness')->getOption('element_group'));
+        $this->assertSame('threedviewer_light_2', $form->get('threedviewer_light_2_color')->getOption('element_group'));
+        $this->assertSame(
+            'threedviewer_babylon',
+            $form->get('threedviewer_babylon_environment')->getOption('element_group')
+        );
+        $this->assertEquals(1.5, $form->get('threedviewer_light_brightness')->getValue());
+        $this->assertSame('', $form->get('threedviewer_lighting_mode')->getValue(), 'Unset: the module setting');
+        $this->assertSame('#00ff00', $form->get('threedviewer_light_2_color')->getValue());
+        $this->assertSame('#ffffff', $form->get('threedviewer_light_1_color')->getValue(), 'Unset rig field: default');
+        $this->assertEquals(45, $form->get('threedviewer_light_1_elevation')->getValue());
+        $this->assertSame(
+            'model-viewer',
+            $form->get('threedviewer_model_viewer_environment')->getAttribute('data-library'),
+            'Without a library setting: the default library'
+        );
+        $this->assertNull($form->get('threedviewer_light_brightness')->getAttribute('data-library'));
+    }
+
+    public function testSiteLibrarySettingsShowForTheModulesLibrary(): void
+    {
+        $this->settings->values['threedviewer_default_library'] = 'babylon';
+        $this->services->setAllowOverride(true);
+        $this->services->setService('Omeka\\Settings\\Site', new class {
+            public function get($key, $default = null)
+            {
+                return $default;
+            }
+        });
+        $form = new Form();
+
+        $this->module->addSiteSettings(new Event('form.add_elements', $form));
+
+        foreach (['threedviewer_model_viewer_shadow_intensity', 'threedviewer_babylon_environment'] as $name) {
+            $this->assertSame('babylon', $form->get($name)->getAttribute('data-library'), $name);
+        }
+        $this->assertSame(
+            '["model-viewer"]',
+            $form->get('threedviewer_model_viewer_shadow_intensity')->getAttribute('data-show-if-library')
+        );
+    }
+
+    public function testSiteLightingFieldsMayBeLeftEmpty(): void
+    {
+        $inputFilter = new InputFilter();
+        $this->module->addSiteSettingsInputFilters(
+            new Event('form.add_input_filters', null, ['inputFilter' => $inputFilter])
+        );
+        foreach (Lighting::keys() as $name) {
+            $this->assertFalse($inputFilter->get($name)->isRequired(), $name);
+            $this->assertTrue($inputFilter->get($name)->allowEmpty(), $name);
+        }
+    }
+
     private function submit(array $post): void
     {
         $controller = $this->getMockBuilder(AbstractController::class)
@@ -282,7 +387,7 @@ class ModuleTest extends TestCase
         $this->module->handleConfigForm($controller);
     }
 
-    public function testTheSettingsFormLoadsTheShowIfScript(): void
+    public function testBothSettingsFormsLoadTheShowIfScript(): void
     {
         $renderer = new class extends PhpRenderer {
             public function formCollection($form, $wrap)
@@ -292,6 +397,11 @@ class ModuleTest extends TestCase
         };
         $this->module->getConfigForm($renderer);
         $this->assertContains('/modules/ThreeDViewer/js/settings-form.js', $renderer->headScript()->files);
+
+        $view = new PhpRenderer();
+        $this->module->addSiteSettingsScript(new Event('view.edit.before', $view));
+        $this->assertContains('/modules/ThreeDViewer/js/settings-form.js', $view->headScript()->files);
+        $this->assertContains('/modules/ThreeDViewer/css/settings-form.css', $view->headLink()->files);
         $this->assertContains('/modules/ThreeDViewer/css/settings-form.css', $renderer->headLink()->files);
     }
 }

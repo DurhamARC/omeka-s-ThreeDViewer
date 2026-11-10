@@ -419,14 +419,16 @@ class ConfigForm extends Form
      * another element in data-show-if is shown only while that element's value is one of
      * data-show-if-value (a JSON list) or at least data-show-if-min, and that element's own field is
      * shown. A field whose element has data-show-if-library (a JSON list) is shown only while the
-     * 3D viewer library select's value is one of them. Both conditions may apply.
-     * asset/js/settings-form.js applies them; without JavaScript every field shows. Hidden fields are
-     * still submitted, so their values are kept.
+     * 3D viewer library is one of them: the library select's value here, and on a site, which has no
+     * library of its own, the module's library in the element's data-library. Both conditions may
+     * apply. asset/js/settings-form.js applies them; without JavaScript every field shows. Hidden
+     * fields are still submitted, so their values are kept.
      */
     private function addConditions(): void
     {
         $rig = ['data-show-if' => 'threedviewer_lights', 'data-show-if-value' => '["custom"]'];
-        $ownLights = ['data-show-if' => 'threedviewer_lights', 'data-show-if-value' => '["default"]'];
+        // A site's blank Lights keeps the module's lights, which may be either
+        $ownLights = ['data-show-if' => 'threedviewer_lights', 'data-show-if-value' => '["","default"]'];
 
         $conditions = [
             'threedviewer_light_ambient_color' => $rig,

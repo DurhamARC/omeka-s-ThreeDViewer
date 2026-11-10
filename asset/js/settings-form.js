@@ -1,5 +1,6 @@
 /**
- * Show each ThreeDViewer setting only where it applies, in the module's configuration form.
+ * Show each ThreeDViewer setting only where it applies, in the module's configuration form and in a
+ * site's settings.
  *
  * Follows AdvancedSearch's data-show-if (SearchConfigConfigureForm, advanced-search-collection.js),
  * where a field is shown only while a checkbox is checked. Here the element named in data-show-if
@@ -9,7 +10,8 @@
  * rig). Elements are found by name, as these forms give them no id.
  *
  * A field whose element has data-show-if-library (a JSON list) is shown only while the 3D viewer
- * library select's value is one of them.
+ * library is one of them: the library select's value in the module's form, or, in a site's settings,
+ * which have no library select, the module's library given in the element's data-library.
  *
  * A group of fields (Omeka's element groups, each a fieldset) is hidden while all its fields are.
  *
@@ -24,14 +26,14 @@
 
     const SELECTOR = '[data-show-if^="threedviewer_"], [name^="threedviewer_"][data-show-if-library]';
 
-    function library(form) {
+    function library(form, element) {
         const select = controller(form, 'threedviewer_default_library');
-        return select ? select.value : undefined;
+        return select ? select.value : element.dataset.library;
     }
 
     function applies(form, element) {
         if (element.dataset.showIfLibrary) {
-            const current = library(form);
+            const current = library(form, element);
             if (current !== undefined && JSON.parse(element.dataset.showIfLibrary).indexOf(current) === -1) {
                 return false;
             }

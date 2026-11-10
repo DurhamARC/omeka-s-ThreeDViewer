@@ -92,8 +92,11 @@ class ConfigFormTest extends TestCase
         $this->assertSame(['threedviewer_lights', '["custom"]'], $condition('threedviewer_light_count'));
         $this->assertSame(['threedviewer_light_count', '3'], $condition('threedviewer_light_3_strength'));
         $this->assertSame(['threedviewer_light_count', '1'], $condition('threedviewer_light_1_color'));
-        $this->assertSame(['threedviewer_lights', '["default"]'], $condition('threedviewer_model_viewer_environment'));
-        $this->assertSame(['threedviewer_lights', '["default"]'], $condition('threedviewer_babylon_lighting'));
+        $this->assertSame(
+            ['threedviewer_lights', '["","default"]'],
+            $condition('threedviewer_model_viewer_environment')
+        );
+        $this->assertSame(['threedviewer_lights', '["","default"]'], $condition('threedviewer_babylon_lighting'));
         $this->assertSame(
             ['threedviewer_model_viewer_environment', '["custom"]'],
             $condition('threedviewer_model_viewer_environment_url')
@@ -117,7 +120,7 @@ class ConfigFormTest extends TestCase
             $this->assertNull($library($name), "{$name} applies to both libraries");
         }
         $this->assertSame(
-            ['threedviewer_lights', '["default"]'],
+            ['threedviewer_lights', '["","default"]'],
             [
                 $this->form->get('threedviewer_babylon_lighting')->getAttribute('data-show-if'),
                 $this->form->get('threedviewer_babylon_lighting')->getAttribute('data-show-if-value'),
