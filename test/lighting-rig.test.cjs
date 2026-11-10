@@ -88,7 +88,7 @@ test('angles: the inverse of direction, in whole degrees', () => {
         JSON.parse(JSON.stringify(lighting.angles({ x: 0, y: 5, z: 0 }, { x: 0, z: 1 }, false))),
         { azimuth: 0, elevation: 90 }
     );
-    assert.equal(lighting.angles({ x: 0, y: -1, z: 1 }, { x: 0, z: 1 }, false).elevation, 0, 'from below: level');
+    assert.equal(lighting.angles({ x: 0, y: -1, z: 1 }, { x: 0, z: 1 }, false).elevation, -45, 'from below: below level');
 });
 
 test('ready, onChange and hasControls: the events between a viewer and its controls', () => {
@@ -557,15 +557,27 @@ test('controller: seen from above, a low light is below the view\'s level, and c
     const viewer = fakeViewer({ controls: true, lights: [
         { id: 'low', kind: 'light', color: '#ffffff', strength: 1, direction: { x: 0, y: -1, z: 1 } }
     ] });
-    assert.equal(lightsOf(viewer)[0].elevation, 0, 'Reported to start as a setting would be, at level');
+    assert.equal(lightsOf(viewer)[0].elevation, -45, 'Reported to start below level, where it is');
     viewer.camera = 90;
     viewer.follow();
-    assert.deepEqual(viewer.turned(), [[{ id: 'low', azimuth: -90, elevation: -45 }]], 'Below level, not clamped');
+    assert.deepEqual(viewer.turned(), [[{ id: 'low', azimuth: -90, elevation: -45 }]], 'Still below level');
     const shown = lightsOf(viewer);
     shown[0].azimuth = -90;
     shown[0].elevation = -30;
     viewer.change({ mode: 'model', lights: shown });
     close(viewer.placed.lights[0].direction.y, -0.5, 'Set below level');
+});
+
+test('controller: a light below the model keeps its height when only its direction changes', () => {
+    // As the Babylon.js point preset under a model centred well above it
+    const viewer = fakeViewer({ controls: true, mode: 'viewer', lights: [
+        { id: 'point', kind: 'point', color: '#ffffff', strength: 1, direction: { x: 0, y: -1, z: 1 } }
+    ] });
+    const shown = lightsOf(viewer);
+    assert.equal(shown[0].elevation, -45);
+    shown[0].azimuth = 30;
+    viewer.change({ mode: 'viewer', lights: shown });
+    close(viewer.placed.lights[0].direction.y, -Math.SQRT1_2, 'Still 45 degrees below level');
 });
 
 test('controller: a direction shown either way round, or overhead, is not reported as turned', () => {

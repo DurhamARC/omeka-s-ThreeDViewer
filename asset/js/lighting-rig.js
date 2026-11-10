@@ -130,19 +130,14 @@
         };
     }
 
-    /** exactAngles() in whole degrees (|| 0: no -0 from a hair to the left) */
-    function wholeAngles(d, back, leftHanded) {
-        const exact = exactAngles(d, back, leftHanded);
-        return { azimuth: Math.round(exact.azimuth) || 0, elevation: Math.round(exact.elevation) || 0 };
-    }
-
     /**
      * The azimuth and elevation, in whole degrees, of a direction from the model towards a light:
-     * the inverse of direction(), as a setting takes it, so never below level.
+     * the inverse of direction(). Below level, as a light under the model is, the elevation is
+     * negative, as the lighting controls show it (|| 0: no -0 from a hair to the left).
      */
     function angles(d, back, leftHanded) {
-        const whole = wholeAngles(d, back, leftHanded);
-        return { azimuth: whole.azimuth, elevation: Math.max(0, whole.elevation) };
+        const exact = exactAngles(d, back, leftHanded);
+        return { azimuth: Math.round(exact.azimuth) || 0, elevation: Math.round(exact.elevation) || 0 };
     }
 
     /**
@@ -274,7 +269,7 @@
                 if (!light.direction) {
                     return;
                 }
-                const seen = wholeAngles(turns.apply(view, light.direction), options.back, options.leftHanded);
+                const seen = angles(turns.apply(view, light.direction), options.back, options.leftHanded);
                 // The same direction either way round (180 and -180), or any way round overhead or
                 // underneath: keep the one shown, rather than make the slider jump
                 if ((seen.azimuth - showing[i].azimuth) % 360 === 0 || Math.abs(seen.elevation) === 90) {
