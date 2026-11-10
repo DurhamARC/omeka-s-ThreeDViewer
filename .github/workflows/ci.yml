@@ -65,6 +65,9 @@ jobs:
       - name: Test STL up axis
         run: node --test test/stl-up-axis.test.cjs
 
+      - name: Test lighting rig
+        run: node --test test/lighting-rig.test.cjs
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:

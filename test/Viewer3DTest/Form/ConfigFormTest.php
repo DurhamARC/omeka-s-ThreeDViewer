@@ -21,4 +21,88 @@ class ConfigFormTest extends TestCase
         $this->assertInstanceOf(ConfigForm::class, $this->form);
         $this->assertInstanceOf(Form::class, $this->form);
     }
+
+    public function testLightingElementsFollowTheLightingSelect(): void
+    {
+        $this->form->init();
+        $names = array_keys($this->form->getElements());
+        $mode = array_search('threedviewer_lighting_mode', $names, true);
+        $this->assertSame(
+            [
+                'threedviewer_light_brightness',
+                'threedviewer_lights',
+                'threedviewer_light_ambient_color',
+            ],
+            array_slice($names, $mode + 1, 3)
+        );
+        foreach (['color', 'strength', 'azimuth', 'elevation'] as $property) {
+            $this->assertTrue($this->form->has("threedviewer_light_4_{$property}"), $property);
+        }
+        $this->assertSame('Colour', $this->form->get('threedviewer_light_4_color')->getLabel(), 'Its group names it');
+        $this->assertSame(
+            ['default', 'custom'],
+            array_keys($this->form->get('threedviewer_lights')->getValueOptions())
+        );
+        $this->assertSame([1, 2, 3, 4], array_keys($this->form->get('threedviewer_light_count')->getValueOptions()));
+        $this->assertSame(
+            ['default', 'neutral', 'legacy', 'custom'],
+            array_keys($this->form->get('threedviewer_model_viewer_environment')->getValueOptions())
+        );
+    }
+
+    public function testSettingsRunFromGeneralToLightingToEachLibrary(): void
+    {
+        $this->form->init();
+        $names = array_keys($this->form->getElements());
+        $order = [
+            'threedviewer_default_library',
+            'threedviewer_show_grid',
+            'threedviewer_stl_up_axis',
+            'threedviewer_lighting_mode',
+            'threedviewer_light_4_elevation',
+            'threedviewer_model_viewer_environment',
+            'threedviewer_model_viewer_shadow_softness',
+            'threedviewer_babylon_camera',
+            'threedviewer_babylon_show_toolbar',
+        ];
+        $positions = array_map(function (string $name) use ($names) {
+            return array_search($name, $names, true);
+        }, $order);
+        $sorted = $positions;
+        sort($sorted);
+        $this->assertSame($sorted, $positions);
+        $this->assertSame(array_search('threedviewer_show_grid', $names, true) + 1, $positions[2]);
+        $this->assertSame($positions[2] + 1, $positions[3], 'Lighting follows the general settings');
+    }
+
+    public function testSettingsAfterTheGeneralOnesAreGroupedInOrder(): void
+    {
+        $this->form->init();
+        $this->assertSame(ConfigForm::ELEMENT_GROUPS, $this->form->getOption('element_groups'));
+        $groups = array_keys(ConfigForm::ELEMENT_GROUPS);
+        $last = -1;
+        $seen = [];
+        foreach ($this->form->getElements() as $name => $element) {
+            $group = $element->getOption('element_group');
+            if ($group === null) {
+                $this->assertSame([], $seen, "{$name}: the general settings come first, in no group");
+                continue;
+            }
+            $position = array_search($group, $groups, true);
+            $this->assertNotFalse($position, $name);
+            $this->assertGreaterThanOrEqual($last, $position, "{$name}: the groups follow the form's order");
+            $last = $position;
+            $seen[$group] = true;
+        }
+        $this->assertCount(count($groups), $seen, 'Every group has settings');
+        $this->assertNull($this->form->get('threedviewer_stl_up_axis')->getOption('element_group'));
+        $this->assertSame(
+            'threedviewer_lighting',
+            $this->form->get('threedviewer_light_brightness')->getOption('element_group')
+        );
+        $this->assertSame(
+            'threedviewer_light_3',
+            $this->form->get('threedviewer_light_3_elevation')->getOption('element_group')
+        );
+    }
 }
