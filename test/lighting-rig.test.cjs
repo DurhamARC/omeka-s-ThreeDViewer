@@ -479,8 +479,11 @@ function modelViewerHarness(start) {
     const scene = { environmentRotation: new THREE.Euler(), quaternion: new THREE.Quaternion(),
         position: new THREE.Vector3(), queueRender() {} };
     const listeners = {};
+    const frames = [];
+    const events = [];
     let camera = start;
     const viewer = {
+        turntableRotation: 0,
         dataset: { lightingMode: 'model', lightingControls: 'true' },
         style: { setProperty() {} },
         exposure: 1,
@@ -490,11 +493,12 @@ function modelViewerHarness(start) {
         unregisterEffectComposer() {},
         addEventListener: (type, listener) => { listeners[type] = listener; },
         removeEventListener() {},
-        dispatchEvent() {}
+        dispatchEvent: (event) => { events.push(event); }
     };
     class CustomEvent { constructor(type, init) { this.type = type; this.detail = init.detail; } }
     const window = { customElements: { whenDefined: () => ({ then: (go) => go() }) } };
     const context = { window, console, CustomEvent, customElements: window.customElements,
+        requestAnimationFrame: (f) => frames.push(f),
         document: { readyState: 'complete', querySelectorAll: () => [viewer] } };
     runInNewContext(source, context);
     runInNewContext(readFileSync(join(__dirname, '../asset/js/model-viewer-lighting.js'), 'utf8'), context);
@@ -502,7 +506,12 @@ function modelViewerHarness(start) {
     // The environment's turn, from the angles it is sampled through: R_XYZ(-e) is the turn's inverse
     const turn = () => new THREE.Quaternion().setFromEuler(new THREE.Euler(
         -scene.environmentRotation.x, -scene.environmentRotation.y, -scene.environmentRotation.z, 'XYZ')).inverse();
-    return { THREE, listeners, turn, move: (to) => { camera = to; } };
+    // Auto-rotate: turn the model on its turntable, then run a frame
+    const spin = (degrees) => {
+        viewer.turntableRotation = degrees * Math.PI / 180;
+        frames.splice(0).forEach((f) => f());
+    };
+    return { THREE, listeners, turn, events, spin, move: (to) => { camera = to; } };
 }
 
 /**
@@ -647,3 +656,35 @@ test('controller: a direction shown either way round, or overhead, is not report
     assert.deepEqual(viewer.turned(), [], 'Overhead, the direction round stays as set');
 });
 
+test('model-viewer: auto-rotate turns the model, and the lights fixed to it turn with it', () => {
+    const { THREE, listeners, turn, spin } = modelViewerHarness({ theta: 0, phi: 75 });
+    const yaw = (degrees) => new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), degrees * Math.PI / 180);
+    spin(30);
+    close(Math.abs(turn().dot(yaw(30))), 1, 'fixed to the model: the environment turns as the model');
+
+    // Fixed to the viewer from here, the lights stay put as the model turns on
+    listeners['threedviewer:lighting']({ detail: { mode: 'viewer', lights: [] } });
+    const atSwitch = turn();
+    spin(75);
+    close(Math.abs(turn().dot(atSwitch)), 1, 'fixed to the viewer: the environment stays put');
+
+    // And back to the model: from where they were, turning with it again
+    listeners['threedviewer:lighting']({ detail: { mode: 'model', lights: [] } });
+    close(Math.abs(turn().dot(atSwitch)), 1, 'no jump at the switch');
+    spin(105);
+    close(Math.abs(turn().dot(yaw(30).multiply(atSwitch))), 1, 'then turning with the model');
+});
+
+test('model-viewer: with the panel open, the directions shown follow the model round as it auto-rotates', () => {
+    const { listeners, events, spin } = modelViewerHarness({ theta: 0, phi: 75 });
+    listeners['threedviewer:lighting']({ detail: { mode: 'model', lights: [
+        { id: 'environment', kind: 'environment', strength: 1, azimuth: 0, elevation: 30 }
+    ] } });
+    listeners['threedviewer:lighting-panel']({ detail: { open: true } });
+    events.length = 0;
+    spin(40);
+    const turned = events.filter((e) => e.type === 'threedviewer:lighting-turned').pop();
+    assert.ok(turned, 'reported');
+    assert.equal(turned.detail.lights[0].azimuth, 40, 'the light has turned 40 degrees to the right with the model');
+    assert.equal(turned.detail.lights[0].elevation, 30);
+});
