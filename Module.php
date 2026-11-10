@@ -30,6 +30,16 @@ class Module extends AbstractModule
     }
 
     /**
+     * The script that shows each lighting setting only where it applies (see ConfigForm's
+     * data-show-if conditions), and the styles that set the light rig's groups in under Lights.
+     */
+    private function appendSettingsFormScript(PhpRenderer $view): void
+    {
+        $view->headScript()->appendFile($view->assetUrl('js/settings-form.js', 'ThreeDViewer'));
+        $view->headLink()->appendStylesheet($view->assetUrl('css/settings-form.css', 'ThreeDViewer'));
+    }
+
+    /**
      * Execute logic when the module is installed.
      *
      * @param ServiceLocatorInterface $serviceLocator
@@ -108,8 +118,7 @@ class Module extends AbstractModule
             $data['threedviewer_stl_up_axis'] = 'current';
         }
         $form->setData($data);
-        // The light rig's groups, set in under Lights
-        $renderer->headLink()->appendStylesheet($renderer->assetUrl('css/settings-form.css', 'ThreeDViewer'));
+        $this->appendSettingsFormScript($renderer);
 
         // Each group in its fieldset, where Omeka can (formCollectionElementGroups, as the site
         // settings use); otherwise every element in one list, as before

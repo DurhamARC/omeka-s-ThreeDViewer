@@ -214,6 +214,7 @@ class ConfigForm extends Form
             ],
         ]);
 
+        $this->addConditions();
         $this->addGroups();
     }
 
@@ -410,5 +411,66 @@ class ConfigForm extends Form
             ],
             'attributes' => ['min' => 0, 'max' => 90, 'step' => 1],
         ]);
+    }
+
+    /**
+     * Show each lighting setting only where it applies, following AdvancedSearch's data-show-if
+     * (SearchConfigConfigureForm, advanced-search-collection.js): a field whose element names
+     * another element in data-show-if is shown only while that element's value is one of
+     * data-show-if-value (a JSON list) or at least data-show-if-min, and that element's own field is
+     * shown. A field whose element has data-show-if-library (a JSON list) is shown only while the
+     * 3D viewer library select's value is one of them. Both conditions may apply.
+     * asset/js/settings-form.js applies them; without JavaScript every field shows. Hidden fields are
+     * still submitted, so their values are kept.
+     */
+    private function addConditions(): void
+    {
+        $rig = ['data-show-if' => 'threedviewer_lights', 'data-show-if-value' => '["custom"]'];
+        $ownLights = ['data-show-if' => 'threedviewer_lights', 'data-show-if-value' => '["default"]'];
+
+        $conditions = [
+            'threedviewer_light_ambient_color' => $rig,
+            'threedviewer_light_ambient_strength' => $rig,
+            'threedviewer_light_count' => $rig,
+            'threedviewer_model_viewer_environment' => $ownLights,
+            'threedviewer_model_viewer_environment_url' => [
+                'data-show-if' => 'threedviewer_model_viewer_environment',
+                'data-show-if-value' => '["custom"]',
+            ],
+            'threedviewer_babylon_lighting' => $ownLights,
+        ];
+        for ($n = 1; $n <= Lighting::MAX_LIGHTS; $n++) {
+            foreach (['color', 'strength', 'azimuth', 'elevation'] as $property) {
+                $conditions["threedviewer_light_{$n}_{$property}"] = [
+                    'data-show-if' => 'threedviewer_light_count',
+                    'data-show-if-min' => (string) $n,
+                ];
+            }
+        }
+        foreach ($conditions as $name => $attributes) {
+            $this->get($name)->setAttributes($attributes);
+        }
+
+        // Settings of one library only, shown while it is the 3D viewer library
+        $libraries = [
+            'model-viewer' => [
+                'threedviewer_model_viewer_environment',
+                'threedviewer_model_viewer_environment_url',
+                'threedviewer_model_viewer_shadow_intensity',
+                'threedviewer_model_viewer_shadow_softness',
+            ],
+            'babylon' => [
+                'threedviewer_babylon_camera',
+                'threedviewer_babylon_lighting',
+                'threedviewer_babylon_environment',
+                'threedviewer_babylon_enable_xr',
+                'threedviewer_babylon_show_toolbar',
+            ],
+        ];
+        foreach ($libraries as $library => $names) {
+            foreach ($names as $name) {
+                $this->get($name)->setAttribute('data-show-if-library', json_encode([$library]));
+            }
+        }
     }
 }

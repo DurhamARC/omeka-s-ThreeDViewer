@@ -282,7 +282,7 @@ class ModuleTest extends TestCase
         $this->module->handleConfigForm($controller);
     }
 
-    public function testTheSettingsFormLoadsTheGroupStyles(): void
+    public function testTheSettingsFormLoadsTheShowIfScript(): void
     {
         $renderer = new class extends PhpRenderer {
             public function formCollection($form, $wrap)
@@ -291,6 +291,7 @@ class ModuleTest extends TestCase
             }
         };
         $this->module->getConfigForm($renderer);
+        $this->assertContains('/modules/ThreeDViewer/js/settings-form.js', $renderer->headScript()->files);
         $this->assertContains('/modules/ThreeDViewer/css/settings-form.css', $renderer->headLink()->files);
     }
 }

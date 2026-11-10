@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-10 16:34+0000\n"
+"POT-Creation-Date: 2026-11-10 16:33+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,11 +16,6 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:159
-#: src/Media/FileRenderer/GlbRenderer.php:37
-msgid "Use mouse to rotate, zoom and pan"
-msgstr ""
 
 #: src/Media/FileRenderer/GlbRenderer.php:34
 msgid "View 3D model fullscreen"
@@ -32,6 +27,11 @@ msgstr ""
 
 #: src/Media/FileRenderer/GlbRenderer.php:36
 msgid "3D viewer controls"
+msgstr ""
+
+#: src/Media/FileRenderer/GlbRenderer.php:37
+#: src/Media/FileRenderer/Abstract3DRenderer.php:159
+msgid "Use mouse to rotate, zoom and pan"
 msgstr ""
 
 #: src/Media/FileRenderer/BabylonRenderer.php:70
@@ -251,115 +251,115 @@ msgid ""
 "Show the Babylon.js inspector toolbar with extra camera and scene controls."
 msgstr ""
 
-#: src/Form/ConfigForm.php:273
+#: src/Form/ConfigForm.php:274
 msgid "Brightness"
 msgstr ""
 
-#: src/Form/ConfigForm.php:274
+#: src/Form/ConfigForm.php:275
 msgid "Multiplies the strength of every light. 1 leaves the lighting as it is."
 msgstr ""
 
-#: src/Form/ConfigForm.php:283
+#: src/Form/ConfigForm.php:284
 msgid "Lights"
 msgstr ""
 
-#: src/Form/ConfigForm.php:284
+#: src/Form/ConfigForm.php:285
 msgid "Custom builds the lights below in every viewer, in place of their own."
 msgstr ""
 
-#: src/Form/ConfigForm.php:286
+#: src/Form/ConfigForm.php:287
 msgid "Viewer default"
 msgstr ""
 
-#: src/Form/ConfigForm.php:287
+#: src/Form/ConfigForm.php:288
 msgid "Custom"
 msgstr ""
 
-#: src/Form/ConfigForm.php:296
+#: src/Form/ConfigForm.php:297
 msgid "Ambient light colour"
 msgstr ""
 
-#: src/Form/ConfigForm.php:297
+#: src/Form/ConfigForm.php:298
 msgid "Light from every side. Used only when Lights is Custom."
 msgstr ""
 
-#: src/Form/ConfigForm.php:305
+#: src/Form/ConfigForm.php:306
 msgid "Ambient light strength"
 msgstr ""
 
-#: src/Form/ConfigForm.php:314
+#: src/Form/ConfigForm.php:315
 msgid "Number of lights"
 msgstr ""
 
-#: src/Form/ConfigForm.php:315
+#: src/Form/ConfigForm.php:316
 msgid "Lights above this number keep their settings but are not used."
 msgstr ""
 
-#: src/Form/ConfigForm.php:331
+#: src/Form/ConfigForm.php:332
 msgid "model-viewer environment"
 msgstr ""
 
-#: src/Form/ConfigForm.php:332
+#: src/Form/ConfigForm.php:333
 msgid "The image that lights GLB/glTF models when Lights is Viewer default."
 msgstr ""
 
-#: src/Form/ConfigForm.php:334
+#: src/Form/ConfigForm.php:335
 msgid "model-viewer default"
 msgstr ""
 
-#: src/Form/ConfigForm.php:335
+#: src/Form/ConfigForm.php:336
 msgid "Neutral"
 msgstr ""
 
-#: src/Form/ConfigForm.php:336
+#: src/Form/ConfigForm.php:337
 msgid "Legacy"
 msgstr ""
 
-#: src/Form/ConfigForm.php:337
+#: src/Form/ConfigForm.php:338
 msgid "Custom image"
 msgstr ""
 
-#: src/Form/ConfigForm.php:346
+#: src/Form/ConfigForm.php:347
 msgid "Custom environment image"
 msgstr ""
 
-#: src/Form/ConfigForm.php:347
+#: src/Form/ConfigForm.php:348
 msgid "URL of an HDR, JPEG or PNG image, from http(s):// or the site root (/)."
 msgstr ""
 
-#: src/Form/ConfigForm.php:355
+#: src/Form/ConfigForm.php:356
 msgid "model-viewer shadow strength"
 msgstr ""
 
-#: src/Form/ConfigForm.php:356
+#: src/Form/ConfigForm.php:357
 msgid "The shadow under GLB/glTF models. 0 shows none."
 msgstr ""
 
-#: src/Form/ConfigForm.php:365
+#: src/Form/ConfigForm.php:366
 msgid "model-viewer shadow softness"
 msgstr ""
 
-#: src/Form/ConfigForm.php:376
+#: src/Form/ConfigForm.php:377
 msgid "Colour"
 msgstr ""
 
-#: src/Form/ConfigForm.php:377
+#: src/Form/ConfigForm.php:378
 msgid "Strength"
 msgstr ""
 
-#: src/Form/ConfigForm.php:378
+#: src/Form/ConfigForm.php:379
 msgid "Direction (degrees round)"
 msgstr ""
 
-#: src/Form/ConfigForm.php:379
+#: src/Form/ConfigForm.php:380
 msgid "Height (degrees up)"
 msgstr ""
 
-#: src/Form/ConfigForm.php:399
+#: src/Form/ConfigForm.php:400
 msgid ""
 "0 is from the viewer’s side of the model, 90 from the right, 180 from behind."
 msgstr ""
 
-#: src/Form/ConfigForm.php:409
+#: src/Form/ConfigForm.php:410
 msgid "0 is level with the model, 90 is overhead."
 msgstr ""

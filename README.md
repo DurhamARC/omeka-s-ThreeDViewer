@@ -64,8 +64,10 @@ See general end user documentation for [Installing a module](http://omeka.org/s/
      rig is painted into the environment image that lights the model.
    - **model-viewer environment** (with *Viewer default*): model-viewer's own, `neutral`, `legacy`, or an image URL;
      and the strength and softness of the shadow under the model.
-   The settings after the general ones are grouped: *Lighting for every viewer*, the custom light rig (set in under
-   *Lights*, one group per light), then model-viewer's and Babylon.js's own.
+   Settings that don't apply are hidden: the light rig until *Lights* is *Custom*, each light beyond *Number of
+   lights*, the custom environment URL until *Custom image* is chosen, and the model-viewer or Babylon.js settings
+   while the other library is selected. The settings after the general ones are grouped: *Lighting for every viewer*,
+   the custom light rig (set in under *Lights*, one group per light), then model-viewer's and Babylon.js's own.
 
 ## Local Development with Docker
 
