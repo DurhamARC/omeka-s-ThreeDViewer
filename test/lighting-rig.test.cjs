@@ -470,7 +470,7 @@ test('Babylon.js rig: lights scaled by pi for PBR materials only, as standard ma
  * Euler (r120, which names invert() inverse()), with model-viewer's own environment, its camera
  * starting at `start`. turn() is the environment's turn now, as a quaternion.
  */
-function modelViewerHarness(start) {
+function modelViewerHarness(start, autoRotate = true) {
     const three = { window: {}, self: {}, console };
     three.self = three.window;
     runInNewContext(readFileSync(join(__dirname, '../asset/vendor/three/three.min.js'), 'utf8'), three);
@@ -484,6 +484,7 @@ function modelViewerHarness(start) {
     let camera = start;
     const viewer = {
         turntableRotation: 0,
+        autoRotate,
         dataset: { lightingMode: 'model', lightingControls: 'true' },
         style: { setProperty() {} },
         exposure: 1,
@@ -511,8 +512,13 @@ function modelViewerHarness(start) {
         viewer.turntableRotation = degrees * Math.PI / 180;
         frames.splice(0).forEach((f) => f());
     };
-    return { THREE, listeners, turn, events, spin, move: (to) => { camera = to; } };
+    return { THREE, listeners, turn, events, spin, frames, move: (to) => { camera = to; } };
 }
+
+test('model-viewer: without auto-rotate, nothing watches the turntable every frame', () => {
+    assert.equal(modelViewerHarness({ theta: 0, phi: 75 }, false).frames.length, 0);
+    assert.equal(modelViewerHarness({ theta: 0, phi: 75 }, true).frames.length, 1);
+});
 
 /**
  * model-viewer's environment turn once the camera has orbited from `start` to `orbit` with the

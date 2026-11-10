@@ -470,3 +470,7 @@ msgstr ""
 #: Module.php:109
 msgid "3D viewer Babylon.js lighting"
 msgstr ""
+
+#: Module.php:24
+msgid "The custom environment image URL must start with http://, https:// or /."
+msgstr ""

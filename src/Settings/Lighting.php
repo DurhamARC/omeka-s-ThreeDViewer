@@ -13,6 +13,9 @@ class Lighting
 {
     public const MAX_LIGHTS = 4;
 
+    /** An absolute http(s) URL or a root-relative path, with nothing that could leave an attribute */
+    public const URL_PATTERN = '~^(https?://|/(?!/))[^\s"\'<>`]*$~i';
+
     /** Values a select may take; anything else falls back to the default */
     private const OPTIONS = [
         'threedviewer_lighting_mode' => ['model', 'viewer'],
@@ -219,8 +222,7 @@ class Lighting
 
         if ($key === 'threedviewer_model_viewer_environment_url') {
             $value = is_string($value) ? trim($value) : '';
-            // An absolute http(s) URL or a root-relative path, with nothing that could leave an attribute
-            return preg_match('~^(https?://|/(?!/))[^\s"\'<>`]*$~i', $value) ? $value : '';
+            return preg_match(self::URL_PATTERN, $value) ? $value : '';
         }
 
         foreach (self::RANGES as $suffix => [$min, $max]) {

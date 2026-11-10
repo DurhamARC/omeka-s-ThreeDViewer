@@ -13,6 +13,7 @@ use Laminas\EventManager\Event;
 use Laminas\EventManager\SharedEventManagerInterface;
 use Laminas\Form\Form;
 use Laminas\InputFilter\InputFilter;
+use Omeka\Mvc\Controller\Plugin\Messenger;
 use ThreeDViewer\Settings\Lighting;
 
 class ModuleTest extends TestCase
@@ -23,6 +24,7 @@ class ModuleTest extends TestCase
 
     protected function setUp(): void
     {
+        Messenger::$warnings = [];
         $this->settings = new class {
             public $values = [];
 
@@ -184,6 +186,90 @@ class ModuleTest extends TestCase
         $this->assertSame($expected, $this->settings->values['threedviewer_lighting_mode']);
     }
 
+    /**
+     * @dataProvider unusableEnvironmentUrls
+     */
+    public function testUnusableCustomEnvironmentUrlSavesTheRestAndWarns(string $url): void
+    {
+        $this->submit(['threedviewer_viewer_height' => 640, 'threedviewer_foreground_color' => '#000000',
+            'threedviewer_background_color' => '#ffffff',
+            'threedviewer_model_viewer_environment' => 'custom',
+            'threedviewer_model_viewer_environment_url' => $url]);
+        $this->assertSame(640, $this->settings->values['threedviewer_viewer_height'], 'The other edits are kept');
+        $this->assertSame('default', $this->settings->values['threedviewer_model_viewer_environment']);
+        $this->assertSame('', $this->settings->values['threedviewer_model_viewer_environment_url']);
+        $this->assertCount(1, Messenger::$warnings);
+    }
+
+    public function unusableEnvironmentUrls(): array
+    {
+        return [
+            'empty' => [''],
+            'no scheme' => ['example.com/studio.hdr'],
+            'space' => ['https://x/a b.hdr'],
+            'javascript' => ['javascript:alert(1)'],
+        ];
+    }
+
+    /**
+     * @dataProvider hiddenEnvironmentSubmissions
+     */
+    public function testNoWarningForAnEnvironmentFieldTheAdminCannotSee(array $post): void
+    {
+        $this->submit($post + ['threedviewer_viewer_height' => 500, 'threedviewer_foreground_color' => '#000000',
+            'threedviewer_background_color' => '#ffffff',
+            'threedviewer_model_viewer_environment' => 'custom',
+            'threedviewer_model_viewer_environment_url' => '']);
+        $this->assertSame([], Messenger::$warnings);
+    }
+
+    public function hiddenEnvironmentSubmissions(): array
+    {
+        return [
+            'custom lights' => [['threedviewer_lights' => 'custom']],
+            'Babylon.js library' => [['threedviewer_default_library' => 'babylon']],
+        ];
+    }
+
+    public function testUsableCustomEnvironmentUrlIsSavedWithoutWarning(): void
+    {
+        $this->submit(['threedviewer_viewer_height' => 500, 'threedviewer_foreground_color' => '#000000',
+            'threedviewer_background_color' => '#ffffff',
+            'threedviewer_model_viewer_environment' => 'custom',
+            'threedviewer_model_viewer_environment_url' => ' /files/studio.hdr ']);
+        $this->assertSame('custom', $this->settings->values['threedviewer_model_viewer_environment']);
+        $this->assertSame('/files/studio.hdr', $this->settings->values['threedviewer_model_viewer_environment_url']);
+        $this->assertSame([], Messenger::$warnings);
+    }
+
+    /**
+     * @dataProvider siteEnvironmentUrls
+     */
+    public function testSiteSettingsRejectAnUnusableEnvironmentUrl(string $url, bool $valid): void
+    {
+        $inputFilter = new InputFilter();
+        $this->module->addSiteSettingsInputFilters(
+            new Event('form.add_input_filters', null, ['inputFilter' => $inputFilter])
+        );
+        $input = $inputFilter->get('threedviewer_model_viewer_environment_url');
+        $input->setValue($url);
+        $this->assertSame($valid, $input->isValid());
+    }
+
+    public function siteEnvironmentUrls(): array
+    {
+        return [
+            'empty inherits the module setting' => ['', true],
+            'absolute' => ['https://example.com/studio.hdr', true],
+            'root-relative' => ['/files/studio.hdr', true],
+            'no scheme' => ['example.com/studio.hdr', false],
+            'space' => ['https://x/a b.hdr', false],
+            'protocol-relative' => ['//evil.example/x.hdr', false],
+            'javascript' => ['javascript:alert(1)', false],
+            'surrounding spaces are trimmed, as in the module form' => [' /files/studio.hdr ', true],
+        ];
+    }
+
     public function lightingModeSubmissions(): array
     {
         return [
@@ -249,7 +335,7 @@ class ModuleTest extends TestCase
             'threedviewer_light_count' => '3',
             'threedviewer_light_1_color' => '#ABCDEF',
             'threedviewer_light_1_azimuth' => '-90',
-            'threedviewer_model_viewer_environment' => 'custom',
+            'threedviewer_model_viewer_environment' => 'neutral',
             'threedviewer_model_viewer_environment_url' => 'javascript:alert(1)',
             'threedviewer_babylon_lighting' => 'directional',
         ]);
@@ -260,7 +346,7 @@ class ModuleTest extends TestCase
         $this->assertSame('#abcdef', $values['threedviewer_light_1_color']);
         $this->assertSame(-90, $values['threedviewer_light_1_azimuth']);
         $this->assertSame(0.3, $values['threedviewer_light_4_strength'], 'Missing values are saved as defaults');
-        $this->assertSame('default', $values['threedviewer_model_viewer_environment']);
+        $this->assertSame('neutral', $values['threedviewer_model_viewer_environment']);
         $this->assertSame('', $values['threedviewer_model_viewer_environment_url']);
         $this->assertSame('directional', $values['threedviewer_babylon_lighting']);
         $this->assertSame('none', $values['threedviewer_babylon_environment']);

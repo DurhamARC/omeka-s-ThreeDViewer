@@ -488,5 +488,9 @@ msgstr "Iluminación de model-viewer del visor 3D"
 msgid "3D viewer Babylon.js lighting"
 msgstr "Iluminación de Babylon.js del visor 3D"
 
+#: Module.php:24
+msgid "The custom environment image URL must start with http://, https:// or /."
+msgstr "La URL de la imagen de entorno personalizada debe empezar por http://, https:// o /."
+
 #~ msgid "Choose the default lighting rig for Babylon.js scenes."
 #~ msgstr "Elija la iluminación predeterminada para las escenas de Babylon.js."

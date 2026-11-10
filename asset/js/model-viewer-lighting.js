@@ -371,7 +371,8 @@
       }
     });
 
-    if (turnable) {
+    // Only auto-rotate turns the turntable, and the module sets it once, in the markup
+    if (turnable && viewer.autoRotate) {
       let last = turntable(viewer);
       const watchTurntable = function () {
         const now = turntable(viewer);
