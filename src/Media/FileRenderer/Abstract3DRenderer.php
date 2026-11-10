@@ -16,6 +16,9 @@ abstract class Abstract3DRenderer implements RendererInterface
         'fullscreen-exit' => '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>',
         'help' => '<circle cx="12" cy="12" r="9"/>'
             . '<path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.4M12 17.1v.1"/>',
+        'reset' => '<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v5h5"/>',
+        'close' => '<path d="M6 6l12 12M18 6L6 18"/>',
+        'chevron' => '<path d="M9 6l6 6-6 6"/>',
         'sun' => '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4'
             . 'M2.5 12h2M19.5 12h2M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
     ];
@@ -159,13 +162,37 @@ abstract class Abstract3DRenderer implements RendererInterface
     }
 
     /**
-     * The lighting controls for one viewer, or nothing where the page does not show them. The
-     * panel stays hidden until the viewer reports its lights, which fill it from the template.
+     * The button that opens a viewer's lighting controls, for the viewer's toolbar, or nothing
+     * where the page does not show them. It stays hidden until the viewer reports its lights.
      *
      * @param string $target The id of the viewer element the controls drive
      */
-    protected function renderLightingControls(PhpRenderer $view, array $config, string $target): string
+    protected function renderLightingButton(PhpRenderer $view, array $config, string $target): string
     {
+        if (!$config['lightingControls']) {
+            return '';
+        }
+        $lighting = $view->escapeHtmlAttr($view->translate('Lighting'));
+        return '<button type="button" class="threedviewer-lighting-toggle" hidden aria-expanded="false"'
+            . ' aria-controls="' . $view->escapeHtmlAttr($this->lightingPanelId($target)) . '"'
+            . ' aria-label="' . $lighting . '" title="' . $lighting . '">' . $this->icon('sun') . '</button>';
+    }
+
+    /**
+     * The lighting controls for one viewer, or nothing where the page does not show them: a
+     * toolbar with the button that opens them (unless the viewer puts the button in a toolbar of
+     * its own), and the panel. The panel has a row per light, filled from the template once the
+     * viewer reports its lights, each row opening onto the light's direction and height.
+     *
+     * @param string $target The id of the viewer element the controls drive
+     * @param bool $toolbar Whether to add the button in a toolbar of its own
+     */
+    protected function renderLightingControls(
+        PhpRenderer $view,
+        array $config,
+        string $target,
+        bool $toolbar = true
+    ): string {
         if (!$config['lightingControls']) {
             return '';
         }
@@ -178,48 +205,76 @@ abstract class Abstract3DRenderer implements RendererInterface
             'point' => 'Point light', // @translate
             'environment' => 'Environment', // @translate
         ];
-        $labels = [
-            'color' => 'Colour', // @translate
+        $more = [
             'groundColor' => 'Ground colour', // @translate
-            'strength' => 'Strength', // @translate
             'azimuth' => 'Direction', // @translate
             'elevation' => 'Height', // @translate
         ];
         $ranges = ['strength' => [0, 3, 0.05], 'azimuth' => [-180, 180, 1], 'elevation' => [0, 90, 1]];
         $lighting = $view->escapeHtml($view->translate('Lighting'));
+        $reset = $view->escapeHtmlAttr($view->translate('Reset'));
+        $close = $view->escapeHtmlAttr($view->translate('Close'));
+        $colour = $view->escapeHtmlAttr($view->translate('Colour'));
+        $strength = $view->escapeHtmlAttr($view->translate('Strength'));
+        $directionAndHeight = $view->escapeHtmlAttr($view->translate('Direction and height'));
+        $fixedToModel = $view->escapeHtml($view->translate('Fixed to the model'));
+        $fixedToViewer = $view->escapeHtml($view->translate('Fixed to the viewer'));
+        $range = function (string $property, string $label = '') use ($ranges): string {
+            [$min, $max, $step] = $ranges[$property];
+            return '<input type="range" min="' . $min . '" max="' . $max . '" step="' . $step . '"'
+                . ' data-property="' . $property . '"' . $label . '><output></output>';
+        };
+        $panel = $view->escapeHtmlAttr($this->lightingPanelId($target));
         $mode = $view->escapeHtmlAttr('threedviewer-lighting-mode-' . $target);
 
-        $html = '<details class="threedviewer-lighting" hidden'
+        $html = $toolbar
+            ? '<div class="threedviewer-lighting-toolbar">'
+                . $this->renderLightingButton($view, $config, $target) . '</div>'
+            : '';
+        $html .= '<div class="threedviewer-lighting" id="' . $panel . '" hidden role="group"'
+            . ' aria-labelledby="' . $panel . '-title"'
             . ' data-threedviewer-target="' . $view->escapeHtmlAttr($target) . '"';
         foreach ($names as $kind => $name) {
             $html .= ' data-name-' . $kind . '="' . $view->escapeHtmlAttr($view->translate($name)) . '"';
         }
-        $html .= '><summary aria-label="' . $lighting . '" title="' . $lighting . '">'
-            . $this->icon('sun') . '</summary>'
-            . '<div class="threedviewer-lighting-panel">'
-            . '<div class="threedviewer-lighting-lights"></div>'
+        $html .= '><div class="threedviewer-lighting-head">'
+            . '<span class="threedviewer-lighting-title" id="' . $panel . '-title">' . $lighting . '</span>'
+            . '<button type="button" class="threedviewer-lighting-reset" aria-label="' . $reset . '"'
+            . ' title="' . $reset . '">' . $this->icon('reset') . '</button>'
+            . '<button type="button" class="threedviewer-lighting-close" aria-label="' . $close . '"'
+            . ' title="' . $close . '">' . $this->icon('close') . '</button>'
+            . '</div>'
             . '<fieldset class="threedviewer-lighting-mode"><legend>' . $lighting . '</legend>'
-            . '<label><input type="radio" name="' . $mode . '" value="model"> '
-            . $view->escapeHtml($view->translate('Fixed to the model')) . '</label>'
-            . '<label><input type="radio" name="' . $mode . '" value="viewer"> '
-            . $view->escapeHtml($view->translate('Fixed to the viewer')) . '</label>'
+            . '<label><input type="radio" name="' . $mode . '" value="model"><span>'
+            . $fixedToModel . '</span></label>'
+            . '<label><input type="radio" name="' . $mode . '" value="viewer"><span>'
+            . $fixedToViewer . '</span></label>'
             . '</fieldset>'
-            . '<button type="button" class="threedviewer-lighting-reset">'
-            . $view->escapeHtml($view->translate('Reset')) . '</button>'
-            . '<template><fieldset class="threedviewer-lighting-light"><legend></legend>';
-        foreach ($labels as $property => $label) {
+            . '<div class="threedviewer-lighting-lights"></div>'
+            . '<template><div class="threedviewer-lighting-light" role="group">'
+            . '<div class="threedviewer-lighting-row">'
+            . '<input type="color" data-property="color" aria-label="' . $colour . '">'
+            . '<span class="threedviewer-lighting-name"></span>'
+            . $range('strength', ' aria-label="' . $strength . '"')
+            . '<button type="button" class="threedviewer-lighting-more" aria-expanded="false"'
+            . ' aria-label="' . $directionAndHeight . '"'
+            . ' title="' . $directionAndHeight . '">' . $this->icon('chevron') . '</button>'
+            . '</div><div class="threedviewer-lighting-details" hidden>';
+        foreach ($more as $property => $label) {
             $html .= '<label class="threedviewer-lighting-control"><span>'
-                . $view->escapeHtml($view->translate($label)) . '</span>';
-            if (isset($ranges[$property])) {
-                [$min, $max, $step] = $ranges[$property];
-                $html .= '<input type="range" min="' . $min . '" max="' . $max . '" step="' . $step . '"'
-                    . ' data-property="' . $property . '"><output></output>';
-            } else {
-                $html .= '<input type="color" data-property="' . $property . '">';
-            }
-            $html .= '</label>';
+                . $view->escapeHtml($view->translate($label)) . '</span>'
+                . ($property === 'groundColor' ? '<input type="color" data-property="groundColor">' : $range($property))
+                . '</label>';
         }
-        return $html . '</fieldset></template></div></details>';
+        return $html . '</div></div></template></div>';
+    }
+
+    /**
+     * The id of a viewer's lighting panel.
+     */
+    private function lightingPanelId(string $target): string
+    {
+        return 'threedviewer-lighting-' . $target;
     }
 
     /**

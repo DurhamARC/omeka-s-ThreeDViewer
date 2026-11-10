@@ -1,9 +1,10 @@
 /**
- * Lighting controls: a panel on each viewer whose page shows them, listing the viewer's lights
- * with their colour, strength and direction.
+ * Lighting controls: a panel on each viewer whose page shows them, opened from a button in the
+ * viewer's toolbar, listing the viewer's lights. Each light is a row with its colour and strength,
+ * which opens onto its direction and height (and ground colour) where it has them, one light at a time.
  *
  * The viewer reports its lights (threedviewer:lighting-ready, see lighting-rig.js); the panel
- * builds a section per light from its <template> and sends the whole state back with every change
+ * builds a row per light from its <template> and sends the whole state back with every change
  * (threedviewer:lighting). Nothing is stored: a reload restores the page's lighting.
  */
 (function () {
@@ -27,10 +28,15 @@
     }
 
     function showValue(input) {
-        const output = input.parentNode.querySelector('output');
-        if (output) {
+        const output = input.nextElementSibling;
+        if (output && output.tagName === 'OUTPUT') {
             output.textContent = input.value + (input.dataset.property === 'strength' ? '' : '°');
         }
+    }
+
+    /** Take a control out of a row, keeping its place in the row's columns */
+    function vacate(element) {
+        element.replaceWith(document.createElement('span'));
     }
 
     /**
@@ -51,11 +57,15 @@
         }
         panel.dataset.lightingControlsReady = 'true';
         const target = targetOf(panel);
+        const toggle = panel.parentNode
+            ? panel.parentNode.querySelector('[aria-controls="' + panel.id + '"]')
+            : null;
         const list = panel.querySelector('.threedviewer-lighting-lights');
         const template = panel.querySelector('template');
         const modes = panel.querySelectorAll('.threedviewer-lighting-mode input');
         const reset = panel.querySelector('.threedviewer-lighting-reset');
-        if (!target || !list || !template) {
+        const close = panel.querySelector('.threedviewer-lighting-close');
+        if (!target || !toggle || !list || !template) {
             return;
         }
 
@@ -67,21 +77,52 @@
             target.dispatchEvent(new CustomEvent('threedviewer:lighting', { detail: detail }));
         }
 
+        function open(show) {
+            panel.hidden = !show;
+            toggle.setAttribute('aria-expanded', String(show));
+        }
+
+        /** Open one light's direction and height, closing any other's */
+        function expand(section, show) {
+            list.querySelectorAll('.threedviewer-lighting-light').forEach(function (other) {
+                const more = other.querySelector('.threedviewer-lighting-more');
+                const details = other.querySelector('.threedviewer-lighting-details');
+                if (more && details) {
+                    const expanded = other === section && show;
+                    more.setAttribute('aria-expanded', String(expanded));
+                    details.hidden = !expanded;
+                }
+            });
+        }
+
         function build(detail) {
             initial = copy(detail);
             state = copy(detail);
             list.textContent = '';
             let rigNumber = 0;
+            let first = null;
             state.lights.forEach(function (light) {
                 const section = template.content.firstElementChild.cloneNode(true);
                 if (light.kind === 'light') {
                     rigNumber++;
                 }
-                section.querySelector('legend').textContent = lightName(panel, light, rigNumber);
+                const name = lightName(panel, light, rigNumber);
+                section.setAttribute('aria-label', name);
+                const label = section.querySelector('.threedviewer-lighting-name');
+                label.textContent = name;
+                label.title = name; // for a narrow viewer, which cuts the name short
                 section.querySelectorAll('[data-property]').forEach(function (input) {
                     const property = input.dataset.property;
                     if (light[property] === undefined) {
-                        input.closest('.threedviewer-lighting-control').remove();
+                        const control = input.closest('.threedviewer-lighting-control');
+                        if (control) {
+                            control.remove();
+                        } else {
+                            if (input.nextElementSibling && input.nextElementSibling.tagName === 'OUTPUT') {
+                                vacate(input.nextElementSibling);
+                            }
+                            vacate(input);
+                        }
                         return;
                     }
                     // Brightness can take a strength past the slider's end: lengthen it, rather
@@ -97,14 +138,38 @@
                         send();
                     });
                 });
+                const more = section.querySelector('.threedviewer-lighting-more');
+                const details = section.querySelector('.threedviewer-lighting-details');
+                if (details.querySelector('[data-property]')) {
+                    more.addEventListener('click', function () {
+                        expand(section, more.getAttribute('aria-expanded') !== 'true');
+                    });
+                    first = first || section;
+                } else {
+                    vacate(more);
+                    details.remove();
+                }
                 list.appendChild(section);
             });
+            // The first light with a direction starts open, showing what a row holds
+            if (first) {
+                expand(first, true);
+            }
             modes.forEach(function (radio) {
                 radio.checked = radio.value === state.mode;
             });
-            panel.hidden = false;
+            toggle.hidden = false;
         }
 
+        toggle.addEventListener('click', function () {
+            open(panel.hidden);
+        });
+        if (close) {
+            close.addEventListener('click', function () {
+                open(false);
+                toggle.focus();
+            });
+        }
         modes.forEach(function (radio) {
             radio.addEventListener('change', function () {
                 if (radio.checked && state) {

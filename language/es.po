@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ThreeDViewer\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 23:56+0000\n"
+"POT-Creation-Date: 2026-11-10 00:26+0000\n"
 "PO-Revision-Date: 2023-11-15 12:00+0000\n"
 "Last-Translator: Área de Tecnología Educativa <ate@gobiernodecanarias.org>\n"
 "Language-Team: Spanish\n"
@@ -25,25 +25,42 @@ msgid "3D viewer controls"
 msgstr "Controles del visor 3D"
 
 #: src/Media/FileRenderer/GlbRenderer.php:38
-#: src/Media/FileRenderer/Abstract3DRenderer.php:271
+#: src/Media/FileRenderer/Abstract3DRenderer.php:347
 msgid "Use mouse to rotate, zoom and pan"
 msgstr "Usa el ratón para rotar, hacer zoom y desplazar"
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:179
+#: src/Media/FileRenderer/Abstract3DRenderer.php:175
+#: src/Media/FileRenderer/Abstract3DRenderer.php:214
 msgid "Lighting"
 msgstr "Iluminación"
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:192
+#: src/Media/FileRenderer/Abstract3DRenderer.php:215
+msgid "Reset"
+msgstr "Restablecer"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:216
+msgid "Close"
+msgstr "Cerrar"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:217
+msgid "Colour"
+msgstr "Color"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:218
+msgid "Strength"
+msgstr "Intensidad"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:219
+msgid "Direction and height"
+msgstr "Dirección y altura"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:220
 msgid "Fixed to the model"
 msgstr "Fija al modelo"
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:194
+#: src/Media/FileRenderer/Abstract3DRenderer.php:221
 msgid "Fixed to the viewer"
 msgstr "Fija al visor"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:197
-msgid "Reset"
-msgstr "Restablecer"
 
 #: src/Media/FileRenderer/BabylonRenderer.php:71
 msgid "Loading 3D model..."
@@ -230,7 +247,7 @@ msgid "Directional"
 msgstr "Direccional"
 
 #: src/Form/ConfigForm.php:167
-#: src/Media/FileRenderer/Abstract3DRenderer.php:168
+#: src/Media/FileRenderer/Abstract3DRenderer.php:205
 msgid "Point light"
 msgstr "Luz puntual"
 
@@ -379,16 +396,6 @@ msgstr "La sombra bajo los modelos GLB/glTF. Con 0 no se muestra."
 msgid "model-viewer shadow softness"
 msgstr "Suavidad de la sombra de model-viewer"
 
-#: src/Form/ConfigForm.php:390
-#: src/Media/FileRenderer/Abstract3DRenderer.php:172
-msgid "Colour"
-msgstr "Color"
-
-#: src/Form/ConfigForm.php:391
-#: src/Media/FileRenderer/Abstract3DRenderer.php:174
-msgid "Strength"
-msgstr "Intensidad"
-
 #: src/Form/ConfigForm.php:392
 msgid "Direction (degrees round)"
 msgstr "Dirección (grados alrededor)"
@@ -412,36 +419,36 @@ msgstr "0 es a la altura del modelo, 90 es desde arriba."
 msgid "STL Viewer"
 msgstr "Visor STL"
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:164
+#: src/Media/FileRenderer/Abstract3DRenderer.php:201
 msgid "Ambient light"
 msgstr "Luz ambiental"
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:165
+#: src/Media/FileRenderer/Abstract3DRenderer.php:202
 #, php-format
 msgid "Light %d"
 msgstr "Luz %d"
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:166
+#: src/Media/FileRenderer/Abstract3DRenderer.php:203
 msgid "Key light"
 msgstr "Luz principal"
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:167
+#: src/Media/FileRenderer/Abstract3DRenderer.php:204
 msgid "Sky light"
 msgstr "Luz del cielo"
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:169
+#: src/Media/FileRenderer/Abstract3DRenderer.php:206
 msgid "Environment"
 msgstr "Entorno"
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:173
+#: src/Media/FileRenderer/Abstract3DRenderer.php:209
 msgid "Ground colour"
 msgstr "Color del suelo"
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:175
+#: src/Media/FileRenderer/Abstract3DRenderer.php:210
 msgid "Direction"
 msgstr "Dirección"
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:176
+#: src/Media/FileRenderer/Abstract3DRenderer.php:211
 msgid "Height"
 msgstr "Altura"
 

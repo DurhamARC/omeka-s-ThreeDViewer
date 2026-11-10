@@ -71,9 +71,10 @@ See general end user documentation for [Installing a module](http://omeka.org/s/
    while the other library is selected (in a site's settings, the module's library). The settings after the general
    ones are grouped: *Lighting for every viewer*, the custom light rig (set in under *Lights*, one group per light),
    then model-viewer's and Babylon.js's own.
-7. **Show lighting controls on viewers** (off by default) adds a ☀ button to every viewer. It opens a panel listing the
-   scene's lights, each with its colour, strength, direction and height, as the light allows, plus *Fixed to the
-   model / Fixed to the viewer* and *Reset*. Changes affect only that viewer and are never stored: reloading the page
+7. **Show lighting controls on viewers** (off by default) adds a *Lighting* button (a sun) to every viewer's toolbar.
+   It opens a panel with a row for each of the scene's lights, showing its colour and strength; the row opens onto
+   the light's direction and height, as the light allows. The panel also has *Fixed to the model / Fixed to the
+   viewer*, *Reset* and *Close*. Changes affect only that viewer and are never stored: reloading the page
    restores the configured lighting. Each site can show or hide the controls whatever the module setting.
    Unlike the Babylon.js toolbar, which embeds the Babylon.js Inspector (a developer tool, for that viewer only), the
    panel shows only the lights, the same way in all three viewers.

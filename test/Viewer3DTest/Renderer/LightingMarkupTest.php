@@ -197,14 +197,24 @@ class LightingMarkupTest extends TestCase
             preg_match('/<[^>]*id="' . preg_quote($match[1], '/') . '"[^>]*data-lighting-controls="true"/', $html),
             'The viewer element knows it has controls'
         );
-        $this->assertStringContainsString('<details class="threedviewer-lighting" hidden', $html);
+        $panel = 'threedviewer-lighting-' . $match[1];
+        $this->assertStringContainsString('<div class="threedviewer-lighting" id="' . $panel . '" hidden', $html);
+        $this->assertSame(
+            1,
+            preg_match('/<button type="button" class="threedviewer-lighting-toggle" hidden aria-expanded="false"'
+                . ' aria-controls="' . preg_quote($panel, '/') . '" aria-label="Lighting"/', $html),
+            'A button opens the panel, hidden until the viewer reports its lights'
+        );
         $this->assertStringContainsString('data-name-light="Light %d"', $html);
-        $this->assertStringContainsString('<template><fieldset class="threedviewer-lighting-light">', $html);
+        $this->assertStringContainsString('<template><div class="threedviewer-lighting-light" role="group">', $html);
         foreach (['color', 'groundColor', 'strength', 'azimuth', 'elevation'] as $property) {
             $this->assertStringContainsString('data-property="' . $property . '"', $html, $property);
         }
-        $this->assertStringContainsString('value="viewer"> Fixed to the viewer', $html);
-        $this->assertStringContainsString('class="threedviewer-lighting-reset">Reset</button>', $html);
+        $this->assertStringContainsString('value="viewer"><span>Fixed to the viewer</span>', $html);
+        $this->assertStringContainsString('class="threedviewer-lighting-reset" aria-label="Reset"', $html);
+        $this->assertStringContainsString('class="threedviewer-lighting-close" aria-label="Close"', $html);
+        $this->assertStringContainsString('aria-label="Direction and height"', $html);
+        $this->assertStringNotContainsString('<details class="threedviewer-lighting"', $html);
 
         $files = $view->headScript()->files;
         $this->assertContains('/modules/ThreeDViewer/js/lighting-controls.js', $files);
@@ -258,5 +268,29 @@ class LightingMarkupTest extends TestCase
         [$html, $view] = $this->render('model.glb', [], ['threedviewer_lighting_controls' => '1']);
         $this->assertStringContainsString('id="threedviewer-model-1"', $html);
         $this->assertContains('/modules/ThreeDViewer/js/model-viewer-lighting.js', $view->headScript()->files);
+    }
+
+    public function testTheLightingButtonJoinsTheToolbarItsViewerHas(): void
+    {
+        [$html] = $this->render('model.glb', ['threedviewer_lighting_controls' => true]);
+        $this->assertSame(
+            1,
+            preg_match('/<div class="threedviewer-control threedviewer-fullscreen">.*?<\/button>'
+                . '<button type="button" class="threedviewer-lighting-toggle"[^>]*>.*?<\/button><\/div>/s', $html),
+            'Beside the fullscreen button'
+        );
+        $this->assertStringNotContainsString('threedviewer-lighting-toolbar', $html);
+
+        foreach ([['mesh.stl', 'model-viewer'], ['model.gltf', 'babylon']] as [$file, $library]) {
+            [$html] = $this->render($file, [
+                'threedviewer_default_library' => $library,
+                'threedviewer_lighting_controls' => true,
+            ]);
+            $this->assertStringContainsString(
+                '<div class="threedviewer-lighting-toolbar"><button type="button" class="threedviewer-lighting-toggle"',
+                $html,
+                $file
+            );
+        }
     }
 }
