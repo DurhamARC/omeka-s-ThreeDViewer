@@ -37,6 +37,14 @@ class Viewer3DRendererTest extends TestCase
         $this->assertStringContainsString('View 3D model fullscreen', $html);
         $this->assertStringContainsString('Exit fullscreen 3D model', $html);
         $this->assertStringContainsString('aria-label="3D viewer controls"', $html);
+        $this->assertSame(
+            1,
+            preg_match('/data-exit-label="[^"]*">(<svg[^>]*threedviewer-icon-enter.*?<\/svg>)'
+                . '(<svg[^>]*threedviewer-icon-exit.*?<\/svg>)<\/button>/', $html),
+            'The fullscreen button draws both its icons, the stylesheet showing one'
+        );
+        $this->assertSame(1, preg_match('/<summary[^>]*>\s*<svg[^>]*aria-hidden="true"/', $html), 'Help is an icon');
+        $this->assertStringNotContainsString('⛶', $html);
         $this->assertContains('/modules/ThreeDViewer/js/viewer-controls.js', $this->view->headScript()->files);
         $this->assertContains(
             '/modules/ThreeDViewer/css/model-viewer-controls.css',

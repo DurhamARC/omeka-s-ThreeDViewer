@@ -12,6 +12,8 @@ use Omeka\Module\AbstractModule;
 use Omeka\Mvc\Controller\Plugin\Messenger;
 use Omeka\Stdlib\Message;
 use ThreeDViewer\Form\ConfigForm;
+use ThreeDViewer\Form\SiteSettingsFieldset;
+use ThreeDViewer\Settings\Lighting;
 
 /**
  * Main class for the 3DViewer module.
@@ -26,6 +28,122 @@ class Module extends AbstractModule
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
+    }
+
+    /**
+     * Add the lighting settings to each site's settings form.
+     *
+     * @param SharedEventManagerInterface $sharedEventManager
+     */
+    public function attachListeners(SharedEventManagerInterface $sharedEventManager)
+    {
+        $sharedEventManager->attach(
+            'Omeka\Form\SiteSettingsForm',
+            'form.add_elements',
+            [$this, 'addSiteSettings']
+        );
+        $sharedEventManager->attach(
+            'Omeka\Form\SiteSettingsForm',
+            'form.add_input_filters',
+            [$this, 'addSiteSettingsInputFilters']
+        );
+        // The site settings form is on the site's edit page
+        $sharedEventManager->attach(
+            'Omeka\Controller\SiteAdmin\Index',
+            'view.edit.before',
+            [$this, 'addSiteSettingsScript']
+        );
+    }
+
+    /**
+     * Show each lighting setting on a site's settings only where it applies.
+     *
+     * @param Event $event
+     */
+    public function addSiteSettingsScript(Event $event)
+    {
+        $this->appendSettingsFormScript($event->getTarget());
+    }
+
+    /**
+     * The script that shows each lighting setting only where it applies (see ConfigForm's
+     * data-show-if conditions), and the styles that set the light rig's groups in under Lights.
+     */
+    private function appendSettingsFormScript(PhpRenderer $view): void
+    {
+        $view->headScript()->appendFile($view->assetUrl('js/settings-form.js', 'ThreeDViewer'));
+        $view->headLink()->appendStylesheet($view->assetUrl('css/settings-form.css', 'ThreeDViewer'));
+    }
+
+    /**
+     * Add the lighting elements to a site's settings form, in the module form's groups. They are
+     * added one by one, because Omeka saves each top-level element of this form as its own site
+     * setting.
+     *
+     * A blank field keeps the module's setting, except in the light rig: a site whose Lights is
+     * Custom has its own whole rig, so its rig fields show the defaults rather than a blank.
+     * Settings of one library show only where it is the module's library.
+     *
+     * @param Event $event
+     */
+    public function addSiteSettings(Event $event)
+    {
+        $services = $this->getServiceLocator();
+        $siteSettings = $services->get('Omeka\Settings\Site');
+        $library = $services->get('Omeka\Settings')->get('threedviewer_default_library', 'model-viewer');
+        $form = $event->getTarget();
+
+        // The module form's groups, named for the site's settings among other modules'. The first
+        // keeps the name it has always had.
+        $siteGroups = [
+            'threedviewer_lighting' => ['threedviewer', '3D viewer lighting'], // @translate
+            'threedviewer_custom_lights' => ['threedviewer_custom_lights', '3D viewer custom lights'], // @translate
+            'threedviewer_light_1' => ['threedviewer_light_1', '3D viewer custom light 1'], // @translate
+            'threedviewer_light_2' => ['threedviewer_light_2', '3D viewer custom light 2'], // @translate
+            'threedviewer_light_3' => ['threedviewer_light_3', '3D viewer custom light 3'], // @translate
+            'threedviewer_light_4' => ['threedviewer_light_4', '3D viewer custom light 4'], // @translate
+            'threedviewer_model_viewer' => [
+                'threedviewer_model_viewer',
+                '3D viewer model-viewer lighting', // @translate
+            ],
+            'threedviewer_babylon' => ['threedviewer_babylon', '3D viewer Babylon.js lighting'], // @translate
+        ];
+        $groups = $form->getOption('element_groups') ?: [];
+        foreach ($siteGroups as [$id, $label]) {
+            $groups[$id] = $label;
+        }
+        $form->setOption('element_groups', $groups);
+
+        $defaults = Lighting::defaults();
+        $rig = Lighting::rigKeys();
+        $fieldset = new SiteSettingsFieldset();
+        $fieldset->init();
+        foreach ($fieldset->getElements() as $name => $element) {
+            $value = $siteSettings->get($name);
+            if (($value === null || $value === '') && in_array($name, $rig, true)) {
+                $value = $defaults[$name];
+            }
+            $element->setOption('element_group', $siteGroups[$element->getOption('element_group')][0]);
+            // A site has no library of its own: its library settings show for the module's
+            if ($element->getAttribute('data-show-if-library')) {
+                $element->setAttribute('data-library', (string) $library);
+            }
+            $element->setValue($value ?? '');
+            $form->add($element);
+        }
+    }
+
+    /**
+     * Let every lighting field of a site's settings form be left empty.
+     *
+     * @param Event $event
+     */
+    public function addSiteSettingsInputFilters(Event $event)
+    {
+        $inputFilter = $event->getParam('inputFilter');
+        foreach (Lighting::keys() as $name) {
+            $inputFilter->add(['name' => $name, 'required' => false, 'allow_empty' => true]);
+        }
     }
 
     /**
@@ -91,32 +209,30 @@ class Module extends AbstractModule
     public function getConfigForm(PhpRenderer $renderer)
     {
         $services = $this->getServiceLocator();
-        $config = $services->get('Config');
         $settings = $services->get('Omeka\Settings');
         
         $form = new ConfigForm;
         $form->init();
         
+        // Each stored value, or its default; checkboxes take '1'/'0'
+        $data = [];
+        foreach (Lighting::defaults() as $key => $default) {
+            $value = $settings->get($key, $default);
+            $data[$key] = is_bool($default) ? ($value ? '1' : '0') : $value;
+        }
         // As saved and rendered: anything but Y or Z keeps current behaviour
-        $stlUpAxis = $settings->get('threedviewer_stl_up_axis', 'current');
+        if (!in_array($data['threedviewer_stl_up_axis'], ['y', 'z'], true)) {
+            $data['threedviewer_stl_up_axis'] = 'current';
+        }
+        $form->setData($data);
+        $this->appendSettingsFormScript($renderer);
 
-        $form->setData([
-            'threedviewer_default_library' => $settings->get('threedviewer_default_library', 'model-viewer'),
-            'threedviewer_viewer_height' => $settings->get('threedviewer_viewer_height', 500),
-            'threedviewer_auto_rotate' => $settings->get('threedviewer_auto_rotate', true) ? '1' : '0',
-            'threedviewer_foreground_color' => $settings->get('threedviewer_foreground_color', '#0000FF'),
-            'threedviewer_background_color' => $settings->get('threedviewer_background_color', '#b5b5b5'),
-            'threedviewer_show_grid' => $settings->get('threedviewer_show_grid', false) ? '1' : '0',
-            'threedviewer_lighting_mode' => $settings->get('threedviewer_lighting_mode', 'model'),
-            'threedviewer_stl_up_axis' => in_array($stlUpAxis, ['y', 'z'], true) ? $stlUpAxis : 'current',
-            'threedviewer_babylon_camera' => $settings->get('threedviewer_babylon_camera', 'arcRotate'),
-            'threedviewer_babylon_lighting' => $settings->get('threedviewer_babylon_lighting', 'hemispheric'),
-            'threedviewer_babylon_environment' => $settings->get('threedviewer_babylon_environment', 'none'),
-            'threedviewer_babylon_enable_xr' => $settings->get('threedviewer_babylon_enable_xr', false) ? '1' : '0',
-            'threedviewer_babylon_show_toolbar' =>
-                $settings->get('threedviewer_babylon_show_toolbar', false) ? '1' : '0',
-        ]);
-        
+        // Each group in its fieldset, where Omeka can (formCollectionElementGroups, as the site
+        // settings use); otherwise every element in one list, as before
+        $helpers = method_exists($renderer, 'getHelperPluginManager') ? $renderer->getHelperPluginManager() : null;
+        if ($helpers && $helpers->has('formCollectionElementGroups')) {
+            return $renderer->formCollectionElementGroups($form, false);
+        }
         return $renderer->formCollection($form, false);
     }
     
@@ -146,15 +262,12 @@ class Module extends AbstractModule
             isset($config['threedviewer_show_grid'])
                 && $config['threedviewer_show_grid'] === '1'
         );
-        $settings->set(
-            'threedviewer_lighting_mode',
-            ($config['threedviewer_lighting_mode'] ?? '') === 'viewer' ? 'viewer' : 'model'
-        );
+        foreach (Lighting::normalise($config) as $key => $value) {
+            $settings->set($key, $value);
+        }
         $stlUpAxis = $config['threedviewer_stl_up_axis'] ?? '';
         $settings->set('threedviewer_stl_up_axis', in_array($stlUpAxis, ['y', 'z'], true) ? $stlUpAxis : 'current');
         $settings->set('threedviewer_babylon_camera', $config['threedviewer_babylon_camera'] ?? 'arcRotate');
-        $settings->set('threedviewer_babylon_lighting', $config['threedviewer_babylon_lighting'] ?? 'hemispheric');
-        $settings->set('threedviewer_babylon_environment', $config['threedviewer_babylon_environment'] ?? 'none');
         $settings->set(
             'threedviewer_babylon_enable_xr',
             isset($config['threedviewer_babylon_enable_xr']) && $config['threedviewer_babylon_enable_xr'] === '1'

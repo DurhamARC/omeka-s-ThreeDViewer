@@ -1,0 +1,300 @@
+/*
+ * Lighting controls on a viewer: a button in the viewer's toolbar at the bottom left (the GLB
+ * viewer's, beside fullscreen; a toolbar of their own in the others), opening a panel above it.
+ * Both are placed against the viewer's container, which each renderer positions, so the panel can
+ * take the viewer's height and scroll within it. Every control is reset against theme styles.
+ */
+
+.threedviewer-lighting-toolbar {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    z-index: 101;
+    display: inline-flex;
+    box-sizing: border-box;
+    padding: 3px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.96);
+    color: #1d2329;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.22);
+}
+
+/* Until the viewer reports its lights, the toolbar has nothing to show */
+.threedviewer-lighting-toolbar:not(:has(> :not([hidden]))) {
+    display: none;
+}
+
+.threedviewer-lighting-toggle,
+.threedviewer-lighting button {
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: 1;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.threedviewer-lighting-toggle[hidden],
+.threedviewer-lighting[hidden],
+.threedviewer-lighting [hidden] {
+    display: none;
+}
+
+.threedviewer-lighting-toggle:hover,
+.threedviewer-lighting button:hover {
+    background: rgba(0, 0, 0, 0.07);
+}
+
+.threedviewer-lighting-toggle:focus-visible,
+.threedviewer-lighting button:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+}
+
+/* Also inside the GLB viewer's toolbar, whose button styles are more specific */
+.threedviewer-lighting-toggle[aria-expanded="true"],
+.threedviewer-model-stage .threedviewer-control .threedviewer-lighting-toggle[aria-expanded="true"] {
+    background: #1d2329;
+    color: #fff;
+}
+
+/* Beside the fullscreen button, with a rule between them */
+.threedviewer-fullscreen > button:not([hidden]) + .threedviewer-lighting-toggle {
+    position: relative;
+    margin-left: 3px;
+}
+
+.threedviewer-fullscreen > button:not([hidden]) + .threedviewer-lighting-toggle::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: -3.5px;
+    width: 1px;
+    background: rgba(0, 0, 0, 0.14);
+}
+
+.threedviewer-lighting-toggle .threedviewer-icon,
+.threedviewer-lighting .threedviewer-icon {
+    display: block;
+    flex: none;
+}
+
+.threedviewer-lighting {
+    position: absolute;
+    left: 12px;
+    bottom: 60px;
+    z-index: 102;
+    box-sizing: border-box;
+    width: 300px;
+    max-width: calc(100% - 24px);
+    max-height: calc(100% - 72px);
+    overflow-y: auto;
+    padding: 8px 12px 10px;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.97);
+    color: #1d2329;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.22);
+    font-size: 13px;
+    line-height: 1.35;
+    text-align: left;
+}
+
+.threedviewer-lighting *,
+.threedviewer-lighting *::before,
+.threedviewer-lighting *::after {
+    box-sizing: border-box;
+}
+
+.threedviewer-lighting-head {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.threedviewer-lighting-title {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.threedviewer-lighting-head button {
+    width: 30px;
+    height: 30px;
+}
+
+.threedviewer-lighting-head .threedviewer-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* Fixed to the model / viewer, as a two-way switch */
+.threedviewer-lighting-mode {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-width: 0;
+    margin: 6px 0 8px;
+    padding: 2px;
+    border: 0;
+    border-radius: 7px;
+    background: #eceef0;
+}
+
+.threedviewer-lighting-mode legend {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.threedviewer-lighting-mode label {
+    position: relative;
+    display: block;
+    margin: 0;
+    cursor: pointer;
+}
+
+.threedviewer-lighting-mode input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.threedviewer-lighting-mode span {
+    display: block;
+    padding: 5px 4px;
+    border-radius: 5px;
+    font-size: 12px;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.threedviewer-lighting-mode input:checked + span {
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+}
+
+.threedviewer-lighting-mode input:focus-visible + span {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+}
+
+.threedviewer-lighting-light {
+    border-top: 1px solid rgba(0, 0, 0, 0.09);
+}
+
+/* Colour, name, strength, value, and the button that opens direction and height */
+.threedviewer-lighting-row {
+    display: grid;
+    grid-template-columns: 22px minmax(4.5em, 7.6em) minmax(56px, 1fr) 2.4em 24px;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+}
+
+.threedviewer-lighting-name {
+    overflow: hidden;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.threedviewer-lighting-row .threedviewer-lighting-more {
+    width: 24px;
+    height: 24px;
+}
+
+.threedviewer-lighting-more .threedviewer-icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.15s;
+}
+
+.threedviewer-lighting-more[aria-expanded="true"] .threedviewer-icon {
+    transform: rotate(90deg);
+}
+
+.threedviewer-lighting-details {
+    padding: 0 0 8px 30px;
+}
+
+.threedviewer-lighting-control {
+    display: grid;
+    grid-template-columns: 5em minmax(0, 1fr) 2.8em;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+    font-size: 12px;
+}
+
+.threedviewer-lighting input[type="range"] {
+    width: 100%;
+    min-width: 0;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    accent-color: #1d2329;
+}
+
+.threedviewer-lighting input[type="color"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    border-radius: 50%;
+    background: none;
+    cursor: pointer;
+}
+
+.threedviewer-lighting input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.threedviewer-lighting input[type="color"]::-webkit-color-swatch {
+    border: 0;
+    border-radius: 50%;
+}
+
+.threedviewer-lighting input[type="color"]::-moz-color-swatch {
+    border: 0;
+    border-radius: 50%;
+}
+
+.threedviewer-lighting output {
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .threedviewer-lighting-more .threedviewer-icon {
+        transition: none;
+    }
+}

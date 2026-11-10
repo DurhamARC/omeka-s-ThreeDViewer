@@ -8,6 +8,8 @@
 let scene, camera, renderer, controls;
 // The element the viewer draws in: the one holding its #loading element
 let container;
+// Set while the lighting is fixed to the viewer: moves the lights each frame
+let followCamera = null;
 
 /**
  * Initializes the 3D scene, camera and renderer
@@ -25,7 +27,10 @@ function init(modelUrl, options = {}) {
     showGrid: options.showGrid === "true" || false,
     lightingMode: options.lightingMode === "viewer" ? "viewer" : "model",
     // STL files don't record which way is up: this viewer shows them Y up unless Z is chosen
-    upAxis: options.upAxis === "z" ? "z" : "y"
+    upAxis: options.upAxis === "z" ? "z" : "y",
+    brightness: options.brightness === undefined ? 1 : options.brightness,
+    rig: options.rig || null,
+    element: options.element || null
   };
   
   // Convert hex color strings to Three.js color objects
@@ -84,15 +89,9 @@ function init(modelUrl, options = {}) {
   // Log auto-rotate setting for debugging
   console.log('STL Viewer: Auto-rotate is ' + (config.autoRotate ? 'enabled' : 'disabled'));
 
-  // Add lighting to the scene
-  // Ambient light provides overall illumination
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambientLight);
-
-  // Directional light simulates sunlight with shadows
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  directionalLight.position.set(0, 50, 50).normalize();
-  scene.add(directionalLight);
+  // Add lighting to the scene: the light rig if there is one, else an ambient light for overall
+  // illumination and a directional light from the front and above
+  const lights = config.rig ? addRig(config.rig, config.brightness) : addDefaultLights(config.brightness);
 
   // Load the STL file using Three.js STLLoader
   const loader = new THREE.STLLoader();
@@ -151,8 +150,11 @@ function init(modelUrl, options = {}) {
       camera.lookAt(0, 0, 0);
       controls.update();
 
-      if (config.lightingMode === 'viewer') {
-        attachLightToCamera(directionalLight);
+      if (config.rig) {
+        aimRig(lights.directional, config.rig);
+      }
+      if (window.ThreeDViewerLighting && config.element) {
+        setUpLighting(config.element, lights, config);
       }
       
       // Trigger a resize to ensure proper rendering
@@ -197,22 +199,112 @@ function init(modelUrl, options = {}) {
 }
 
 /**
- * Moves a directional light onto the camera, keeping the direction it shines from in the current
- * view, so the light stays fixed relative to the viewer and the model turns under it
+ * The viewer's own lights: ambient, and a directional light from the front and 45 degrees up
  *
- * @param {THREE.DirectionalLight} light - A light in the scene, with its target at the origin
+ * @param {number} brightness - Multiplier for both lights
+ * @return {{ambient: THREE.AmbientLight, directional: THREE.DirectionalLight[]}} The lights
  */
-function attachLightToCamera(light) {
-  camera.updateMatrixWorld();
-  const direction = light.position.clone()
-    .sub(light.target.position)
-    .transformDirection(camera.matrixWorldInverse);
+function addDefaultLights(brightness) {
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6 * brightness);
+  scene.add(ambientLight);
 
-  light.position.copy(direction);
-  light.target.position.set(0, 0, 0);
-  camera.add(light);
-  camera.add(light.target);
-  scene.add(camera);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8 * brightness);
+  directionalLight.position.set(0, 50, 50).normalize();
+  scene.add(directionalLight);
+  return { ambient: ambientLight, directional: [directionalLight] };
+}
+
+/**
+ * The light rig's lights: ambient, and one directional light per rig light, aimed by aimRig()
+ * once the camera has its default view
+ *
+ * @param {Object} rig - From ThreeDViewerLighting.parse()
+ * @param {number} brightness - Multiplier for every light
+ * @return {{ambient: THREE.AmbientLight, directional: THREE.DirectionalLight[]}} The lights, in the rig's order
+ */
+function addRig(rig, brightness) {
+  const ambientLight = new THREE.AmbientLight(new THREE.Color(rig.ambient.color), rig.ambient.strength * brightness);
+  scene.add(ambientLight);
+
+  const directional = rig.lights.map(function (light) {
+    const directionalLight = new THREE.DirectionalLight(new THREE.Color(light.color), light.strength * brightness);
+    directionalLight.position.set(0, 0, 1);
+    scene.add(directionalLight);
+    return directionalLight;
+  });
+  return { ambient: ambientLight, directional: directional };
+}
+
+/**
+ * Points each rig light from its direction relative to the camera's current (default) view
+ *
+ * @param {THREE.DirectionalLight[]} lights - From addRig()
+ * @param {Object} rig - The rig they were made from
+ */
+function aimRig(lights, rig) {
+  const back = ThreeDViewerLighting.backFrom(camera.position, new THREE.Vector3(0, 0, 0));
+  lights.forEach(function (light, i) {
+    const d = ThreeDViewerLighting.direction(rig.lights[i].azimuth, rig.lights[i].elevation, back, false);
+    light.position.set(d.x, d.y, d.z);
+  });
+}
+
+/**
+ * The lights fixed to the model or to the viewer, and changed by the lighting controls where the
+ * page shows them: see ThreeDViewerLighting.controller() in lighting-rig.js
+ *
+ * @param {HTMLElement} element - The element the controls send their changes to
+ * @param {{ambient: THREE.AmbientLight, directional: THREE.DirectionalLight[]}} lights
+ * @param {Object} config - The viewer's configuration
+ */
+function setUpLighting(element, lights, config) {
+  const byId = { ambient: lights.ambient };
+  const described = [{ id: 'ambient', kind: 'ambient' }];
+  lights.directional.forEach(function (light, i) {
+    const id = config.rig ? 'light' + (i + 1) : 'key';
+    byId[id] = light;
+    // Its target is at the origin, so its position is the way to the light
+    const p = light.position;
+    described.push({ id: id, kind: config.rig ? 'light' : 'key', direction: { x: p.x, y: p.y, z: p.z } });
+  });
+
+  ThreeDViewerLighting.controller(element, {
+    lights: described.map(function (light) {
+      return Object.assign(light, {
+        color: '#' + byId[light.id].color.getHexString(),
+        strength: byId[light.id].intensity
+      });
+    }),
+    back: ThreeDViewerLighting.backFrom(camera.position, new THREE.Vector3(0, 0, 0)),
+    leftHanded: false,
+    mode: config.lightingMode,
+    turns: {
+      identity: function () { return new THREE.Quaternion(); },
+      clone: function (turn) { return turn.clone(); },
+      then: function (first, second) { return second.clone().multiply(first); },
+      invert: function (turn) { return turn.clone().inverse(); },
+      apply: function (turn, v) {
+        const p = new THREE.Vector3(v.x, v.y, v.z).applyQuaternion(turn);
+        return { x: p.x, y: p.y, z: p.z };
+      },
+      camera: function () { return camera.quaternion.clone(); },
+      since: function (start) { return camera.quaternion.clone().multiply(start.clone().inverse()); }
+    },
+    follow: function (update) {
+      followCamera = update;
+    },
+    set: function (light) {
+      byId[light.id].color.set(light.color);
+      byId[light.id].intensity = light.strength;
+    },
+    place: function (all, turn) {
+      all.forEach(function (light) {
+        if (light.direction) {
+          byId[light.id].position.set(light.direction.x, light.direction.y, light.direction.z).applyQuaternion(turn);
+        }
+      });
+    }
+  });
 }
 
 /**
@@ -279,6 +371,9 @@ function animate() {
   if (controls) {
     controls.update();
   }
+  if (followCamera) {
+    followCamera();
+  }
   
   // Render the scene
   if (scene && camera && renderer) {
@@ -304,6 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const showGrid = loadingElement.dataset.showGrid;
   const lightingMode = loadingElement.dataset.lightingMode;
   const upAxis = loadingElement.dataset.stlUpAxis;
+  const lighting = window.ThreeDViewerLighting;
   
   // Verify we have a valid URL
   if (!stlUrl) {
@@ -320,7 +416,10 @@ document.addEventListener('DOMContentLoaded', () => {
     autoRotate: autoRotate,
     showGrid: showGrid,
     lightingMode: lightingMode,
-    upAxis: upAxis
+    upAxis: upAxis,
+    brightness: lighting ? lighting.brightness(loadingElement) : 1,
+    rig: lighting ? lighting.parse(loadingElement) : null,
+    element: loadingElement
   });
   
   // Start the animation loop
