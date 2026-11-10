@@ -30,10 +30,11 @@ class ConfigFormTest extends TestCase
         $this->assertSame(
             [
                 'threedviewer_light_brightness',
+                'threedviewer_lighting_controls',
                 'threedviewer_lights',
                 'threedviewer_light_ambient_color',
             ],
-            array_slice($names, $mode + 1, 3)
+            array_slice($names, $mode + 1, 4)
         );
         foreach (['color', 'strength', 'azimuth', 'elevation'] as $property) {
             $this->assertTrue($this->form->has("threedviewer_light_4_{$property}"), $property);
@@ -47,6 +48,18 @@ class ConfigFormTest extends TestCase
         $this->assertSame(
             ['default', 'neutral', 'legacy', 'custom'],
             array_keys($this->form->get('threedviewer_model_viewer_environment')->getValueOptions())
+        );
+    }
+
+    public function testControlsAreACheckboxBeforeTheLightRig(): void
+    {
+        $this->form->init();
+        $element = $this->form->get('threedviewer_lighting_controls');
+        $this->assertInstanceOf(Element\Checkbox::class, $element);
+        $names = array_keys($this->form->getElements());
+        $this->assertSame(
+            array_search('threedviewer_lights', $names, true) - 1,
+            array_search('threedviewer_lighting_controls', $names, true)
         );
     }
 
@@ -116,7 +129,7 @@ class ConfigFormTest extends TestCase
             $this->assertSame('["babylon"]', $library("threedviewer_babylon_{$setting}"), $setting);
         }
         foreach (['threedviewer_default_library', 'threedviewer_light_brightness', 'threedviewer_lights',
-            'threedviewer_light_1_color', 'threedviewer_stl_up_axis'] as $name) {
+            'threedviewer_light_1_color', 'threedviewer_lighting_controls', 'threedviewer_stl_up_axis'] as $name) {
             $this->assertNull($library($name), "{$name} applies to both libraries");
         }
         $this->assertSame(
@@ -152,7 +165,7 @@ class ConfigFormTest extends TestCase
         $this->assertNull($this->form->get('threedviewer_stl_up_axis')->getOption('element_group'));
         $this->assertSame(
             'threedviewer_lighting',
-            $this->form->get('threedviewer_light_brightness')->getOption('element_group')
+            $this->form->get('threedviewer_lighting_controls')->getOption('element_group')
         );
         $this->assertSame(
             'threedviewer_light_3',

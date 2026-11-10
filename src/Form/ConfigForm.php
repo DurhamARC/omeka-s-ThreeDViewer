@@ -227,6 +227,7 @@ class ConfigForm extends Form
             'threedviewer_lighting' => [
                 'threedviewer_lighting_mode',
                 'threedviewer_light_brightness',
+                'threedviewer_lighting_controls',
                 'threedviewer_lights',
             ],
             'threedviewer_custom_lights' => [
@@ -262,8 +263,8 @@ class ConfigForm extends Form
     }
 
     /**
-     * Brightness, the light rig and model-viewer's own lighting, after the Lighting select: the
-     * settings for every viewer first, then the rig, then one library's.
+     * Brightness, the visitor's controls, the light rig and model-viewer's own lighting, after the
+     * Lighting select: the settings for every viewer first, then the rig, then one library's.
      */
     private function addLightingElements(): void
     {
@@ -275,6 +276,18 @@ class ConfigForm extends Form
                 'info' => 'Multiplies the strength of every light. 1 leaves the lighting as it is.', // @translate
             ],
             'attributes' => ['min' => 0, 'max' => 3, 'step' => 0.05],
+        ]);
+
+        $this->add([
+            'name' => 'threedviewer_lighting_controls',
+            'type' => Element\Checkbox::class,
+            'options' => [
+                'label' => 'Show lighting controls on viewers', // @translate
+                'info' => 'Lets visitors change each light, until they reload the page.', // @translate
+                'use_hidden_element' => true,
+                'checked_value' => '1',
+                'unchecked_value' => '0',
+            ],
         ]);
 
         $this->add([

@@ -69,6 +69,7 @@ class Lighting
         $keys = [
             'threedviewer_lighting_mode',
             'threedviewer_light_brightness',
+            'threedviewer_lighting_controls',
             'threedviewer_lights',
             'threedviewer_light_ambient_color',
             'threedviewer_light_ambient_strength',
@@ -205,6 +206,11 @@ class Lighting
 
         if (isset(self::OPTIONS[$key])) {
             return in_array($value, self::OPTIONS[$key], true) ? $value : $default;
+        }
+
+        if ($key === 'threedviewer_lighting_controls') {
+            // A checkbox ('1'/'0') in the module's form, a select in a site's
+            return in_array($value, [true, 1, '1'], true) || ($value === null && $default);
         }
 
         if (substr($key, -6) === '_color') {

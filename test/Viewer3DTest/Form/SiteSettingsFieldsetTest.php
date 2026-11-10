@@ -43,6 +43,13 @@ class SiteSettingsFieldsetTest extends TestCase
         );
     }
 
+    public function testSitesShowOrHideTheControlsOrKeepTheModulesChoice(): void
+    {
+        $element = $this->fieldset->get('threedviewer_lighting_controls');
+        $this->assertInstanceOf(Element\Select::class, $element);
+        $this->assertSame(['', '1', '0'], array_map('strval', array_keys($element->getValueOptions())));
+    }
+
     public function testASitesOwnRigCountsItsLightsWithoutInheriting(): void
     {
         $this->assertSame(

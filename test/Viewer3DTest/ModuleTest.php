@@ -312,7 +312,7 @@ class ModuleTest extends TestCase
         foreach (Lighting::keys() as $name) {
             $this->assertArrayHasKey($form->get($name)->getOption('element_group'), $groups, $name);
         }
-        $this->assertSame('threedviewer', $form->get('threedviewer_light_brightness')->getOption('element_group'));
+        $this->assertSame('threedviewer', $form->get('threedviewer_lighting_controls')->getOption('element_group'));
         $this->assertSame('threedviewer_light_2', $form->get('threedviewer_light_2_color')->getOption('element_group'));
         $this->assertSame(
             'threedviewer_babylon',

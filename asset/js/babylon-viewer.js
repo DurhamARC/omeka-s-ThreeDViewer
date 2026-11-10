@@ -147,46 +147,6 @@
     }
 
     /**
-     * Keep lights fixed relative to the camera, so the model turns under them. Each light's
-     * direction and position are recorded in the camera's frame, then carried round with the
-     * camera before every frame. The environment's image-based lighting, if any, turns with the
-     * camera in the same way; its skybox and ground stay in the scene.
-     */
-    function attachLightsToCamera(scene, camera, lights) {
-        const worldToCamera = camera.getViewMatrix(true);
-        const local = lights.map(function (light) {
-            return {
-                light: light,
-                direction: light.direction ? BABYLON.Vector3.TransformNormal(light.direction, worldToCamera) : null,
-                position: light.position ? BABYLON.Vector3.TransformCoordinates(light.position, worldToCamera) : null
-            };
-        });
-
-        const cameraToWorld0 = camera.getWorldMatrix().getRotationMatrix();
-
-        scene.onBeforeRenderObservable.add(function () {
-            const cameraToWorld = camera.getWorldMatrix();
-            // The environment is sampled through its reflection matrix, so turning it with the camera
-            // means sampling through the inverse turn: from the current camera frame back to the
-            // initial one (Babylon.js matrices apply left to right).
-            const environment = scene.environmentTexture;
-            if (environment && environment.setReflectionTextureMatrix) {
-                environment.setReflectionTextureMatrix(
-                    camera.getViewMatrix().getRotationMatrix().multiply(cameraToWorld0)
-                );
-            }
-            local.forEach(function (entry) {
-                if (entry.direction) {
-                    entry.light.direction = BABYLON.Vector3.TransformNormal(entry.direction, cameraToWorld);
-                }
-                if (entry.position) {
-                    entry.light.position = BABYLON.Vector3.TransformCoordinates(entry.position, cameraToWorld);
-                }
-            });
-        });
-    }
-
-    /**
      * Turn an STL mesh so that the file's Y axis is up. The STL loader swaps Y and Z, which shows a
      * Z-up file upright in this left-handed scene without mirroring it; turning (x, y, z) to
      * (x, z, -y) then brings the file's Y up instead. A rotation, so the winding stays as it is.
@@ -206,6 +166,151 @@
             mesh.setVerticesData(kind, data);
         });
         mesh.refreshBoundingInfo();
+    }
+
+    /**
+     * The lights fixed to the model or to the viewer, and changed by the lighting controls where the
+     * page shows them: see ThreeDViewerLighting.controller() in lighting-rig.js. The environment's
+     * image-based lighting, if any, turns with the lights; its skybox and ground stay in the scene.
+     * With a rig the environment gives no light, so the controls do not show it.
+     */
+    function setUpLighting(canvas, scene, camera, presetLights, rig, rigScale) {
+        const lighting = window.ThreeDViewerLighting;
+        const target = camera.getTarget ? camera.getTarget().clone() : BABYLON.Vector3.Zero();
+
+        const entries = {};
+        const lights = [];
+        let rigNumber = 0;
+        presetLights.forEach(function (light) {
+            const entry = { light: light, scale: 1 };
+            let id;
+            let kind;
+            let from = null;
+            if (rig && light.name === 'rigAmbient') {
+                id = 'ambient';
+                kind = 'ambient';
+            } else if (rig) {
+                rigNumber++;
+                id = 'light' + rigNumber;
+                kind = 'light';
+                entry.scale = rigScale;
+                from = light.direction.negate();
+            } else if (light instanceof BABYLON.HemisphericLight) {
+                id = 'sky' + lights.length;
+                kind = 'sky';
+                from = light.direction.clone();
+            } else if (light instanceof BABYLON.DirectionalLight) {
+                id = 'key' + lights.length;
+                kind = 'key';
+                from = light.direction.negate();
+            } else if (light instanceof BABYLON.PointLight) {
+                id = 'point' + lights.length;
+                kind = 'point';
+                from = light.position.subtract(target);
+                entry.distance = from.length();
+                from.normalize();
+            } else {
+                return;
+            }
+            entries[id] = Object.assign(entry, { kind: kind });
+            const described = {
+                id: id,
+                kind: kind,
+                color: light.diffuse.toHexString().toLowerCase(),
+                strength: light.intensity / entry.scale
+            };
+            if (kind === 'sky') {
+                described.groundColor = light.groundColor.toHexString().toLowerCase();
+            }
+            if (from) {
+                described.direction = { x: from.x, y: from.y, z: from.z };
+            }
+            lights.push(described);
+        });
+        if (scene.environmentTexture && !rig) {
+            lights.push({ id: 'environment', kind: 'environment', strength: scene.environmentIntensity });
+        }
+
+        let observer = null;
+        lighting.controller(canvas, {
+            lights: lights,
+            back: viewSide(camera),
+            leftHanded: !scene.useRightHandedSystem,
+            mode: canvas.dataset.lightingMode,
+            // Babylon.js matrices apply left to right: first.multiply(second) turns by first, then second
+            turns: {
+                identity: function () {
+                    return BABYLON.Matrix.Identity();
+                },
+                clone: function (turn) {
+                    return turn.clone();
+                },
+                then: function (first, second) {
+                    return first.multiply(second);
+                },
+                invert: function (turn) {
+                    return BABYLON.Matrix.Invert(turn);
+                },
+                apply: function (turn, v) {
+                    const p = BABYLON.Vector3.TransformNormal(new BABYLON.Vector3(v.x, v.y, v.z), turn);
+                    return { x: p.x, y: p.y, z: p.z };
+                },
+                camera: function () {
+                    return camera.getViewMatrix().getRotationMatrix();
+                },
+                since: function (worldToCamera) {
+                    return worldToCamera.multiply(camera.getWorldMatrix().getRotationMatrix());
+                }
+            },
+            follow: function (update) {
+                if (observer) {
+                    scene.onBeforeRenderObservable.remove(observer);
+                    observer = null;
+                }
+                if (update) {
+                    observer = scene.onBeforeRenderObservable.add(update);
+                }
+            },
+            set: function (light) {
+                if (light.id === 'environment') {
+                    scene.environmentIntensity = light.strength;
+                    return;
+                }
+                const entry = entries[light.id];
+                entry.light.diffuse = BABYLON.Color3.FromHexString(light.color);
+                if (entry.kind === 'ambient') {
+                    entry.light.groundColor = entry.light.diffuse.clone();
+                } else if (entry.kind === 'light') {
+                    entry.light.specular = entry.light.diffuse.clone();
+                } else if (entry.kind === 'sky') {
+                    entry.light.groundColor = BABYLON.Color3.FromHexString(light.groundColor);
+                }
+                entry.light.intensity = light.strength * entry.scale;
+            },
+            place: function (all, turn) {
+                all.forEach(function (light) {
+                    if (!light.direction) {
+                        return;
+                    }
+                    const entry = entries[light.id];
+                    const d = light.direction;
+                    const from = BABYLON.Vector3.TransformNormal(new BABYLON.Vector3(d.x, d.y, d.z), turn);
+                    if (entry.kind === 'sky') {
+                        entry.light.direction = from;
+                    } else if (entry.kind === 'point') {
+                        entry.light.position = target.add(from.scale(entry.distance));
+                    } else {
+                        entry.light.direction = from.negate();
+                    }
+                });
+                const environment = scene.environmentTexture;
+                if (environment && environment.setReflectionTextureMatrix) {
+                    // The environment is sampled through its reflection matrix: turning it by the frame
+                    // means sampling through the frame's inverse
+                    environment.setReflectionTextureMatrix(BABYLON.Matrix.Invert(turn));
+                }
+            }
+        });
     }
 
     function createEnvironment(scene, option) {
@@ -347,8 +452,8 @@
             }
 
             // After framing, so the first view is lit exactly as in the default mode
-            if (canvas.dataset.lightingMode === 'viewer') {
-                attachLightsToCamera(scene, camera, presetLights);
+            if (lighting) {
+                setUpLighting(canvas, scene, camera, presetLights, rig, rigScale);
             }
 
             if (canvas.dataset.showInspector === 'true' && scene.debugLayer) {

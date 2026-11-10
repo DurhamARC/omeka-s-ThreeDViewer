@@ -8,7 +8,7 @@
                 return;
             }
             stage.dataset.viewerControlsReady = 'true';
-            const button = stage.querySelector('.threedviewer-fullscreen button');
+            const button = stage.querySelector('.threedviewer-fullscreen button:not(.threedviewer-lighting-toggle)');
             if (!button || typeof stage.requestFullscreen !== 'function') {
                 if (button) {
                     button.hidden = true;
@@ -31,13 +31,13 @@
 
     function updateButtons() {
         document.querySelectorAll('.threedviewer-model-stage').forEach(function (stage) {
-            const button = stage.querySelector('.threedviewer-fullscreen button');
+            const button = stage.querySelector('.threedviewer-fullscreen button:not(.threedviewer-lighting-toggle)');
             if (!button) {
                 return;
             }
+            // The button holds both icons; the stylesheet shows the one for the stage's state
             const expanded = document.fullscreenElement === stage;
             const label = expanded ? button.dataset.exitLabel : button.dataset.enterLabel;
-            button.textContent = expanded ? '×' : '⛶';
             button.setAttribute('aria-label', label);
             button.title = label;
         });

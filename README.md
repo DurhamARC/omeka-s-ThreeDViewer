@@ -25,6 +25,7 @@ This module allows users to view and interact with 3D models (STL and GLB files)
 - Configurable lighting: overall brightness, and an optional light rig (an ambient light plus up to four lights, each
   with its own colour, strength and direction) built the same way in every viewer
 - Per-site lighting: each site can override the module's lighting settings
+- Optional lighting controls on every viewer, so visitors can change each light's colour, strength and direction
 - Toggle between the original Three.js/model-viewer pipeline and an experimental Babylon.js renderer
 - Babylon.js renderer with configurable cameras, lighting, and WebXR support
 
@@ -70,7 +71,17 @@ See general end user documentation for [Installing a module](http://omeka.org/s/
    while the other library is selected (in a site's settings, the module's library). The settings after the general
    ones are grouped: *Lighting for every viewer*, the custom light rig (set in under *Lights*, one group per light),
    then model-viewer's and Babylon.js's own.
-7. Each site can override the lighting settings in its own settings, under *3D viewer lighting* and the groups after
+7. **Show lighting controls on viewers** (off by default) adds a *Lighting* button (a sun) to every viewer's toolbar.
+   It opens a panel with a row for each of the scene's lights, showing its colour and strength; the row opens onto
+   the light's direction and height, as the light allows. The panel also has *Fixed to the model / Fixed to the
+   viewer*, *Reset* and *Close*; Escape or a click outside it also closes it, while dragging the model leaves it open.
+   Directions and heights are as seen from where the camera is: fixed to the model, the lights turn with the model
+   as you turn it, and the sliders follow them round (a height goes below 0 once you look down on a low light).
+   Changes affect only that viewer and are never stored: reloading the page restores the configured lighting. Each
+   site can show or hide the controls whatever the module setting.
+   Unlike the Babylon.js toolbar, which embeds the Babylon.js Inspector (a developer tool, for that viewer only), the
+   panel shows only the lights, the same way in all three viewers.
+8. Each site can override the lighting settings in its own settings, under *3D viewer lighting* and the groups after
    it. A field left as
    *Use the module setting* (or blank) keeps the module's value. The light rig is overridden whole: a site uses the
    module's lights, each viewer's default lights, or a complete rig of its own.

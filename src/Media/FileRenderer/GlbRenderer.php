@@ -21,7 +21,7 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
         );
         $view->headScript()->appendFile($view->assetUrl('js/viewer-controls.js', 'ThreeDViewer'));
         // Brightness is model-viewer's exposure attribute, which needs no script
-        if ($this->appendLightingScripts($view, $config, false) || $config['lightingMode'] === 'viewer') {
+        if ($this->appendLightingScripts($view, $config, false)) {
             $view->headScript()->appendFile($view->assetUrl('js/model-viewer-lighting.js', 'ThreeDViewer'));
         }
 
@@ -36,11 +36,14 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
         $helpLabel = $view->escapeHtmlAttr($view->translate('3D viewer controls'));
         $helpText = $view->escapeHtml($view->translate('Use mouse to rotate, zoom and pan'));
         $gridOverlay = $config['showGrid'] ? '<div class="grid-overlay"></div>' : '';
+        // The lighting controls find the viewer by its id, which it otherwise does not need
+        $viewerId = 'threedviewer-model-' . $media->id() . $this->idSuffix($view, $media);
+        $idAttribute = $config['lightingControls'] ? 'id="' . $viewerId . '" ' : '';
 
         return '<div class="threedviewer-model-stage" style="position: relative; width: 100%; height: '
              . (int) $config['height'] . 'px;">'
              . $gridOverlay
-             . '<model-viewer src="' . $modelViewerSrc . '" '
+             . '<model-viewer ' . $idAttribute . 'src="' . $modelViewerSrc . '" '
              . 'alt="' . $altText . '" camera-controls '
              . 'data-lighting-mode="' . $config['lightingMode'] . '" '
              . $this->renderModelViewerLighting($view, $config)
@@ -50,9 +53,15 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
              . '<div class="threedviewer-control threedviewer-fullscreen">'
              . '<button type="button" aria-label="' . $enterFullscreen . '" '
              . 'title="' . $enterFullscreen . '" data-enter-label="' . $enterFullscreen . '" '
-             . 'data-exit-label="' . $exitFullscreen . '">⛶</button></div>'
+             . 'data-exit-label="' . $exitFullscreen . '">'
+             . $this->icon('fullscreen', 'threedviewer-icon-enter')
+             . $this->icon('fullscreen-exit', 'threedviewer-icon-exit') . '</button>'
+             . $this->renderLightingButton($view, $config, $viewerId) . '</div>'
+             . $this->renderLightingControls($view, $config, $viewerId, false)
              . '<details class="threedviewer-control threedviewer-help">'
-             . '<summary aria-label="' . $helpLabel . '">?</summary><p>' . $helpText . '</p></details>'
+             . '<summary aria-label="' . $helpLabel . '" title="' . $helpLabel . '">'
+             . $this->icon('help') . '</summary>'
+             . '<p>' . $helpText . '</p></details>'
              . '</div>';
     }
 

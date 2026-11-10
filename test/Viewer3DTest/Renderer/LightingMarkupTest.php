@@ -79,6 +79,18 @@ class LightingMarkupTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider viewers
+     */
+    public function testViewerFixedLightingLoadsTheSharedScript(string $file, string $library): void
+    {
+        [, $view] = $this->render($file, [
+            'threedviewer_default_library' => $library,
+            'threedviewer_lighting_mode' => 'viewer',
+        ]);
+        $this->assertContains('/modules/ThreeDViewer/js/lighting-rig.js', $view->headScript()->files);
+    }
+
     public function testModelViewerGetsItsEnvironmentWithoutARig(): void
     {
         [$html, $view] = $this->render('model.glb', [
@@ -154,5 +166,136 @@ class LightingMarkupTest extends TestCase
         $rig = json_decode(html_entity_decode($match[1], ENT_QUOTES), true);
         $this->assertCount(4, $rig['lights']);
         $this->assertSame('#ffffff', $rig['ambient']['color'], 'The site rig does not take the module ambient colour');
+    }
+
+    /**
+     * @dataProvider viewers
+     */
+    public function testControlsAreOffByDefault(string $file, string $library): void
+    {
+        [$html, $view] = $this->render($file, ['threedviewer_default_library' => $library]);
+        $this->assertStringNotContainsString('threedviewer-lighting', $html);
+        $this->assertStringNotContainsString('data-lighting-controls', $html);
+        $this->assertNotContains('/modules/ThreeDViewer/js/lighting-controls.js', $view->headScript()->files);
+        $this->assertNotContains('/modules/ThreeDViewer/css/lighting-controls.css', $view->headLink()->files);
+    }
+
+    /**
+     * @dataProvider viewers
+     */
+    public function testControlsDriveTheirOwnViewer(string $file, string $library): void
+    {
+        [$html, $view] = $this->render($file, [
+            'threedviewer_default_library' => $library,
+            'threedviewer_lighting_controls' => true,
+        ]);
+
+        $this->assertSame(1, preg_match('/data-threedviewer-target="([^"]+)"/', $html, $match));
+        $this->assertStringContainsString('id="' . $match[1] . '"', $html, 'The target exists');
+        $this->assertSame(
+            1,
+            preg_match('/<[^>]*id="' . preg_quote($match[1], '/') . '"[^>]*data-lighting-controls="true"/', $html),
+            'The viewer element knows it has controls'
+        );
+        $panel = 'threedviewer-lighting-' . $match[1];
+        $this->assertStringContainsString('<div class="threedviewer-lighting" id="' . $panel . '" hidden', $html);
+        $this->assertSame(
+            1,
+            preg_match('/<button type="button" class="threedviewer-lighting-toggle" hidden aria-expanded="false"'
+                . ' aria-controls="' . preg_quote($panel, '/') . '" aria-label="Lighting"/', $html),
+            'A button opens the panel, hidden until the viewer reports its lights'
+        );
+        $this->assertStringContainsString('data-name-light="Light %d"', $html);
+        $this->assertStringContainsString('<template><div class="threedviewer-lighting-light" role="group">', $html);
+        foreach (['color', 'groundColor', 'strength', 'azimuth', 'elevation'] as $property) {
+            $this->assertStringContainsString('data-property="' . $property . '"', $html, $property);
+        }
+        $this->assertStringContainsString('value="viewer"><span>Fixed to the viewer</span>', $html);
+        $this->assertStringContainsString('class="threedviewer-lighting-reset" aria-label="Reset"', $html);
+        $this->assertStringContainsString('class="threedviewer-lighting-close" aria-label="Close"', $html);
+        $this->assertStringContainsString('aria-label="Direction and height"', $html);
+        $this->assertStringContainsString(
+            'min="-90" max="90" step="1" data-property="elevation"',
+            $html,
+            'Height as seen from the camera, which can be below level'
+        );
+        $this->assertStringNotContainsString('<details class="threedviewer-lighting"', $html);
+
+        $files = $view->headScript()->files;
+        $this->assertContains('/modules/ThreeDViewer/js/lighting-controls.js', $files);
+        $this->assertContains('/modules/ThreeDViewer/js/lighting-rig.js', $files);
+        $this->assertContains('/modules/ThreeDViewer/css/lighting-controls.css', $view->headLink()->files);
+    }
+
+    public function viewersWithIds(): array
+    {
+        return [
+            'model-viewer' => ['model.glb', 'model-viewer'],
+            'Babylon.js' => ['model.gltf', 'babylon'],
+        ];
+    }
+
+    /**
+     * @dataProvider viewersWithIds
+     */
+    public function testTheSameMediaTwiceOnAPageGetsTwoIds(string $file, string $library): void
+    {
+        $view = new DummyPhpRenderer();
+        $view->setSettings(['threedviewer_default_library' => $library, 'threedviewer_lighting_controls' => true]);
+        $media = new MediaRepresentation('https://example.org/files/original/' . $file, 'Sample', $file);
+        $html = (new Viewer3DRenderer())->render($view, $media, [])
+            . (new Viewer3DRenderer())->render($view, $media, []);
+
+        preg_match_all('/\sid="([^"]+)"/', $html, $ids);
+        $this->assertSame(array_unique($ids[1]), $ids[1], 'No id is used twice');
+        preg_match_all('/data-threedviewer-target="([^"]+)"/', $html, $targets);
+        $this->assertCount(2, array_unique($targets[1]), 'Each panel drives its own viewer');
+        foreach ($targets[1] as $target) {
+            $this->assertContains($target, $ids[1]);
+        }
+
+        $other = new DummyPhpRenderer();
+        $other->setSettings(['threedviewer_default_library' => $library, 'threedviewer_lighting_controls' => true]);
+        $this->assertStringContainsString(
+            'id="' . $targets[1][0] . '"',
+            (new Viewer3DRenderer())->render($other, $media, []),
+            'Another page starts again'
+        );
+    }
+
+    public function testASiteShowsOrHidesTheControls(): void
+    {
+        [$html] = $this->render('model.glb', ['threedviewer_lighting_controls' => true], [
+            'threedviewer_lighting_controls' => '0',
+        ]);
+        $this->assertStringNotContainsString('threedviewer-lighting', $html);
+
+        [$html, $view] = $this->render('model.glb', [], ['threedviewer_lighting_controls' => '1']);
+        $this->assertStringContainsString('id="threedviewer-model-1"', $html);
+        $this->assertContains('/modules/ThreeDViewer/js/model-viewer-lighting.js', $view->headScript()->files);
+    }
+
+    public function testTheLightingButtonJoinsTheToolbarItsViewerHas(): void
+    {
+        [$html] = $this->render('model.glb', ['threedviewer_lighting_controls' => true]);
+        $this->assertSame(
+            1,
+            preg_match('/<div class="threedviewer-control threedviewer-fullscreen">.*?<\/button>'
+                . '<button type="button" class="threedviewer-lighting-toggle"[^>]*>.*?<\/button><\/div>/s', $html),
+            'Beside the fullscreen button'
+        );
+        $this->assertStringNotContainsString('threedviewer-lighting-toolbar', $html);
+
+        foreach ([['mesh.stl', 'model-viewer'], ['model.gltf', 'babylon']] as [$file, $library]) {
+            [$html] = $this->render($file, [
+                'threedviewer_default_library' => $library,
+                'threedviewer_lighting_controls' => true,
+            ]);
+            $this->assertStringContainsString(
+                '<div class="threedviewer-lighting-toolbar"><button type="button" class="threedviewer-lighting-toggle"',
+                $html,
+                $file
+            );
+        }
     }
 }
