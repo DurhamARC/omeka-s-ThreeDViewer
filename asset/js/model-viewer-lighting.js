@@ -17,8 +17,14 @@
    */
   const environments = new WeakMap();
 
-  /** How long to wait for an environment model-viewer is loading before giving up on it */
+  /**
+   * How long to wait for an environment where model-viewer's cache cannot be reached, so that there
+   * is no telling whether it has started loading or failed, before painting the next
+   */
   const ENVIRONMENT_TIMEOUT = 10000;
+
+  /** How often to look for model-viewer starting to load an environment */
+  const ENVIRONMENT_POLL = 250;
 
   /**
    * model-viewer has no public accessor for its three.js scene, but hands it to an effect composer
@@ -117,12 +123,45 @@
     const lighting = window.ThreeDViewerLighting;
     const hdr = lighting.rgbe(lighting.environment(rig, back));
     state.loading = URL.createObjectURL(new Blob([hdr], { type: 'image/vnd.radiance' }));
-    // model-viewer throws, with no event, when an environment fails to load
-    state.timer = setTimeout(function () {
-      loaded(viewer, state, false);
-    }, ENVIRONMENT_TIMEOUT);
     // model-viewer chooses its HDR loader by the URL's ending; fetch ignores the fragment
     viewer.environmentImage = state.loading + '#.hdr';
+    watch(viewer, state, state.loading);
+  }
+
+  /**
+   * Watch for the environment being loaded failing: model-viewer throws, with no event. It loads
+   * an environment only once the element is on screen, which may be long after it is given one,
+   * so wait for it to start, however long that takes, rather than give up on it and free an image
+   * it has yet to load.
+   */
+  function watch(viewer, state, url) {
+    if (state.loading !== url) {
+      return;
+    }
+    const cache = environmentCache(viewer);
+    if (!cache) {
+      // Stop waiting for it, but keep its URL, which model-viewer may yet load
+      state.timer = setTimeout(function () {
+        if (state.loading === url) {
+          state.loading = null;
+          next(viewer, state);
+        }
+      }, ENVIRONMENT_TIMEOUT);
+      return;
+    }
+    const loading = cache.get(url + '#.hdr');
+    if (!loading) {
+      state.timer = setTimeout(function () {
+        watch(viewer, state, url);
+      }, ENVIRONMENT_POLL);
+      return;
+    }
+    // Loading: it is either shown (environment-change) or fails
+    Promise.resolve(loading).then(null, function () {
+      if (state.loading === url) {
+        loaded(viewer, state, false);
+      }
+    });
   }
 
   /**
@@ -142,6 +181,11 @@
     if (old) {
       release(viewer, old);
     }
+    next(viewer, state);
+  }
+
+  /** Paint the rig waiting, if any */
+  function next(viewer, state) {
     const waiting = state.waiting;
     state.waiting = null;
     if (waiting) {
