@@ -165,11 +165,12 @@
     const scene = getScene(viewer);
     // model-viewer's three.js classes, which its bundle does not export, from the scene's own objects.
     // Scene.environmentRotation was added in three.js r162.
-    const turnable = scene && scene.environmentRotation && scene.quaternion;
+    const turnable = scene && scene.environmentRotation && scene.quaternion && scene.position;
     if (!turnable && viewer.dataset.lightingMode === 'viewer') {
       console.warn('ThreeDViewer: viewer-fixed lighting is not supported by this model-viewer version.');
     }
     const Quaternion = turnable ? scene.quaternion.constructor : null;
+    const Vector3 = turnable ? scene.position.constructor : null;
     const Euler = turnable ? scene.environmentRotation.constructor : null;
     const degrees = Math.PI / 180;
 
@@ -248,6 +249,13 @@
         },
         then: function (first, second) {
           return second.clone().multiply(first);
+        },
+        invert: function (turn) {
+          return turn.clone().invert();
+        },
+        apply: function (turn, v) {
+          const p = new Vector3(v.x, v.y, v.z).applyQuaternion(turn);
+          return { x: p.x, y: p.y, z: p.z };
         },
         camera: orientation,
         since: function (start) {

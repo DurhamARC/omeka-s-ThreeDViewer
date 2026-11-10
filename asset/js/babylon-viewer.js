@@ -248,6 +248,13 @@
                 then: function (first, second) {
                     return first.multiply(second);
                 },
+                invert: function (turn) {
+                    return BABYLON.Matrix.Invert(turn);
+                },
+                apply: function (turn, v) {
+                    const p = BABYLON.Vector3.TransformNormal(new BABYLON.Vector3(v.x, v.y, v.z), turn);
+                    return { x: p.x, y: p.y, z: p.z };
+                },
                 camera: function () {
                     return camera.getViewMatrix().getRotationMatrix();
                 },

@@ -282,6 +282,11 @@ function setUpLighting(element, lights, config) {
       identity: function () { return new THREE.Quaternion(); },
       clone: function (turn) { return turn.clone(); },
       then: function (first, second) { return second.clone().multiply(first); },
+      invert: function (turn) { return turn.clone().inverse(); },
+      apply: function (turn, v) {
+        const p = new THREE.Vector3(v.x, v.y, v.z).applyQuaternion(turn);
+        return { x: p.x, y: p.y, z: p.z };
+      },
       camera: function () { return camera.quaternion.clone(); },
       since: function (start) { return camera.quaternion.clone().multiply(start.clone().inverse()); }
     },

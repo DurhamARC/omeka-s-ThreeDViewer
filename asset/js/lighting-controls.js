@@ -4,6 +4,10 @@
  * which opens onto its direction and height (and ground colour) where it has them, one light at a time.
  * Escape closes the panel, as does a click (not a drag) anywhere outside it.
  *
+ * Directions are as seen from the camera now. Where the lights are fixed to the model, turning the
+ * model turns them round the view, and the viewer reports where they have turned to
+ * (threedviewer:lighting-turned), which the sliders follow.
+ *
  * The viewer reports its lights (threedviewer:lighting-ready, see lighting-rig.js); the panel
  * builds a row per light from its <template> and sends the whole state back with every change
  * (threedviewer:lighting). Nothing is stored: a reload restores the page's lighting.
@@ -72,6 +76,7 @@
 
         let initial = null;
         let state = null;
+        let sections = [];
 
         function send(extra) {
             const detail = Object.assign(copy(state), extra || {});
@@ -100,6 +105,7 @@
             initial = copy(detail);
             state = copy(detail);
             list.textContent = '';
+            sections = [];
             let rigNumber = 0;
             let first = null;
             state.lights.forEach(function (light) {
@@ -151,6 +157,7 @@
                     details.remove();
                 }
                 list.appendChild(section);
+                sections.push(section);
             });
             // The first light with a direction starts open, showing what a row holds
             if (first) {
@@ -212,6 +219,29 @@
                 }
             });
         }
+
+        // The lights have turned round the view: follow them, except a slider being dragged
+        target.addEventListener('threedviewer:lighting-turned', function (event) {
+            if (!state) {
+                return;
+            }
+            event.detail.lights.forEach(function (turned) {
+                const i = state.lights.findIndex(function (light) {
+                    return light.id === turned.id;
+                });
+                if (i < 0) {
+                    return;
+                }
+                ['azimuth', 'elevation'].forEach(function (property) {
+                    state.lights[i][property] = turned[property];
+                    const input = sections[i].querySelector('[data-property="' + property + '"]');
+                    if (input && !input.matches(':active')) {
+                        input.value = turned[property];
+                        showValue(input);
+                    }
+                });
+            });
+        });
 
         target.addEventListener('threedviewer:lighting-ready', function (event) {
             build(event.detail);

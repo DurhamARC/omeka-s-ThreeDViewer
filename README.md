@@ -75,6 +75,8 @@ See general end user documentation for [Installing a module](http://omeka.org/s/
    It opens a panel with a row for each of the scene's lights, showing its colour and strength; the row opens onto
    the light's direction and height, as the light allows. The panel also has *Fixed to the model / Fixed to the
    viewer*, *Reset* and *Close*; Escape or a click outside it also closes it, while dragging the model leaves it open.
+   Directions and heights are as seen from where the camera is: fixed to the model, the lights turn with the model
+   as you turn it, and the sliders follow them round (a height goes below 0 once you look down on a low light).
    Changes affect only that viewer and are never stored: reloading the page restores the configured lighting. Each
    site can show or hide the controls whatever the module setting.
    Unlike the Babylon.js toolbar, which embeds the Babylon.js Inspector (a developer tool, for that viewer only), the

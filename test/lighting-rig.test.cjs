@@ -194,6 +194,8 @@ function fakeViewer(options) {
         set: [],
         placed: null,
         ready: () => events.find((event) => event.type === 'threedviewer:lighting-ready'),
+        turned: () => JSON.parse(JSON.stringify(events
+            .filter((event) => event.type === 'threedviewer:lighting-turned').map((e) => e.detail.lights))),
         change: (detail) => listeners['threedviewer:lighting']({ detail }),
         frame: () => viewer.placed.frame
     };
@@ -206,6 +208,12 @@ function fakeViewer(options) {
             identity: () => 0,
             clone: (turn) => turn,
             then: (first, second) => first + second,
+            invert: (turn) => -turn,
+            // Ry: a turn of 90 takes +z (the camera's side in the default view) to +x
+            apply: (turn, v) => {
+                const a = turn * Math.PI / 180;
+                return { x: v.x * Math.cos(a) + v.z * Math.sin(a), y: v.y, z: -v.x * Math.sin(a) + v.z * Math.cos(a) };
+            },
             camera: () => viewer.camera,
             since: (start) => viewer.camera - start
         },
@@ -264,8 +272,8 @@ test('controller: fixed to the viewer, the frame turns with the camera from the 
     assert.equal(viewer.frame(), 30, 'Turned as far as the camera since the switch');
 
     viewer.change({ mode: 'model', lights: shown });
-    assert.equal(viewer.follow, null);
     viewer.camera = 100;
+    viewer.follow();
     viewer.change({ mode: 'model', lights: shown });
     assert.equal(viewer.frame(), 30, 'Kept where it had got to');
 
@@ -417,7 +425,8 @@ function modelViewerTurn(start, orbit, end) {
     runInNewContext(readFileSync(join(__dirname, '../asset/vendor/three/three.min.js'), 'utf8'), three);
     const THREE = three.window.THREE || three.THREE;
     THREE.Quaternion.prototype.invert = THREE.Quaternion.prototype.inverse;
-    const scene = { environmentRotation: new THREE.Euler(), quaternion: new THREE.Quaternion(), queueRender() {} };
+    const scene = { environmentRotation: new THREE.Euler(), quaternion: new THREE.Quaternion(),
+        position: new THREE.Vector3(), queueRender() {} };
     const listeners = {};
     let camera = start;
     const viewer = {
@@ -470,3 +479,85 @@ test('model-viewer: fixed to the viewer after orbiting, the lighting turns as th
         close(moved.distanceTo(side(end)), 0, `${name}: the camera's side at the switch turns to its side now`);
     }
 });
+
+test('controller: fixed to the model, turning the camera turns the lights round the view, and says so', () => {
+    const viewer = fakeViewer({ controls: true, lights: PRESET });
+    assert.equal(typeof viewer.follow, 'function', 'Following the camera, to report');
+    viewer.follow();
+    assert.deepEqual(viewer.turned(), [], 'Nothing to report until the camera turns');
+
+    // The key light is 135 degrees round from the camera; the camera goes 90 degrees round after it
+    viewer.camera = 90;
+    viewer.follow();
+    assert.deepEqual(viewer.turned(), [[{ id: 'key', azimuth: 45, elevation: 55 }]]);
+    assert.equal(viewer.frame(), 0, 'The light stays on the model');
+    viewer.follow();
+    assert.equal(viewer.turned().length, 1, 'Reported once');
+
+    // Set straight at the camera, as seen from it now: the camera's side is +x
+    const shown = lightsOf(viewer);
+    shown[1].azimuth = 0;
+    shown[1].elevation = 0;
+    viewer.change({ mode: 'model', lights: shown });
+    const d = viewer.placed.lights[1].direction;
+    close(d.x, 1, 'Towards the camera');
+    close(d.z, 0, 'Towards the camera');
+    close(viewer.placed.lights[1].azimuth, 90, 'Kept in the default view\'s terms, for model-viewer');
+});
+
+test('controller: fixed to the viewer, the lights stay put in the view, so nothing is reported', () => {
+    const viewer = fakeViewer({ controls: true, lights: PRESET, mode: 'viewer' });
+    viewer.camera = 120;
+    viewer.follow();
+    assert.deepEqual(viewer.turned(), []);
+
+    // Switched to the model, the lights are where they were in the view; the camera then turns away
+    viewer.change({ mode: 'model', lights: lightsOf(viewer) });
+    assert.deepEqual(viewer.turned(), [], 'No jump at the switch');
+    viewer.camera = 150;
+    viewer.follow();
+    assert.deepEqual(viewer.turned(), [[{ id: 'key', azimuth: 105, elevation: 55 }]]);
+});
+
+test('controller: Reset reports where the lights are seen from, wherever the camera is', () => {
+    const viewer = fakeViewer({ controls: true, lights: PRESET });
+    const initial = lightsOf(viewer);
+    viewer.camera = -45;
+    viewer.change({ reset: true, mode: 'model', lights: initial });
+    assert.deepEqual(viewer.turned(), [[{ id: 'key', azimuth: 180, elevation: 55 }]]);
+    assert.deepEqual(viewer.placed.lights[1].direction, { x: 1, y: 2, z: -1 }, 'Back where it started');
+});
+
+test('controller: seen from above, a low light is below the view\'s level, and can be set there', () => {
+    // The fake's turns are about the up axis only, so tip the view by giving the light from below
+    const viewer = fakeViewer({ controls: true, lights: [
+        { id: 'low', kind: 'light', color: '#ffffff', strength: 1, direction: { x: 0, y: -1, z: 1 } }
+    ] });
+    assert.equal(lightsOf(viewer)[0].elevation, 0, 'Reported to start as a setting would be, at level');
+    viewer.camera = 90;
+    viewer.follow();
+    assert.deepEqual(viewer.turned(), [[{ id: 'low', azimuth: -90, elevation: -45 }]], 'Below level, not clamped');
+    const shown = lightsOf(viewer);
+    shown[0].azimuth = -90;
+    shown[0].elevation = -30;
+    viewer.change({ mode: 'model', lights: shown });
+    close(viewer.placed.lights[0].direction.y, -0.5, 'Set below level');
+});
+
+test('controller: a direction shown either way round, or overhead, is not reported as turned', () => {
+    const viewer = fakeViewer({ controls: true, lights: PRESET });
+    const shown = lightsOf(viewer);
+    shown[1].azimuth = 180;
+    viewer.change({ mode: 'model', lights: shown });
+    viewer.camera = 1e-9;   // A turn too small to show, which can come out at -180
+    viewer.follow();
+    assert.deepEqual(viewer.turned(), []);
+
+    shown[1].azimuth = 30;
+    shown[1].elevation = 90;
+    viewer.change({ mode: 'model', lights: shown });
+    viewer.camera = 60;
+    viewer.follow();
+    assert.deepEqual(viewer.turned(), [], 'Overhead, the direction round stays as set');
+});
+

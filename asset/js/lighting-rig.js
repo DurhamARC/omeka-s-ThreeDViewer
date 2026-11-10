@@ -114,10 +114,10 @@
     }
 
     /**
-     * The azimuth and elevation, in whole degrees, of a direction from the model towards a light:
-     * the inverse of direction().
+     * The azimuth and elevation, in degrees and not rounded, of a direction from the model towards
+     * a light: the inverse of direction(). Below level, the elevation is negative.
      */
-    function angles(d, back, leftHanded) {
+    function exactAngles(d, back, leftHanded) {
         const length = Math.sqrt(d.x * d.x + d.y * d.y + d.z * d.z) || 1;
         const y = Math.max(-1, Math.min(1, d.y / length));
         const right = leftHanded ? { x: -back.z, z: back.x } : { x: back.z, z: -back.x };
@@ -125,10 +125,24 @@
         const across = (d.x * right.x + d.z * right.z) / length;
         const level = Math.abs(along) < 1e-9 && Math.abs(across) < 1e-9;
         return {
-            // || 0: no -0 from a hair to the left
-            azimuth: level ? 0 : Math.round(Math.atan2(across, along) * 180 / Math.PI) || 0,
-            elevation: Math.max(0, Math.round(Math.asin(y) * 180 / Math.PI))
+            azimuth: level ? 0 : Math.atan2(across, along) * 180 / Math.PI,
+            elevation: Math.asin(y) * 180 / Math.PI
         };
+    }
+
+    /** exactAngles() in whole degrees (|| 0: no -0 from a hair to the left) */
+    function wholeAngles(d, back, leftHanded) {
+        const exact = exactAngles(d, back, leftHanded);
+        return { azimuth: Math.round(exact.azimuth) || 0, elevation: Math.round(exact.elevation) || 0 };
+    }
+
+    /**
+     * The azimuth and elevation, in whole degrees, of a direction from the model towards a light:
+     * the inverse of direction(), as a setting takes it, so never below level.
+     */
+    function angles(d, back, leftHanded) {
+        const whole = wholeAngles(d, back, leftHanded);
+        return { azimuth: whole.azimuth, elevation: Math.max(0, whole.elevation) };
     }
 
     /**
@@ -195,6 +209,13 @@
      * it, so that showing them changes nothing until they are used, although they show directions
      * in whole degrees and strengths to two decimals.
      *
+     * The controls show each direction as it is seen from where the camera is now: turned by the
+     * frame, then back by the camera's turn since the default view. Fixed to the viewer, the two
+     * turns cancel and the directions shown stay put; fixed to the model, turning the camera turns
+     * the lights round the view, and the controls are told the directions they have turned to
+     * (threedviewer:lighting-turned, { lights: [{ id, azimuth, elevation }] }). A direction set
+     * from the controls is taken the same way, as seen from the camera.
+     *
      * @param {HTMLElement} element - The viewer element, which the controls send their changes to
      * @param {Object} options
      * @param {Object[]} options.lights - { id, kind, color?, groundColor?, strength, direction? },
@@ -204,8 +225,9 @@
      * @param {string} options.mode - 'model' or 'viewer', to start with
      * @param {Object|null} options.turns - The viewer's rotations, or null where it cannot turn its
      *     lighting, which then stays fixed to the model: identity(), clone(turn), then(first, second)
-     *     (the turn by first, then by second), camera() (the camera's orientation, to measure from)
-     *     and since(camera) (the camera's turn since then)
+     *     (the turn by first, then by second), invert(turn), apply(turn, {x, y, z}) (a turned copy of
+     *     the vector), camera() (the camera's orientation, to measure from) and since(camera) (the
+     *     camera's turn since then)
      * @param {function(?function())} options.follow - Call the given function whenever the camera
      *     moves, or stop with null
      * @param {function(Object)} options.set - A light has changed: apply its colour and strength
@@ -224,10 +246,12 @@
         });
         let lights = initial.map(copyLight);
         let showing = initial.map(shown);
+        const controls = hasControls(element);
 
         let mode = 'model';
         let frame = turns ? turns.identity() : null;
         let attached = null;   // While fixed to the viewer: the camera and the frame at the switch
+        const start = turns ? turns.camera() : null;   // The camera in the default view
 
         function currentFrame() {
             return attached ? turns.then(attached.frame, turns.since(attached.camera)) : frame;
@@ -237,19 +261,59 @@
             options.place(lights, turns ? currentFrame() : null);
         }
 
+        /** The turn from a direction as kept to the same direction as seen from the camera now */
+        function toView() {
+            return turns.then(currentFrame(), turns.invert(turns.since(start)));
+        }
+
+        /** Tell the controls each direction that the camera has turned, as seen from it now */
+        function report() {
+            const view = toView();
+            const turned = [];
+            lights.forEach(function (light, i) {
+                if (!light.direction) {
+                    return;
+                }
+                const seen = wholeAngles(turns.apply(view, light.direction), options.back, options.leftHanded);
+                // The same direction either way round (180 and -180), or any way round overhead or
+                // underneath: keep the one shown, rather than make the slider jump
+                if ((seen.azimuth - showing[i].azimuth) % 360 === 0 || Math.abs(seen.elevation) === 90) {
+                    seen.azimuth = showing[i].azimuth;
+                }
+                if (seen.azimuth !== showing[i].azimuth || seen.elevation !== showing[i].elevation) {
+                    showing[i].azimuth = seen.azimuth;
+                    showing[i].elevation = seen.elevation;
+                    turned.push({ id: light.id, azimuth: seen.azimuth, elevation: seen.elevation });
+                }
+            });
+            if (turned.length) {
+                element.dispatchEvent(new CustomEvent('threedviewer:lighting-turned', {
+                    detail: { lights: turned }
+                }));
+            }
+        }
+
+        /** Follow the camera: fixed to the viewer, to turn the lights; to the model, to report them */
+        function follow() {
+            if (mode === 'viewer') {
+                options.follow(place);
+            } else {
+                options.follow(controls ? report : null);
+            }
+        }
+
         function setMode(next) {
             if (next === mode || !turns) {
                 return;
             }
             if (next === 'viewer') {
                 attached = { camera: turns.camera(), frame: turns.clone(frame) };
-                options.follow(place);
             } else {
                 frame = turns.clone(currentFrame());
                 attached = null;
-                options.follow(null);
             }
             mode = next;
+            follow();
         }
 
         /** Take each value the controls have changed from what they showed */
@@ -272,9 +336,18 @@
             if (light.direction && (change.azimuth !== was.azimuth || change.elevation !== was.elevation)
                 && change.azimuth !== undefined && change.elevation !== undefined
             ) {
-                light.azimuth = was.azimuth = change.azimuth;
-                light.elevation = was.elevation = change.elevation;
-                light.direction = direction(change.azimuth, change.elevation, options.back, options.leftHanded);
+                // Set as seen from the camera now, so kept turned back from the view
+                const seen = direction(change.azimuth, change.elevation, options.back, options.leftHanded);
+                was.azimuth = change.azimuth;
+                was.elevation = change.elevation;
+                if (turns) {
+                    light.direction = turns.apply(turns.invert(toView()), seen);
+                    Object.assign(light, exactAngles(light.direction, options.back, options.leftHanded));
+                } else {
+                    light.direction = seen;
+                    light.azimuth = change.azimuth;
+                    light.elevation = change.elevation;
+                }
                 changed = true;
             }
             if (changed) {
@@ -282,10 +355,14 @@
             }
         }
 
-        setMode(options.mode === 'viewer' ? 'viewer' : 'model');
+        if (options.mode === 'viewer' && turns) {
+            setMode('viewer');
+        } else if (turns) {
+            follow();
+        }
         place();
 
-        if (!hasControls(element)) {
+        if (!controls) {
             return;
         }
 
@@ -300,6 +377,10 @@
             setMode(detail.mode === 'viewer' ? 'viewer' : 'model');
             (detail.lights || []).forEach(merge);
             place();
+            if (turns) {
+                // After Reset, the lights are back where they started, wherever the camera is now
+                report();
+            }
         });
 
         ready(element, { mode: mode, lights: initial.map(shown) });

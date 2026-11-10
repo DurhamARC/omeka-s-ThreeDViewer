@@ -214,6 +214,11 @@ class LightingMarkupTest extends TestCase
         $this->assertStringContainsString('class="threedviewer-lighting-reset" aria-label="Reset"', $html);
         $this->assertStringContainsString('class="threedviewer-lighting-close" aria-label="Close"', $html);
         $this->assertStringContainsString('aria-label="Direction and height"', $html);
+        $this->assertStringContainsString(
+            'min="-90" max="90" step="1" data-property="elevation"',
+            $html,
+            'Height as seen from the camera, which can be below level'
+        );
         $this->assertStringNotContainsString('<details class="threedviewer-lighting"', $html);
 
         $files = $view->headScript()->files;
