@@ -47,6 +47,16 @@
   }
 
   /**
+   * How far model-viewer's auto-rotate has turned the model, in radians about the up axis. Unlike the
+   * other viewers' auto-rotate, which moves the camera, model-viewer's turns the model on a turntable
+   * (its pivot), with no camera-change event.
+   */
+  function turntable(viewer) {
+    const yaw = viewer.turntableRotation;
+    return typeof yaw === 'number' && isFinite(yaw) ? yaw : 0;
+  }
+
+  /**
    * The side of the model the default view looks from: the camera's, before anyone orbits it.
    */
   function viewSide(viewer) {
@@ -201,6 +211,12 @@
    * light repaints the environment. With model-viewer's own environment, its direction and height
    * turn the environment so that its overhead light comes from there.
    *
+   * The controller works in the model's frame. Auto-rotate turns the model, not the camera, so the
+   * camera's orientation is taken relative to the model (the model's turn counts as the camera
+   * turning the other way), and the environment turns with the model on top of the frame: fixed to
+   * the model, the lights turn with it; fixed to the viewer, the frame turns back as the model turns,
+   * and the lights stay put. The turntable is watched each frame, as nothing announces its turns.
+   *
    * @param {Object|null} rig - The rig as painted, its strengths already multiplied by brightness
    * @param {{x: number, z: number}} side - The side of the model the default view looks from
    */
@@ -217,6 +233,11 @@
     const Vector3 = turnable ? scene.position.constructor : null;
     const Euler = turnable ? scene.environmentRotation.constructor : null;
     const degrees = Math.PI / 180;
+    // The model's turn since the lighting was set up, which its default view is taken from
+    const startYaw = turntable(viewer);
+    function turned() {
+      return turntable(viewer) - startYaw;
+    }
 
     let lights;
     if (rig) {
@@ -247,6 +268,8 @@
     // paint only once the controls pause rather than as often as a slider moves
     const pause = rig && !environmentCache(viewer) ? 250 : 0;
     let latest = null;
+    let placed = null;   // The lights and frame as last placed, to turn again with the model
+    let following = null;   // The controller's update for a camera move, if it wants one
     function paint() {
       repaint = 0;
       applyRig(viewer, { ambient: latest[0], lights: latest.slice(1) }, side);
@@ -268,18 +291,23 @@
           'YXZ'
         )));
       }
+      // Then with the model, from the model's frame to the scene's
+      const world = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), turned()).multiply(turn);
       // three.js samples the environment through the negated Euler angles: R_XYZ(-e) = turn^-1
-      const inverse = new Euler().setFromQuaternion(turn.invert(), 'XYZ');
+      const inverse = new Euler().setFromQuaternion(world.invert(), 'XYZ');
       scene.environmentRotation.set(-inverse.x, -inverse.y, -inverse.z, 'XYZ');
       if (typeof scene.queueRender === 'function') {
         scene.queueRender();
       }
     }
 
-    /** The camera's orientation from its orbit, Ry(theta) Rx(phi): it turns +y to the camera's side */
+    /**
+     * The camera's orientation relative to the model, from its orbit less the model's turn,
+     * Ry(theta - turned) Rx(phi): it turns +y to the camera's side
+     */
     function orientation() {
       const orbit = viewer.getCameraOrbit();
-      return new Quaternion().setFromEuler(new Euler(orbit.phi, orbit.theta, 0, 'YXZ'));
+      return new Quaternion().setFromEuler(new Euler(orbit.phi, orbit.theta - turned(), 0, 'YXZ'));
     }
 
     let listener = null;
@@ -316,6 +344,7 @@
           viewer.removeEventListener('camera-change', listener);
         }
         listener = update;
+        following = update;
         if (listener) {
           viewer.addEventListener('camera-change', listener);
         }
@@ -329,6 +358,7 @@
       },
       place: function (all, frame) {
         latest = all;
+        placed = { all: all, frame: frame };
         if (changed && pause) {
           clearTimeout(repaint);
           repaint = setTimeout(paint, pause);
@@ -340,6 +370,25 @@
         orient(all, frame);
       }
     });
+
+    if (turnable) {
+      let last = turntable(viewer);
+      const watchTurntable = function () {
+        const now = turntable(viewer);
+        if (now !== last) {
+          last = now;
+          // Fixed to the viewer, the frame turns back; with the panel open, the directions shown turn
+          if (following) {
+            following();
+          }
+          if (placed) {
+            orient(placed.all, placed.frame);
+          }
+        }
+        requestAnimationFrame(watchTurntable);
+      };
+      requestAnimationFrame(watchTurntable);
+    }
   }
 
   function attach(viewer) {
@@ -366,7 +415,8 @@
       applyRig(viewer, rig, side);
     }
 
-    if (lighting && (controls || viewer.dataset.lightingMode === 'viewer')) {
+    // A rig also needs turning with the model, as auto-rotate turns it
+    if (lighting && (controls || rig || viewer.dataset.lightingMode === 'viewer')) {
       if (viewer.loaded) {
         setUpLighting(viewer, rig, side);
       } else {
