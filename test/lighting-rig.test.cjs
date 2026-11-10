@@ -197,6 +197,7 @@ function fakeViewer(options) {
         turned: () => JSON.parse(JSON.stringify(events
             .filter((event) => event.type === 'threedviewer:lighting-turned').map((e) => e.detail.lights))),
         change: (detail) => listeners['threedviewer:lighting']({ detail }),
+        panel: (open) => listeners['threedviewer:lighting-panel']({ detail: { open } }),
         frame: () => viewer.placed.frame
     };
     window.ThreeDViewerLighting.controller(element, {
@@ -221,6 +222,10 @@ function fakeViewer(options) {
         set: (light) => viewer.set.push(JSON.parse(JSON.stringify(light))),
         place: (lights, frame) => { viewer.placed = { lights: JSON.parse(JSON.stringify(lights)), frame }; }
     });
+    // The panel open, unless the test says otherwise
+    if (options.controls && options.open !== false) {
+        viewer.panel(true);
+    }
     return viewer;
 }
 
@@ -327,6 +332,29 @@ test('controller: Reset fixed to the model puts the lights back in the scene, wh
     assert.equal(viewer.frame(), 0, 'And staying there');
     const shown = viewer.turned().flat().filter((light) => light.id === 'key').pop();
     assert.equal(shown.azimuth, ((initial[1].azimuth - 120 + 540) % 360) - 180, 'Seen from the camera, turned by its 120 degrees');
+});
+
+test('controller: fixed to the model, the directions are reported only while the panel is open', () => {
+    const viewer = fakeViewer({ controls: true, lights: PRESET, open: false });
+    assert.equal(viewer.follow, null, 'Not following the camera with the panel closed');
+    viewer.camera = 30;
+    assert.deepEqual(viewer.turned(), []);
+
+    viewer.panel(true);
+    assert.deepEqual(viewer.turned(), [[{ id: 'key', azimuth: 105, elevation: 55 }]], 'Caught up as it opens: 135, turned by -30');
+    assert.equal(typeof viewer.follow, 'function', 'Following while open');
+    viewer.camera = 40;
+    viewer.follow();
+    assert.equal(viewer.turned().length, 2);
+
+    viewer.panel(false);
+    assert.equal(viewer.follow, null, 'Not once it closes');
+
+    const fixed = fakeViewer({ controls: true, lights: PRESET, mode: 'viewer', open: false });
+    assert.equal(typeof fixed.follow, 'function', 'Fixed to the viewer, following the camera to turn the lights, open or not');
+    fixed.panel(true);
+    fixed.panel(false);
+    assert.equal(typeof fixed.follow, 'function');
 });
 
 test('controller: without controls it only keeps the lighting fixed; without turns, to the model', () => {

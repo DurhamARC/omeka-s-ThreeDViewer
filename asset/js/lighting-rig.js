@@ -208,8 +208,9 @@
      * frame, then back by the camera's turn since the default view. Fixed to the viewer, the two
      * turns cancel and the directions shown stay put; fixed to the model, turning the camera turns
      * the lights round the view, and the controls are told the directions they have turned to
-     * (threedviewer:lighting-turned, { lights: [{ id, azimuth, elevation }] }). A direction set
-     * from the controls is taken the same way, as seen from the camera.
+     * (threedviewer:lighting-turned, { lights: [{ id, azimuth, elevation }] }), while they are open
+     * (threedviewer:lighting-panel, { open }) and once as they open. A direction set from the
+     * controls is taken the same way, as seen from the camera.
      *
      * @param {HTMLElement} element - The viewer element, which the controls send their changes to
      * @param {Object} options
@@ -242,6 +243,7 @@
         let lights = initial.map(copyLight);
         let showing = initial.map(shown);
         const controls = hasControls(element);
+        let open = false;   // Whether the controls are open, and so want the directions reported
 
         let mode = 'model';
         let frame = turns ? turns.identity() : null;
@@ -288,12 +290,15 @@
             }
         }
 
-        /** Follow the camera: fixed to the viewer, to turn the lights; to the model, to report them */
+        /**
+         * Follow the camera: fixed to the viewer, to turn the lights; to the model, to report them
+         * while the controls are open
+         */
         function follow() {
             if (mode === 'viewer') {
                 options.follow(place);
             } else {
-                options.follow(controls ? report : null);
+                options.follow(open ? report : null);
             }
         }
 
@@ -360,6 +365,17 @@
         if (!controls) {
             return;
         }
+
+        element.addEventListener('threedviewer:lighting-panel', function (event) {
+            open = !!event.detail.open;
+            if (turns) {
+                if (open) {
+                    // The camera may have turned the lights since the controls last saw them
+                    report();
+                }
+                follow();
+            }
+        });
 
         onChange(element, function (detail) {
             if (detail.reset) {

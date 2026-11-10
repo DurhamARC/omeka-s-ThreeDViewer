@@ -6,7 +6,8 @@
  *
  * Directions are as seen from the camera now. Where the lights are fixed to the model, turning the
  * model turns them round the view, and the viewer reports where they have turned to
- * (threedviewer:lighting-turned), which the sliders follow.
+ * (threedviewer:lighting-turned), which the sliders follow. It does so only while the panel is
+ * open (threedviewer:lighting-panel), and catches up as it opens.
  *
  * The viewer reports its lights (threedviewer:lighting-ready, see lighting-rig.js); the panel
  * builds a row per light from its <template> and sends the whole state back with every change
@@ -86,6 +87,8 @@
         function open(show) {
             panel.hidden = !show;
             toggle.setAttribute('aria-expanded', String(show));
+            // The viewer reports turned lights only while the panel shows them
+            target.dispatchEvent(new CustomEvent('threedviewer:lighting-panel', { detail: { open: show } }));
         }
 
         /** Open one light's direction and height, closing any other's */
