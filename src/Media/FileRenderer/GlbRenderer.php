@@ -21,8 +21,7 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
         );
         $view->headScript()->appendFile($view->assetUrl('js/viewer-controls.js', 'ThreeDViewer'));
         // Brightness is model-viewer's exposure attribute, which needs no script
-        $this->appendLightingScripts($view, $config, false);
-        if ($config['lightingMode'] === 'viewer' || $config['rig'] !== null || $config['lightingControls']) {
+        if ($this->appendLightingScripts($view, $config, false)) {
             $view->headScript()->appendFile($view->assetUrl('js/model-viewer-lighting.js', 'ThreeDViewer'));
         }
 

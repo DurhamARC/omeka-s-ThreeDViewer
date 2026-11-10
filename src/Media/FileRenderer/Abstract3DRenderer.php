@@ -146,19 +146,21 @@ abstract class Abstract3DRenderer implements RendererInterface
      * controls where the page shows them.
      *
      * @param bool $brightnessInScript False where the viewer is given brightness some other way
+     * @return bool Whether the page has the lighting script, for a viewer's own script that uses it
      */
-    protected function appendLightingScripts(PhpRenderer $view, array $config, bool $brightnessInScript = true): void
+    protected function appendLightingScripts(PhpRenderer $view, array $config, bool $brightnessInScript = true): bool
     {
         $brightness = $brightnessInScript && $config['lighting']['threedviewer_light_brightness'] != 1;
-        if ($config['rig'] !== null || $brightness || $config['lightingMode'] === 'viewer'
-            || $config['lightingControls']
-        ) {
+        $lighting = $config['rig'] !== null || $brightness || $config['lightingMode'] === 'viewer'
+            || $config['lightingControls'];
+        if ($lighting) {
             $view->headScript()->appendFile($view->assetUrl('js/lighting-rig.js', 'ThreeDViewer'));
         }
         if ($config['lightingControls']) {
             $view->headScript()->appendFile($view->assetUrl('js/lighting-controls.js', 'ThreeDViewer'));
             $view->headLink()->appendStylesheet($view->assetUrl('css/lighting-controls.css', 'ThreeDViewer'));
         }
+        return $lighting;
     }
 
     /**
