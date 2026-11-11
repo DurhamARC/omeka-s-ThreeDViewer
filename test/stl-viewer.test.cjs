@@ -24,16 +24,18 @@ class Element {
 }
 
 /**
- * Runs the viewer on a page holding the given media blocks, the last of them the STL viewer's,
- * and returns the renderer it created
+ * Runs the viewer script on a page holding the given media blocks, each of the STL viewers' with
+ * an element carrying its settings, and returns the renderers it created and each viewer element
  */
-function initialise(blocks) {
-    const viewerBlock = blocks[blocks.length - 1];
-    const loading = new Element('', 0, 0);
-    loading.dataset.stlUrl = '/mesh.stl';
-    viewerBlock.appendChild(loading);
+function initialise(blocks, viewerBlocks, { failFirst = false, observe = false } = {}) {
+    const viewers = viewerBlocks.map((block, i) => {
+        const element = new Element('threedviewer-stl-loading', 0, 0);
+        element.dataset.stlUrl = '/mesh' + i + '.stl';
+        block.appendChild(element);
+        return element;
+    });
 
-    let renderer;
+    const renderers = [];
     let ready;
     class Stub {
         constructor() {
@@ -56,39 +58,66 @@ function initialise(blocks) {
         },
         WebGLRenderer: class {
             constructor() {
-                renderer = this;
+                if (failFirst && !failed) {
+                    failed = true;
+                    throw new Error('Error creating WebGL context.');
+                }
+                renderers.push(this);
                 this.domElement = new Element('', 0, 0);
             }
             setSize(width, height) {
                 this.size = [width, height];
             }
             setClearColor() {}
-            render() {}
+            render() {
+                this.renders = (this.renders || 0) + 1;
+            }
         },
         OrbitControls: class { update() {} },
-        STLLoader: class { load() {} }
+        STLLoader: class {
+            load(url, onLoad, onProgress, onError) {
+                loaded.push(url);
+                callbacks.push({ onLoad, onProgress, onError });
+            }
+        }
     };
+    let failed = false;
+    const loaded = [];
+    const callbacks = [];
+    // Frames run only when a test asks, and each viewer's visibility is reported when a test says
+    const frames = [];
+    const observers = [];
+    const window = { addEventListener() {} };
+    if (observe) {
+        window.IntersectionObserver = class {
+            constructor(callback) { this.callback = callback; }
+            observe(element) { observers.push({ element, report: (on) => this.callback([{ isIntersecting: on }]) }); }
+        };
+    }
     const context = {
         THREE,
-        console: { log() {}, error() {} },
-        window: { addEventListener() {} },
-        requestAnimationFrame() {},
+        console: { log() {}, error: (...args) => errors.push(args) },
+        window,
+        IntersectionObserver: window.IntersectionObserver,
+        requestAnimationFrame: (f) => frames.push(f),
         document: {
             addEventListener: (type, listener) => { ready = listener; },
-            getElementById: (id) => (id === 'loading' ? loading : null),
+            querySelectorAll: (selector) => (selector === '[data-stl-url]' ? viewers : []),
             querySelector: (selector) => (selector === '.media-render' ? blocks[0] : null)
         }
     };
+    const errors = [];
     runInNewContext(source, context);
     ready();
-    return { renderer, context };
+    const runFrame = () => frames.splice(0).forEach((f) => f());
+    return { renderers, viewers, loaded, ready, callbacks, errors, observers, runFrame, frames };
 }
 
 test('draws in its own media block when other media come before it', () => {
     const thumbnail = new Element('media-render file', 300, 200);
     const viewerBlock = new Element('media-render file', 800, 500);
 
-    const { renderer } = initialise([thumbnail, viewerBlock]);
+    const { renderers: [renderer] } = initialise([thumbnail, viewerBlock], [viewerBlock]);
 
     assert.equal(renderer.domElement.parentElement, viewerBlock);
     assert.deepEqual(thumbnail.children, []);
@@ -98,10 +127,76 @@ test('draws in its own media block when other media come before it', () => {
 test('keeps to its own media block when resized', () => {
     const thumbnail = new Element('media-render file', 300, 200);
     const viewerBlock = new Element('media-render file', 800, 500);
-    const { renderer, context } = initialise([thumbnail, viewerBlock]);
+    const { renderers: [renderer], viewers: [viewer] } = initialise([thumbnail, viewerBlock], [viewerBlock]);
 
     viewerBlock.clientWidth = 600;
-    runInNewContext('onWindowResize()', context);
+    viewer.threedviewerStl.resize();
 
     assert.deepEqual(renderer.size, [600, 500]);
+});
+
+test('every STL on the page gets a viewer of its own', () => {
+    const first = new Element('media-render file', 800, 500);
+    const second = new Element('media-render file', 400, 300);
+    const { renderers, viewers, loaded, ready } = initialise([first, second], [first, second]);
+
+    assert.equal(renderers.length, 2);
+    assert.equal(renderers[0].domElement.parentElement, first);
+    assert.equal(renderers[1].domElement.parentElement, second);
+    assert.deepEqual(loaded, ['/mesh0.stl', '/mesh1.stl'], 'each loads its own model');
+    assert.notEqual(viewers[0].threedviewerStl.scene, viewers[1].threedviewerStl.scene, 'each has its own scene');
+
+    // Started again, as by the script loaded twice, it makes no more viewers
+    ready();
+    assert.equal(renderers.length, 2, 'no viewer is started twice');
+
+    // Resizing one leaves the other as it is
+    second.clientWidth = 200;
+    viewers[1].threedviewerStl.resize();
+    assert.deepEqual(renderers[0].size, [800, 500]);
+    assert.deepEqual(renderers[1].size, [200, 300]);
+});
+
+test('a viewer that fails to start says so, and the others still start', () => {
+    const first = new Element('media-render file', 800, 500);
+    const second = new Element('media-render file', 400, 300);
+    const { renderers, viewers, errors } = initialise([first, second], [first, second], { failFirst: true });
+
+    assert.equal(viewers[0].textContent, 'Error: Could not show the model');
+    assert.equal(errors.length, 1, 'the error is logged');
+    assert.equal(renderers.length, 1);
+    assert.equal(renderers[0].domElement.parentElement, second, 'the second viewer starts all the same');
+    assert.ok(viewers[1].threedviewerStl);
+});
+
+test('a model that downloads but fails to load shows its error, though its message was hidden', () => {
+    const block = new Element('media-render file', 800, 500);
+    const { viewers: [viewer], callbacks: [loading] } = initialise([block], [block]);
+
+    loading.onProgress({ lengthComputable: true, loaded: 10, total: 10 });
+    assert.equal(viewer.style.display, 'none', 'hidden once downloaded');
+    loading.onError(new Error('not an STL'));
+    assert.equal(viewer.style.display, '', 'shown again');
+    assert.equal(viewer.textContent, 'Error loading STL model. Please verify the file exists.');
+});
+
+test('a viewer renders only while it is on screen', () => {
+    const first = new Element('media-render file', 800, 500);
+    const second = new Element('media-render file', 800, 500);
+    const { renderers, observers, runFrame, frames } = initialise([first, second], [first, second], { observe: true });
+    assert.deepEqual(observers.map((o) => o.element), [first, second], 'each viewer watches its own container');
+
+    observers[1].report(false);
+    runFrame();
+    runFrame();
+    assert.equal(renderers[0].renders, 3, 'on screen: a render each frame');
+    assert.equal(renderers[1].renders, 1, 'off screen: none after the first');
+    assert.equal(frames.length, 1, 'and no frame waiting for it');
+
+    observers[1].report(true);
+    runFrame();
+    assert.equal(renderers[1].renders, 3, 'back on screen, it renders again');
+    observers[1].report(true);
+    runFrame();
+    assert.equal(renderers[1].renders, 4, 'one loop, however often it is reported on screen');
 });
