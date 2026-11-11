@@ -48,8 +48,7 @@ function createViewer(loadingElement) {
       // STL files don't record which way is up: this viewer shows them Y up unless Z is chosen
       upAxis: options.upAxis === "z" ? "z" : "y",
       brightness: options.brightness === undefined ? 1 : options.brightness,
-      rig: options.rig || null,
-      element: options.element || null
+      rig: options.rig || null
     };
   
     // Convert hex color strings to Three.js color objects
@@ -169,8 +168,8 @@ function createViewer(loadingElement) {
         if (config.rig) {
           aimRig(lights.directional, config.rig);
         }
-        if (window.ThreeDViewerLighting && config.element) {
-          setUpLighting(config.element, lights, config);
+        if (window.ThreeDViewerLighting) {
+          setUpLighting(loadingElement, lights, config);
         }
       
         // Trigger a resize to ensure proper rendering
@@ -324,7 +323,6 @@ function createViewer(loadingElement) {
    * Adjusts camera and renderer to maintain proper aspect ratio
    */
   function onWindowResize() {
-    if (!container) return;
   
     // Update camera aspect ratio
     camera.aspect = container.clientWidth / container.clientHeight;
@@ -342,7 +340,6 @@ function createViewer(loadingElement) {
    * Prevents model distortion when container dimensions change
    */
   function adjustCameraForAspectRatio() {
-    if (!scene) return;
   
     // Find the 3D model mesh in the scene
     const model = scene.children.find(child => child instanceof THREE.Mesh);
@@ -385,17 +382,13 @@ function createViewer(loadingElement) {
     frame = requestAnimationFrame(animate);
   
     // Update controls (needed for smooth damping and auto-rotation)
-    if (controls) {
-      controls.update();
-    }
+    controls.update();
     if (followCamera) {
       followCamera();
     }
   
     // Render the scene
-    if (scene && camera && renderer) {
-      renderer.render(scene, camera);
-    }
+    renderer.render(scene, camera);
   }
 
   // Get STL URL and configuration from data attributes
@@ -425,8 +418,7 @@ function createViewer(loadingElement) {
     lightingMode: lightingMode,
     upAxis: upAxis,
     brightness: lighting ? lighting.brightness(loadingElement) : 1,
-    rig: lighting ? lighting.parse(loadingElement) : null,
-    element: loadingElement
+    rig: lighting ? lighting.parse(loadingElement) : null
   });
   loadingElement.threedviewerStl = {
     scene: scene,
