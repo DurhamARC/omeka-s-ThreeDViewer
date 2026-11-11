@@ -14,6 +14,9 @@ permissions:
 
 jobs:
   preview:
+    # Fork PRs get a read-only token, so posting the comment fails with
+    # "Resource not accessible by integration": skip them instead.
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
