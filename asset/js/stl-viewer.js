@@ -26,6 +26,9 @@ function createViewer(loadingElement) {
   let container;
   // Set while the lighting is fixed to the viewer: moves the lights each frame
   let followCamera = null;
+  // Whether the viewer is on screen, and so rendering, and its next frame while it is
+  let onScreen = true;
+  let frame = 0;
 
   /**
    * Initializes the 3D scene, camera and renderer
@@ -374,7 +377,12 @@ function createViewer(loadingElement) {
    * Animation loop - renders the scene for each frame
    */
   function animate() {
-    requestAnimationFrame(animate);
+    frame = 0;
+    // Off screen, the loop stops; it starts again when the viewer comes back into view
+    if (!onScreen) {
+      return;
+    }
+    frame = requestAnimationFrame(animate);
   
     // Update controls (needed for smooth damping and auto-rotation)
     if (controls) {
@@ -428,8 +436,17 @@ function createViewer(loadingElement) {
     resize: onWindowResize
   };
   
-  // Start the animation loop
+  // Start the animation loop, and render only while the viewer is on screen, so that a page of
+  // several viewers draws only those in view
   animate();
+  if (window.IntersectionObserver) {
+    new IntersectionObserver(function (entries) {
+      onScreen = entries[entries.length - 1].isIntersecting;
+      if (onScreen && !frame) {
+        animate();
+      }
+    }).observe(container);
+  }
 }
 
 /**

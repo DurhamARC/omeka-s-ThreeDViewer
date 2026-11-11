@@ -27,7 +27,7 @@ class Element {
  * Runs the viewer script on a page holding the given media blocks, each of the STL viewers' with
  * an element carrying its settings, and returns the renderers it created and each viewer element
  */
-function initialise(blocks, viewerBlocks, { failFirst = false } = {}) {
+function initialise(blocks, viewerBlocks, { failFirst = false, observe = false } = {}) {
     const viewers = viewerBlocks.map((block, i) => {
         const element = new Element('threedviewer-stl-loading', 0, 0);
         element.dataset.stlUrl = '/mesh' + i + '.stl';
@@ -69,7 +69,9 @@ function initialise(blocks, viewerBlocks, { failFirst = false } = {}) {
                 this.size = [width, height];
             }
             setClearColor() {}
-            render() {}
+            render() {
+                this.renders = (this.renders || 0) + 1;
+            }
         },
         OrbitControls: class { update() {} },
         STLLoader: class {
@@ -82,11 +84,22 @@ function initialise(blocks, viewerBlocks, { failFirst = false } = {}) {
     let failed = false;
     const loaded = [];
     const callbacks = [];
+    // Frames run only when a test asks, and each viewer's visibility is reported when a test says
+    const frames = [];
+    const observers = [];
+    const window = { addEventListener() {} };
+    if (observe) {
+        window.IntersectionObserver = class {
+            constructor(callback) { this.callback = callback; }
+            observe(element) { observers.push({ element, report: (on) => this.callback([{ isIntersecting: on }]) }); }
+        };
+    }
     const context = {
         THREE,
         console: { log() {}, error: (...args) => errors.push(args) },
-        window: { addEventListener() {} },
-        requestAnimationFrame() {},
+        window,
+        IntersectionObserver: window.IntersectionObserver,
+        requestAnimationFrame: (f) => frames.push(f),
         document: {
             addEventListener: (type, listener) => { ready = listener; },
             querySelectorAll: (selector) => (selector === '[data-stl-url]' ? viewers : []),
@@ -96,7 +109,8 @@ function initialise(blocks, viewerBlocks, { failFirst = false } = {}) {
     const errors = [];
     runInNewContext(source, context);
     ready();
-    return { renderers, viewers, loaded, ready, callbacks, errors };
+    const runFrame = () => frames.splice(0).forEach((f) => f());
+    return { renderers, viewers, loaded, ready, callbacks, errors, observers, runFrame, frames };
 }
 
 test('draws in its own media block when other media come before it', () => {
@@ -164,4 +178,25 @@ test('a model that downloads but fails to load shows its error, though its messa
     loading.onError(new Error('not an STL'));
     assert.equal(viewer.style.display, '', 'shown again');
     assert.equal(viewer.textContent, 'Error loading STL model. Please verify the file exists.');
+});
+
+test('a viewer renders only while it is on screen', () => {
+    const first = new Element('media-render file', 800, 500);
+    const second = new Element('media-render file', 800, 500);
+    const { renderers, observers, runFrame, frames } = initialise([first, second], [first, second], { observe: true });
+    assert.deepEqual(observers.map((o) => o.element), [first, second], 'each viewer watches its own container');
+
+    observers[1].report(false);
+    runFrame();
+    runFrame();
+    assert.equal(renderers[0].renders, 3, 'on screen: a render each frame');
+    assert.equal(renderers[1].renders, 1, 'off screen: none after the first');
+    assert.equal(frames.length, 1, 'and no frame waiting for it');
+
+    observers[1].report(true);
+    runFrame();
+    assert.equal(renderers[1].renders, 3, 'back on screen, it renders again');
+    observers[1].report(true);
+    runFrame();
+    assert.equal(renderers[1].renders, 4, 'one loop, however often it is reported on screen');
 });
