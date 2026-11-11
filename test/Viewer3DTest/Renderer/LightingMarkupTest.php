@@ -231,6 +231,7 @@ class LightingMarkupTest extends TestCase
     {
         return [
             'model-viewer' => ['model.glb', 'model-viewer'],
+            'STL' => ['mesh.stl', 'model-viewer'],
             'Babylon.js' => ['model.gltf', 'babylon'],
         ];
     }
@@ -253,6 +254,8 @@ class LightingMarkupTest extends TestCase
         foreach ($targets[1] as $target) {
             $this->assertContains($target, $ids[1]);
         }
+        preg_match_all('/<input type="radio" name="([^"]+)" value="model"/', $html, $modes);
+        $this->assertCount(2, array_unique($modes[1]), 'Each panel has its own mode switch');
 
         $other = new DummyPhpRenderer();
         $other->setSettings(['threedviewer_default_library' => $library, 'threedviewer_lighting_controls' => true]);

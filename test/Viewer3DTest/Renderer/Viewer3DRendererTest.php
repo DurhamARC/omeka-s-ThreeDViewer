@@ -79,6 +79,37 @@ class Viewer3DRendererTest extends TestCase
         $this->assertStringContainsString('data-stl-url="//example.org/files/original/mesh.stl"', $html);
         $this->assertStringContainsString('STL Viewer', $html, 'STL info panel present');
         $this->assertStringStartsWith('<div class="threedviewer-stl-container">', $html);
+        $this->assertStringContainsString(
+            '<div class="threedviewer-stl-loading" id="threedviewer-stl-1" data-stl-url=',
+            $html,
+            'The element stl-viewer.js starts a viewer for, with an id of its own'
+        );
+        $this->assertStringNotContainsString('id="loading"', $html);
+    }
+
+    public function testEachStlOnAPageGetsItsOwnViewer(): void
+    {
+        $first = new MediaRepresentation('https://example.org/files/original/a.stl', 'A', 'a.stl', 1);
+        $second = new MediaRepresentation('https://example.org/files/original/b.stl', 'B', 'b.stl', 2);
+
+        $html = $this->renderer->render($this->view, $first, [])
+            . $this->renderer->render($this->view, $second, [])
+            . $this->renderer->render($this->view, $first, []);
+
+        $element = '/<div class="threedviewer-stl-loading" id="([^"]+)" data-stl-url="([^"]+)"/';
+        preg_match_all($element, $html, $viewers);
+        $this->assertSame(['threedviewer-stl-1', 'threedviewer-stl-2', 'threedviewer-stl-1-2'], $viewers[1]);
+        $this->assertSame(
+            [
+                '//example.org/files/original/a.stl',
+                '//example.org/files/original/b.stl',
+                '//example.org/files/original/a.stl',
+            ],
+            $viewers[2]
+        );
+        $styles = implode("\n", $this->view->headStyle()->styles);
+        $this->assertStringContainsString('.threedviewer-stl-loading {', $styles);
+        $this->assertStringNotContainsString('#loading', $styles);
     }
 
     public function testStlStylesLeaveOtherMediaAlone(): void

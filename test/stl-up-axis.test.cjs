@@ -63,7 +63,7 @@ function threeCorners(binary, upAxis) {
     let ready;
     context.document = {
         addEventListener: (type, listener) => { ready = listener; },
-        getElementById: (id) => (id === 'loading' ? loading : null)
+        querySelectorAll: (selector) => (selector === '[data-stl-url]' ? [loading] : [])
     };
     context.requestAnimationFrame = context.addEventListener = () => {};
     runInContext(read('asset/js/stl-viewer.js'), context);
@@ -77,7 +77,7 @@ function threeCorners(binary, upAxis) {
     THREE.OrbitControls = class { update() {} };
     THREE.STLLoader.prototype.load = function (url, onLoad) { onLoad(this.parse(stl(binary))); };
     ready();
-    const mesh = runInContext('scene', context).children.find((child) => child.isMesh);
+    const mesh = loading.threedviewerStl.scene.children.find((child) => child.isMesh);
     return tidy(corners(mesh.geometry.attributes.position.array));
 }
 
