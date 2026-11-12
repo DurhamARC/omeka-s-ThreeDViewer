@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-10 00:26+0000\n"
+"POT-Creation-Date: 2026-11-12 10:49+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,58 +17,95 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/Media/FileRenderer/GlbRenderer.php:35
+#: src/Media/FileRenderer/BabylonRenderer.php:71
+msgid "Loading 3D model..."
+msgstr ""
+
+#: src/Media/FileRenderer/GlbRenderer.php:34
 msgid "View 3D model fullscreen"
 msgstr ""
 
-#: src/Media/FileRenderer/GlbRenderer.php:36
+#: src/Media/FileRenderer/GlbRenderer.php:35
 msgid "Exit fullscreen 3D model"
 msgstr ""
 
-#: src/Media/FileRenderer/GlbRenderer.php:37
+#: src/Media/FileRenderer/GlbRenderer.php:36
 msgid "3D viewer controls"
 msgstr ""
 
-#: src/Media/FileRenderer/GlbRenderer.php:38
-#: src/Media/FileRenderer/Abstract3DRenderer.php:347
+#: src/Media/FileRenderer/GlbRenderer.php:37
+#: src/Media/FileRenderer/Abstract3DRenderer.php:350
 msgid "Use mouse to rotate, zoom and pan"
 msgstr ""
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:175
-#: src/Media/FileRenderer/Abstract3DRenderer.php:214
+#: src/Media/FileRenderer/Abstract3DRenderer.php:177
+#: src/Media/FileRenderer/Abstract3DRenderer.php:217
 msgid "Lighting"
 msgstr ""
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:215
+#: src/Media/FileRenderer/Abstract3DRenderer.php:218
 msgid "Reset"
 msgstr ""
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:216
+#: src/Media/FileRenderer/Abstract3DRenderer.php:219
 msgid "Close"
 msgstr ""
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:217
+#: src/Media/FileRenderer/Abstract3DRenderer.php:220
 msgid "Colour"
 msgstr ""
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:218
+#: src/Media/FileRenderer/Abstract3DRenderer.php:221
 msgid "Strength"
 msgstr ""
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:219
+#: src/Media/FileRenderer/Abstract3DRenderer.php:222
 msgid "Direction and height"
 msgstr ""
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:220
+#: src/Media/FileRenderer/Abstract3DRenderer.php:223
 msgid "Fixed to the model"
 msgstr ""
 
-#: src/Media/FileRenderer/Abstract3DRenderer.php:221
+#: src/Media/FileRenderer/Abstract3DRenderer.php:224
 msgid "Fixed to the viewer"
 msgstr ""
 
-#: src/Media/FileRenderer/BabylonRenderer.php:71
-msgid "Loading 3D model..."
+#: Module.php:24
+msgid ""
+"The custom environment image URL must start with http://, https:// or /."
+msgstr ""
+
+#: Module.php:102
+msgid "3D viewer lighting"
+msgstr ""
+
+#: Module.php:103
+msgid "3D viewer custom lights"
+msgstr ""
+
+#: Module.php:104
+msgid "3D viewer custom light 1"
+msgstr ""
+
+#: Module.php:105
+msgid "3D viewer custom light 2"
+msgstr ""
+
+#: Module.php:106
+msgid "3D viewer custom light 3"
+msgstr ""
+
+#: Module.php:107
+msgid "3D viewer custom light 4"
+msgstr ""
+
+#: Module.php:110
+msgid "3D viewer model-viewer lighting"
+msgstr ""
+
+#: Module.php:112
+msgid "3D viewer Babylon.js lighting"
 msgstr ""
 
 #: src/Form/SiteSettingsFieldset.php:27 src/Form/ConfigForm.php:285
@@ -244,7 +281,7 @@ msgid "Directional"
 msgstr ""
 
 #: src/Form/ConfigForm.php:167
-#: src/Media/FileRenderer/Abstract3DRenderer.php:205
+#: src/Media/FileRenderer/Abstract3DRenderer.php:207
 msgid "Point light"
 msgstr ""
 
@@ -386,7 +423,7 @@ msgid "Direction (degrees round)"
 msgstr ""
 
 #: src/Form/ConfigForm.php:393
-msgid "Height (degrees up)"
+msgid "Height (degrees)"
 msgstr ""
 
 #: src/Form/ConfigForm.php:413
@@ -395,82 +432,46 @@ msgid ""
 msgstr ""
 
 #: src/Form/ConfigForm.php:423
-msgid "0 is level with the model, 90 is overhead."
-msgstr ""
-
-#: src/Media/FileRenderer/StlRenderer.php:42
-msgid "STL Viewer"
-msgstr ""
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:201
-msgid "Ambient light"
-msgstr ""
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:202
-#, php-format
-msgid "Light %d"
-msgstr ""
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:203
-msgid "Key light"
-msgstr ""
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:204
-msgid "Sky light"
-msgstr ""
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:206
-msgid "Environment"
-msgstr ""
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:209
-msgid "Ground colour"
-msgstr ""
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:210
-msgid "Direction"
-msgstr ""
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:211
-msgid "Height"
+msgid "0 is level with the model, 90 is overhead, -90 is from below."
 msgstr ""
 
 #: src/Media/FileRenderer/BabylonRenderer.php:57
 msgid "Babylon.js Viewer"
 msgstr ""
 
-#: Module.php:99
-msgid "3D viewer lighting"
+#: src/Media/FileRenderer/StlRenderer.php:42
+msgid "STL Viewer"
 msgstr ""
 
-#: Module.php:100
-msgid "3D viewer custom lights"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:203
+msgid "Ambient light"
 msgstr ""
 
-#: Module.php:101
-msgid "3D viewer custom light 1"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:204
+#, php-format
+msgid "Light %d"
 msgstr ""
 
-#: Module.php:102
-msgid "3D viewer custom light 2"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:205
+msgid "Key light"
 msgstr ""
 
-#: Module.php:103
-msgid "3D viewer custom light 3"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:206
+msgid "Sky light"
 msgstr ""
 
-#: Module.php:104
-msgid "3D viewer custom light 4"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:208
+msgid "Environment"
 msgstr ""
 
-#: Module.php:107
-msgid "3D viewer model-viewer lighting"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:211
+msgid "Ground colour"
 msgstr ""
 
-#: Module.php:109
-msgid "3D viewer Babylon.js lighting"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:212
+msgid "Direction"
 msgstr ""
 
-#: Module.php:24
-msgid "The custom environment image URL must start with http://, https:// or /."
+#: src/Media/FileRenderer/Abstract3DRenderer.php:213
+msgid "Height"
 msgstr ""

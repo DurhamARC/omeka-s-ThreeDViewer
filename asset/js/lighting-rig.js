@@ -97,7 +97,7 @@
      * The unit vector pointing from the model towards a light, in world space, with y up.
      *
      * @param {number} azimuth Degrees from the camera's side, positive to the viewer's right
-     * @param {number} elevation Degrees above level
+     * @param {number} elevation Degrees above level, negative below
      * @param {{x: number, z: number}} back From backFrom()
      * @param {boolean} leftHanded True for Babylon.js, where +x is to the left of a camera on +z
      */

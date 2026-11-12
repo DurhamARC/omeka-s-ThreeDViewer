@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ThreeDViewer\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-10 00:26+0000\n"
+"POT-Creation-Date: 2026-11-12 10:49+0100\n"
 "PO-Revision-Date: 2023-11-15 12:00+0000\n"
 "Last-Translator: Área de Tecnología Educativa <ate@gobiernodecanarias.org>\n"
 "Language-Team: Spanish\n"
@@ -12,59 +12,98 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/Media/FileRenderer/GlbRenderer.php:35
-msgid "View 3D model fullscreen"
-msgstr "Ver el modelo 3D en pantalla completa"
-
-#: src/Media/FileRenderer/GlbRenderer.php:36
-msgid "Exit fullscreen 3D model"
-msgstr "Salir de la pantalla completa del modelo 3D"
-
-#: src/Media/FileRenderer/GlbRenderer.php:37
-msgid "3D viewer controls"
-msgstr "Controles del visor 3D"
-
-#: src/Media/FileRenderer/GlbRenderer.php:38
-#: src/Media/FileRenderer/Abstract3DRenderer.php:347
-msgid "Use mouse to rotate, zoom and pan"
-msgstr "Usa el ratón para rotar, hacer zoom y desplazar"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:175
-#: src/Media/FileRenderer/Abstract3DRenderer.php:214
-msgid "Lighting"
-msgstr "Iluminación"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:215
-msgid "Reset"
-msgstr "Restablecer"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:216
-msgid "Close"
-msgstr "Cerrar"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:217
-msgid "Colour"
-msgstr "Color"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:218
-msgid "Strength"
-msgstr "Intensidad"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:219
-msgid "Direction and height"
-msgstr "Dirección y altura"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:220
-msgid "Fixed to the model"
-msgstr "Fija al modelo"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:221
-msgid "Fixed to the viewer"
-msgstr "Fija al visor"
-
 #: src/Media/FileRenderer/BabylonRenderer.php:71
 msgid "Loading 3D model..."
 msgstr "Cargando modelo 3D..."
+
+#: src/Media/FileRenderer/GlbRenderer.php:34
+msgid "View 3D model fullscreen"
+msgstr "Ver el modelo 3D en pantalla completa"
+
+#: src/Media/FileRenderer/GlbRenderer.php:35
+msgid "Exit fullscreen 3D model"
+msgstr "Salir de la pantalla completa del modelo 3D"
+
+#: src/Media/FileRenderer/GlbRenderer.php:36
+msgid "3D viewer controls"
+msgstr "Controles del visor 3D"
+
+#: src/Media/FileRenderer/GlbRenderer.php:37
+#: src/Media/FileRenderer/Abstract3DRenderer.php:350
+msgid "Use mouse to rotate, zoom and pan"
+msgstr "Usa el ratón para rotar, hacer zoom y desplazar"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:177
+#: src/Media/FileRenderer/Abstract3DRenderer.php:217
+msgid "Lighting"
+msgstr "Iluminación"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:218
+msgid "Reset"
+msgstr "Restablecer"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:219
+msgid "Close"
+msgstr "Cerrar"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:220
+msgid "Colour"
+msgstr "Color"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:221
+msgid "Strength"
+msgstr "Intensidad"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:222
+msgid "Direction and height"
+msgstr "Dirección y altura"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:223
+msgid "Fixed to the model"
+msgstr "Fija al modelo"
+
+#: src/Media/FileRenderer/Abstract3DRenderer.php:224
+msgid "Fixed to the viewer"
+msgstr "Fija al visor"
+
+#: Module.php:24
+msgid ""
+"The custom environment image URL must start with http://, https:// or /."
+msgstr ""
+"La URL de la imagen de entorno personalizada debe empezar por http://, "
+"https:// o /."
+
+#: Module.php:102
+msgid "3D viewer lighting"
+msgstr "Iluminación del visor 3D"
+
+#: Module.php:103
+msgid "3D viewer custom lights"
+msgstr "Luces personalizadas del visor 3D"
+
+#: Module.php:104
+msgid "3D viewer custom light 1"
+msgstr "Luz personalizada 1 del visor 3D"
+
+#: Module.php:105
+msgid "3D viewer custom light 2"
+msgstr "Luz personalizada 2 del visor 3D"
+
+#: Module.php:106
+msgid "3D viewer custom light 3"
+msgstr "Luz personalizada 3 del visor 3D"
+
+#: Module.php:107
+msgid "3D viewer custom light 4"
+msgstr "Luz personalizada 4 del visor 3D"
+
+#: Module.php:110
+msgid "3D viewer model-viewer lighting"
+msgstr "Iluminación de model-viewer del visor 3D"
+
+#: Module.php:112
+msgid "3D viewer Babylon.js lighting"
+msgstr "Iluminación de Babylon.js del visor 3D"
 
 #: src/Form/SiteSettingsFieldset.php:27 src/Form/ConfigForm.php:285
 msgid "Show lighting controls on viewers"
@@ -247,7 +286,7 @@ msgid "Directional"
 msgstr "Direccional"
 
 #: src/Form/ConfigForm.php:167
-#: src/Media/FileRenderer/Abstract3DRenderer.php:205
+#: src/Media/FileRenderer/Abstract3DRenderer.php:207
 msgid "Point light"
 msgstr "Luz puntual"
 
@@ -401,8 +440,8 @@ msgid "Direction (degrees round)"
 msgstr "Dirección (grados alrededor)"
 
 #: src/Form/ConfigForm.php:393
-msgid "Height (degrees up)"
-msgstr "Altura (grados hacia arriba)"
+msgid "Height (degrees)"
+msgstr "Altura (grados)"
 
 #: src/Form/ConfigForm.php:413
 msgid ""
@@ -412,85 +451,49 @@ msgstr ""
 "desde detrás."
 
 #: src/Form/ConfigForm.php:423
-msgid "0 is level with the model, 90 is overhead."
-msgstr "0 es a la altura del modelo, 90 es desde arriba."
-
-#: src/Media/FileRenderer/StlRenderer.php:42
-msgid "STL Viewer"
-msgstr "Visor STL"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:201
-msgid "Ambient light"
-msgstr "Luz ambiental"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:202
-#, php-format
-msgid "Light %d"
-msgstr "Luz %d"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:203
-msgid "Key light"
-msgstr "Luz principal"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:204
-msgid "Sky light"
-msgstr "Luz del cielo"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:206
-msgid "Environment"
-msgstr "Entorno"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:209
-msgid "Ground colour"
-msgstr "Color del suelo"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:210
-msgid "Direction"
-msgstr "Dirección"
-
-#: src/Media/FileRenderer/Abstract3DRenderer.php:211
-msgid "Height"
-msgstr "Altura"
+msgid "0 is level with the model, 90 is overhead, -90 is from below."
+msgstr "0 es a la altura del modelo, 90 es desde arriba, -90 es desde abajo."
 
 #: src/Media/FileRenderer/BabylonRenderer.php:57
 msgid "Babylon.js Viewer"
 msgstr "Visor Babylon.js"
 
-#: Module.php:99
-msgid "3D viewer lighting"
-msgstr "Iluminación del visor 3D"
+#: src/Media/FileRenderer/StlRenderer.php:42
+msgid "STL Viewer"
+msgstr "Visor STL"
 
-#: Module.php:100
-msgid "3D viewer custom lights"
-msgstr "Luces personalizadas del visor 3D"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:203
+msgid "Ambient light"
+msgstr "Luz ambiental"
 
-#: Module.php:101
-msgid "3D viewer custom light 1"
-msgstr "Luz personalizada 1 del visor 3D"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:204
+#, php-format
+msgid "Light %d"
+msgstr "Luz %d"
 
-#: Module.php:102
-msgid "3D viewer custom light 2"
-msgstr "Luz personalizada 2 del visor 3D"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:205
+msgid "Key light"
+msgstr "Luz principal"
 
-#: Module.php:103
-msgid "3D viewer custom light 3"
-msgstr "Luz personalizada 3 del visor 3D"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:206
+msgid "Sky light"
+msgstr "Luz del cielo"
 
-#: Module.php:104
-msgid "3D viewer custom light 4"
-msgstr "Luz personalizada 4 del visor 3D"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:208
+msgid "Environment"
+msgstr "Entorno"
 
-#: Module.php:107
-msgid "3D viewer model-viewer lighting"
-msgstr "Iluminación de model-viewer del visor 3D"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:211
+msgid "Ground colour"
+msgstr "Color del suelo"
 
-#: Module.php:109
-msgid "3D viewer Babylon.js lighting"
-msgstr "Iluminación de Babylon.js del visor 3D"
+#: src/Media/FileRenderer/Abstract3DRenderer.php:212
+msgid "Direction"
+msgstr "Dirección"
 
-#: Module.php:24
-msgid "The custom environment image URL must start with http://, https:// or /."
-msgstr "La URL de la imagen de entorno personalizada debe empezar por http://, https:// o /."
+#: src/Media/FileRenderer/Abstract3DRenderer.php:213
+msgid "Height"
+msgstr "Altura"
 
 #~ msgid "Choose the default lighting rig for Babylon.js scenes."
 #~ msgstr "Elija la iluminación predeterminada para las escenas de Babylon.js."

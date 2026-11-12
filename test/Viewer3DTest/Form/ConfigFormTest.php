@@ -40,6 +40,9 @@ class ConfigFormTest extends TestCase
             $this->assertTrue($this->form->has("threedviewer_light_4_{$property}"), $property);
         }
         $this->assertSame('Colour', $this->form->get('threedviewer_light_4_color')->getLabel(), 'Its group names it');
+        $elevation = $this->form->get('threedviewer_light_4_elevation');
+        $range = [$elevation->getAttribute('min'), $elevation->getAttribute('max')];
+        $this->assertSame([-90, 90], $range, 'Below level too');
         $this->assertSame(
             ['default', 'custom'],
             array_keys($this->form->get('threedviewer_lights')->getValueOptions())

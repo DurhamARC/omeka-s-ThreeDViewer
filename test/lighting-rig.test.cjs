@@ -26,8 +26,9 @@ test('parse: no rig without data-lights, or when it is not JSON', () => {
 test('parse: values are checked, clamped and limited to four lights', () => {
     const lights = [
         { color: '#FF0000', strength: 9, azimuth: -400, elevation: 120 },
-        { color: 'red', strength: 'x' }
-    ].concat(Array(4).fill({ color: '#00ff00', strength: 1, azimuth: 10, elevation: 20 }));
+        { color: 'red', strength: 'x' },
+        { color: '#0000ff', strength: 1, azimuth: 0, elevation: -120 }
+    ].concat(Array(3).fill({ color: '#00ff00', strength: 1, azimuth: 10, elevation: 20 }));
     const rig = lighting.parse(element({
         lights: JSON.stringify({ ambient: { color: '#ABCDEF', strength: -1 }, lights })
     }));
@@ -41,6 +42,7 @@ test('parse: values are checked, clamped and limited to four lights', () => {
         JSON.parse(JSON.stringify(rig.lights[1])),
         { color: '#ffffff', strength: 0, azimuth: 0, elevation: 45 }
     );
+    assert.equal(rig.lights[2].elevation, -90, 'From below, down to underneath');
 });
 
 test('brightness: 1 by default, clamped otherwise', () => {

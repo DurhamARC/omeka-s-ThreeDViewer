@@ -390,7 +390,7 @@ class ConfigForm extends Form
         $colour = 'Colour'; // @translate
         $strength = 'Strength'; // @translate
         $azimuth = 'Direction (degrees round)'; // @translate
-        $elevation = 'Height (degrees up)'; // @translate
+        $elevation = 'Height (degrees)'; // @translate
 
         $this->add([
             'name' => "threedviewer_light_{$n}_color",

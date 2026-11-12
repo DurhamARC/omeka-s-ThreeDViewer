@@ -44,6 +44,8 @@ class LightingTest extends TestCase
             'threedviewer_model_viewer_shadow_softness' => '0.876',
             'threedviewer_light_1_azimuth' => '-200',
             'threedviewer_light_1_elevation' => '44.6',
+            'threedviewer_light_2_elevation' => '-30',
+            'threedviewer_light_3_elevation' => '-95',
             'threedviewer_light_2_azimuth' => 'east',
             'threedviewer_model_viewer_shadow_intensity' => '2',
         ]);
@@ -57,6 +59,8 @@ class LightingTest extends TestCase
         $this->assertSame(0.9, $clean['threedviewer_model_viewer_shadow_softness']);
         $this->assertSame(-180, $clean['threedviewer_light_1_azimuth']);
         $this->assertSame(45, $clean['threedviewer_light_1_elevation']);
+        $this->assertSame(-30, $clean['threedviewer_light_2_elevation'], 'A light from below');
+        $this->assertSame(-90, $clean['threedviewer_light_3_elevation']);
         $this->assertSame(60, $clean['threedviewer_light_2_azimuth'], 'Not a number: the default');
         $this->assertSame(1.0, $clean['threedviewer_model_viewer_shadow_intensity']);
     }
