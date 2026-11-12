@@ -211,6 +211,51 @@ class LightingTest extends TestCase
         $this->assertSame(0.4, $rig['lights'][1]['strength'], 'A blank site field takes the default, not the module');
     }
 
+    public function testRangeGivesEachNumbersMinAndMaxFromItsKeyOrTheEndOfIt(): void
+    {
+        $this->assertSame([0, 3], Lighting::range('threedviewer_light_brightness'));
+        $this->assertSame([0, 3], Lighting::range('threedviewer_light_ambient_strength'));
+        $this->assertSame([1, Lighting::MAX_LIGHTS], Lighting::range('threedviewer_light_count'));
+        $this->assertSame([-180, 180], Lighting::range('threedviewer_light_2_azimuth'));
+        $this->assertSame([-90, 90], Lighting::range('threedviewer_light_4_elevation'));
+        $this->assertSame([0, 1], Lighting::range('threedviewer_model_viewer_shadow_intensity'));
+        $this->assertSame([0, 1], Lighting::range('threedviewer_model_viewer_shadow_softness'));
+        $this->assertSame([0, 3], Lighting::range('strength'), 'The end of a key');
+        $this->assertSame([-90, 90], Lighting::range('elevation'), 'The end of a key');
+    }
+
+    public function testRangeIsTheOneNormaliseClampsTo(): void
+    {
+        foreach (Lighting::keys() as $key) {
+            try {
+                [$min, $max] = Lighting::range($key);
+            } catch (\InvalidArgumentException $e) {
+                continue;
+            }
+            $this->assertEquals($min, Lighting::normalise([$key => $min - 100])[$key], $key);
+            $this->assertEquals($max, Lighting::normalise([$key => $max + 100])[$key], $key);
+        }
+    }
+
+    /**
+     * @dataProvider notANumber
+     */
+    public function testRangeRejectsANameThatIsNotALightingNumber(string $name): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        Lighting::range($name);
+    }
+
+    public function notANumber(): array
+    {
+        return [
+            'a colour' => ['threedviewer_light_1_color'],
+            'a select' => ['threedviewer_lighting_mode'],
+            'unknown' => ['height'],
+            'empty' => [''],
+        ];
+    }
+
     public function testRigKeysAreTheAmbientLightTheCountAndEachLight(): void
     {
         $keys = Lighting::rigKeys();

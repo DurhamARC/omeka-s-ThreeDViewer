@@ -275,7 +275,7 @@ class ConfigForm extends Form
                 'label' => 'Brightness', // @translate
                 'info' => 'Multiplies the strength of every light. 1 leaves the lighting as it is.', // @translate
             ],
-            'attributes' => ['min' => 0, 'max' => 3, 'step' => 0.05],
+            'attributes' => self::rangeAttributes('threedviewer_light_brightness', 0.05),
         ]);
 
         $this->add([
@@ -318,7 +318,7 @@ class ConfigForm extends Form
             'options' => [
                 'label' => 'Ambient light strength', // @translate
             ],
-            'attributes' => ['min' => 0, 'max' => 3, 'step' => 0.05],
+            'attributes' => self::rangeAttributes('threedviewer_light_ambient_strength', 0.05),
         ]);
 
         $this->add([
@@ -369,7 +369,7 @@ class ConfigForm extends Form
                 'label' => 'model-viewer shadow strength', // @translate
                 'info' => 'The shadow under GLB/glTF models. 0 shows none.', // @translate
             ],
-            'attributes' => ['min' => 0, 'max' => 1, 'step' => 0.05],
+            'attributes' => self::rangeAttributes('threedviewer_model_viewer_shadow_intensity', 0.05),
         ]);
 
         $this->add([
@@ -378,7 +378,7 @@ class ConfigForm extends Form
             'options' => [
                 'label' => 'model-viewer shadow softness', // @translate
             ],
-            'attributes' => ['min' => 0, 'max' => 1, 'step' => 0.05],
+            'attributes' => self::rangeAttributes('threedviewer_model_viewer_shadow_softness', 0.05),
         ]);
     }
 
@@ -402,7 +402,7 @@ class ConfigForm extends Form
             'name' => "threedviewer_light_{$n}_strength",
             'type' => Element\Number::class,
             'options' => ['label' => $strength],
-            'attributes' => ['min' => 0, 'max' => 3, 'step' => 0.05],
+            'attributes' => self::rangeAttributes("threedviewer_light_{$n}_strength", 0.05),
         ]);
 
         $this->add([
@@ -412,7 +412,7 @@ class ConfigForm extends Form
                 'label' => $azimuth,
                 'info' => '0 is from the viewer’s side of the model, 90 from the right, 180 from behind.', // @translate
             ],
-            'attributes' => ['min' => -180, 'max' => 180, 'step' => 1],
+            'attributes' => self::rangeAttributes("threedviewer_light_{$n}_azimuth", 1),
         ]);
 
         $this->add([
@@ -422,8 +422,20 @@ class ConfigForm extends Form
                 'label' => $elevation,
                 'info' => '0 is level with the model, 90 is overhead, -90 is from below.', // @translate
             ],
-            'attributes' => ['min' => -90, 'max' => 90, 'step' => 1],
+            'attributes' => self::rangeAttributes("threedviewer_light_{$n}_elevation", 1),
         ]);
+    }
+
+    /**
+     * The min, max and step attributes of a lighting number's field, its range from Lighting.
+     *
+     * @param int|float $step
+     * @return array<string,int|float>
+     */
+    private static function rangeAttributes(string $key, $step): array
+    {
+        [$min, $max] = Lighting::range($key);
+        return ['min' => $min, 'max' => $max, 'step' => $step];
     }
 
     /**

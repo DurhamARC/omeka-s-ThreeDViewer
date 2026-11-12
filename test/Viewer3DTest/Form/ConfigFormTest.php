@@ -4,6 +4,7 @@ namespace Viewer3DTest\Form;
 
 use PHPUnit\Framework\TestCase;
 use ThreeDViewer\Form\ConfigForm;
+use ThreeDViewer\Settings\Lighting;
 use Laminas\Form\Element;
 use Laminas\Form\Form;
 
@@ -52,6 +53,25 @@ class ConfigFormTest extends TestCase
             ['default', 'neutral', 'legacy', 'custom'],
             array_keys($this->form->get('threedviewer_model_viewer_environment')->getValueOptions())
         );
+    }
+
+    public function testEachLightingNumberFieldTakesItsRangeFromLighting(): void
+    {
+        $this->form->init();
+        $checked = 0;
+        foreach (Lighting::keys() as $key) {
+            $element = $this->form->get($key);
+            if (!$element instanceof Element\Number) {
+                continue;
+            }
+            $this->assertSame(
+                Lighting::range($key),
+                [$element->getAttribute('min'), $element->getAttribute('max')],
+                $key
+            );
+            $checked++;
+        }
+        $this->assertSame(4 + 3 * Lighting::MAX_LIGHTS, $checked);
     }
 
     public function testControlsAreACheckboxBeforeTheLightRig(): void

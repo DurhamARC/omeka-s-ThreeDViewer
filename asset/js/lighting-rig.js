@@ -54,6 +54,7 @@
         if (!rig || typeof rig !== 'object') {
             return null;
         }
+        // The ranges of Lighting::RANGES (src/Settings/Lighting.php): keep the two the same
         const ambient = rig.ambient || {};
         const lights = Array.isArray(rig.lights) ? rig.lights.slice(0, MAX_LIGHTS) : [];
         return {

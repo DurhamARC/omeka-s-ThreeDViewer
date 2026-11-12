@@ -213,7 +213,11 @@ abstract class Abstract3DRenderer implements RendererInterface
             'elevation' => 'Height', // @translate
         ];
         // Height as seen from the camera now, which can be below level once the camera is above the lights
-        $ranges = ['strength' => [0, 3, 0.05], 'azimuth' => [-180, 180, 1], 'elevation' => [-90, 90, 1]];
+        $ranges = [
+            'strength' => array_merge(Lighting::range('strength'), [0.05]),
+            'azimuth' => array_merge(Lighting::range('azimuth'), [1]),
+            'elevation' => array_merge(Lighting::range('elevation'), [1]),
+        ];
         $lighting = $view->escapeHtml($view->translate('Lighting'));
         $reset = $view->escapeHtmlAttr($view->translate('Reset'));
         $close = $view->escapeHtmlAttr($view->translate('Close'));

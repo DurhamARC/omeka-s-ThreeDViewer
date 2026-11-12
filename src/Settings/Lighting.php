@@ -25,7 +25,11 @@ class Lighting
         'threedviewer_babylon_environment' => ['none', 'default', 'studio'],
     ];
 
-    /** Ranges of the numbers, keyed by the end of the setting key */
+    /**
+     * Ranges of the numbers, keyed by the end of the setting key: the one place they are written
+     * out in PHP, read through range() by the configuration form and the viewer's lighting controls.
+     * lighting-rig.js repeats them in parse(); keep the two the same.
+     */
     private const RANGES = [
         'brightness' => [0, 3],
         'strength' => [0, 3],
@@ -200,6 +204,34 @@ class Lighting
     }
 
     /**
+     * The range of a lighting number, from a setting key or the end of one (such as 'elevation').
+     *
+     * @return array{0:int|float,1:int|float} [min, max]
+     * @throws \InvalidArgumentException For a name that is not a lighting number
+     */
+    public static function range(string $name): array
+    {
+        $suffix = self::rangeSuffix($name);
+        if ($suffix === null) {
+            throw new \InvalidArgumentException(sprintf('No lighting range for "%s".', $name));
+        }
+        return self::RANGES[$suffix];
+    }
+
+    /**
+     * The key of RANGES that a setting key, or the end of one, ends with, or null if none does.
+     */
+    private static function rangeSuffix(string $name): ?string
+    {
+        foreach (array_keys(self::RANGES) as $suffix) {
+            if (substr($name, -strlen($suffix)) === $suffix) {
+                return $suffix;
+            }
+        }
+        return null;
+    }
+
+    /**
      * @param mixed $value
      * @return mixed
      */
@@ -225,17 +257,17 @@ class Lighting
             return preg_match(self::URL_PATTERN, $value) ? $value : '';
         }
 
-        foreach (self::RANGES as $suffix => [$min, $max]) {
-            if (substr($key, -strlen($suffix)) === $suffix) {
-                if (!is_numeric($value)) {
-                    $value = $default;
-                }
-                $number = max($min, min($max, (float) $value));
-                if (in_array($suffix, self::WHOLE, true)) {
-                    return (int) round($number);
-                }
-                return round(round($number / self::STEP) * self::STEP, 2);
+        $suffix = self::rangeSuffix($key);
+        if ($suffix !== null) {
+            [$min, $max] = self::RANGES[$suffix];
+            if (!is_numeric($value)) {
+                $value = $default;
             }
+            $number = max($min, min($max, (float) $value));
+            if (in_array($suffix, self::WHOLE, true)) {
+                return (int) round($number);
+            }
+            return round(round($number / self::STEP) * self::STEP, 2);
         }
 
         return $default;
