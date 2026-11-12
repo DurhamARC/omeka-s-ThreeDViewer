@@ -31,7 +31,7 @@ class Lighting
         'strength' => [0, 3],
         'count' => [1, self::MAX_LIGHTS],
         'azimuth' => [-180, 180],
-        'elevation' => [0, 90],
+        'elevation' => [-90, 90],
         'shadow_intensity' => [0, 1],
         'shadow_softness' => [0, 1],
     ];

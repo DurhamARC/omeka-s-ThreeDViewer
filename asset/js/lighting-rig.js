@@ -4,8 +4,8 @@
  * lights in model-viewer, which has none.
  *
  * Directions are given relative to the default view: azimuth turns about the world's up axis from
- * the camera's side of the model (positive to the viewer's right), and elevation rises from level
- * (0) to overhead (90), in degrees.
+ * the camera's side of the model (positive to the viewer's right), and elevation rises from underneath
+ * (-90) to overhead (90), in degrees.
  */
 (function (root) {
     'use strict';
@@ -67,7 +67,7 @@
                     color: colour(light.color, '#ffffff'),
                     strength: number(light.strength, 0, 3, 0),
                     azimuth: number(light.azimuth, -180, 180, 0),
-                    elevation: number(light.elevation, 0, 90, 45)
+                    elevation: number(light.elevation, -90, 90, 45)
                 };
             })
         };

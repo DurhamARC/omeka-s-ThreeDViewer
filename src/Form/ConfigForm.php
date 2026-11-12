@@ -420,9 +420,9 @@ class ConfigForm extends Form
             'type' => Element\Number::class,
             'options' => [
                 'label' => $elevation,
-                'info' => '0 is level with the model, 90 is overhead.', // @translate
+                'info' => '0 is level with the model, 90 is overhead, -90 is from below.', // @translate
             ],
-            'attributes' => ['min' => 0, 'max' => 90, 'step' => 1],
+            'attributes' => ['min' => -90, 'max' => 90, 'step' => 1],
         ]);
     }
 
