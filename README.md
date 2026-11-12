@@ -63,7 +63,8 @@ See general end user documentation for [Installing a module](http://omeka.org/s/
    - **Lights**: *Viewer default* keeps each viewer's own lighting. *Custom* builds the same light rig in every viewer:
      an ambient light and 1–4 lights, each with a colour, a strength, a direction (degrees round the model from the
      viewer's side, positive to the right) and a height (degrees from level, -90 underneath to 90 overhead). model-viewer has no lamps, so there the
-     rig is painted into the environment image that lights the model.
+     rig is painted into the environment image that lights the model. model-viewer's shadow is drawn under the
+     model wherever the lights are: with every light below the model, set its strength to 0.
    - **model-viewer environment** (with *Viewer default*): model-viewer's own, `neutral`, `legacy`, or an image URL;
      and the strength and softness of the shadow under the model.
    Settings that don't apply are hidden: the light rig until *Lights* is *Custom*, each light beyond *Number of

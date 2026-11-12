@@ -411,7 +411,7 @@ msgid "model-viewer shadow strength"
 msgstr ""
 
 #: src/Form/ConfigForm.php:370
-msgid "The shadow under GLB/glTF models. 0 shows none."
+msgid "Drawn under GLB/glTF models even when lit from below. 0 shows none."
 msgstr ""
 
 #: src/Form/ConfigForm.php:379
