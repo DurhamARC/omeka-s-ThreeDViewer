@@ -430,8 +430,8 @@ msgstr "Intensidad de la sombra de model-viewer"
 #: src/Form/ConfigForm.php:370
 msgid "Drawn under GLB/glTF models even when lit from below. 0 shows none."
 msgstr ""
-"Se dibuja bajo los modelos GLB/glTF aunque la luz venga de abajo. Con 0 no se "
-"muestra."
+"Se dibuja bajo los modelos GLB/glTF aunque la luz venga de abajo. Con 0 no "
+"se muestra."
 
 #: src/Form/ConfigForm.php:379
 msgid "model-viewer shadow softness"
