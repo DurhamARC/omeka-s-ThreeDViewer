@@ -27,8 +27,9 @@ class Lighting
 
     /**
      * Ranges of the numbers, keyed by the end of the setting key: the one place they are written
-     * out in PHP, read through range() by the configuration form and the viewer's lighting controls.
-     * lighting-rig.js repeats them in parse(); keep the two the same.
+     * out in PHP, read through range() and step() by the configuration form and the viewer's
+     * lighting controls. lighting-rig.js repeats them, and MAX_LIGHTS, in parse() and brightness();
+     * test/lighting-rig.test.cjs reads them from this file and fails if the two differ.
      */
     private const RANGES = [
         'brightness' => [0, 3],
@@ -204,27 +205,53 @@ class Lighting
     }
 
     /**
-     * The range of a lighting number, from a setting key or the end of one (such as 'elevation').
+     * The range of a lighting number, from its setting key or the name of its range (such as
+     * 'elevation').
      *
      * @return array{0:int|float,1:int|float} [min, max]
      * @throws \InvalidArgumentException For a name that is not a lighting number
      */
     public static function range(string $name): array
     {
-        $suffix = self::rangeSuffix($name);
-        if ($suffix === null) {
-            throw new \InvalidArgumentException(sprintf('No lighting range for "%s".', $name));
-        }
-        return self::RANGES[$suffix];
+        return self::RANGES[self::rangeName($name)];
     }
 
     /**
-     * The key of RANGES that a setting key, or the end of one, ends with, or null if none does.
+     * The step of a lighting number, from its setting key or the name of its range: 1 for the light
+     * count and the angles, which are kept whole, and 0.05 for the rest.
+     *
+     * @return int|float
+     * @throws \InvalidArgumentException For a name that is not a lighting number
      */
-    private static function rangeSuffix(string $name): ?string
+    public static function step(string $name)
     {
-        foreach (array_keys(self::RANGES) as $suffix) {
-            if (substr($name, -strlen($suffix)) === $suffix) {
+        return in_array(self::rangeName($name), self::WHOLE, true) ? 1 : self::STEP;
+    }
+
+    /**
+     * The name of the range of a lighting setting key, or the name itself if it names a range.
+     *
+     * @throws \InvalidArgumentException For a name that is neither
+     */
+    private static function rangeName(string $name): string
+    {
+        if (isset(self::RANGES[$name])) {
+            return $name;
+        }
+        $suffix = in_array($name, self::keys(), true) ? self::rangeSuffix($name) : null;
+        if ($suffix === null) {
+            throw new \InvalidArgumentException(sprintf('No lighting range for "%s".', $name));
+        }
+        return $suffix;
+    }
+
+    /**
+     * The key of RANGES that a setting key ends with, or null if none does.
+     */
+    private static function rangeSuffix(string $key): ?string
+    {
+        foreach (self::RANGES as $suffix => $range) {
+            if (substr($key, -strlen($suffix)) === $suffix) {
                 return $suffix;
             }
         }

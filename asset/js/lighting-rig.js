@@ -10,6 +10,7 @@
 (function (root) {
     'use strict';
 
+    // Lighting::MAX_LIGHTS (src/Settings/Lighting.php): test/lighting-rig.test.cjs checks they agree
     const MAX_LIGHTS = 4;
 
     /**
@@ -54,7 +55,8 @@
         if (!rig || typeof rig !== 'object') {
             return null;
         }
-        // The ranges of Lighting::RANGES (src/Settings/Lighting.php): keep the two the same
+        // The ranges of Lighting::RANGES (src/Settings/Lighting.php): test/lighting-rig.test.cjs checks
+        // they agree
         const ambient = rig.ambient || {};
         const lights = Array.isArray(rig.lights) ? rig.lights.slice(0, MAX_LIGHTS) : [];
         return {
@@ -80,6 +82,8 @@
      */
     function brightness(element) {
         const value = element && element.dataset ? element.dataset.lightBrightness : undefined;
+        // The range of Lighting::RANGES (src/Settings/Lighting.php): test/lighting-rig.test.cjs checks
+        // they agree
         return number(value, 0, 3, 1);
     }
 

@@ -53,6 +53,48 @@ test('brightness: 1 by default, clamped otherwise', () => {
     assert.equal(lighting.brightness(element({ lightBrightness: 'bright' })), 1);
 });
 
+// The ranges as src/Settings/Lighting.php writes them, so that a change there fails here until
+// lighting-rig.js follows it
+function phpRanges() {
+    const php = readFileSync(join(__dirname, '../src/Settings/Lighting.php'), 'utf8');
+    const maxLights = Number(/const MAX_LIGHTS = (\d+);/.exec(php)[1]);
+    const block = /const RANGES = \[([\s\S]*?)\];/.exec(php)[1];
+    const number = (text) => (text.trim() === 'self::MAX_LIGHTS' ? maxLights : Number(text));
+    const ranges = {};
+    for (const [, name, min, max] of block.matchAll(/'(\w+)' => \[([^,\]]+), ([^\]]+)\]/g)) {
+        ranges[name] = [number(min), number(max)];
+    }
+    return { maxLights, ranges };
+}
+
+test('ranges: parse() and brightness() clamp to Lighting::RANGES and MAX_LIGHTS in PHP', () => {
+    const { maxLights, ranges } = phpRanges();
+    for (const name of ['brightness', 'strength', 'count', 'azimuth', 'elevation']) {
+        assert.ok(Array.isArray(ranges[name]) && ranges[name].every(Number.isFinite), `${name} read from PHP`);
+    }
+    assert.equal(ranges.count[1], maxLights);
+
+    const [bMin, bMax] = ranges.brightness;
+    assert.equal(lighting.brightness(element({ lightBrightness: String(bMin - 100) })), bMin, 'brightness min');
+    assert.equal(lighting.brightness(element({ lightBrightness: String(bMax + 100) })), bMax, 'brightness max');
+
+    const rigAt = (pick) => lighting.parse(element({ lights: JSON.stringify({
+        ambient: { color: '#ffffff', strength: pick('strength') },
+        lights: Array(maxLights + 2).fill({
+            color: '#ffffff', strength: pick('strength'), azimuth: pick('azimuth'), elevation: pick('elevation')
+        })
+    }) }));
+    const low = rigAt((name) => ranges[name][0] - 100);
+    const high = rigAt((name) => ranges[name][1] + 100);
+    assert.equal(low.ambient.strength, ranges.strength[0], 'ambient strength min');
+    assert.equal(high.ambient.strength, ranges.strength[1], 'ambient strength max');
+    assert.equal(high.lights.length, ranges.count[1], 'at most MAX_LIGHTS lights');
+    for (const name of ['strength', 'azimuth', 'elevation']) {
+        assert.equal(low.lights[0][name], ranges[name][0], `${name} min`);
+        assert.equal(high.lights[0][name], ranges[name][1], `${name} max`);
+    }
+});
+
 test('direction: relative to the side the camera looks from', () => {
     const front = { x: 0, z: 1 };
     const d = (az, el, back, lh) => lighting.direction(az, el, back, lh);

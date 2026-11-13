@@ -55,7 +55,7 @@ class ConfigFormTest extends TestCase
         );
     }
 
-    public function testEachLightingNumberFieldTakesItsRangeFromLighting(): void
+    public function testEachLightingNumberFieldTakesItsRangeAndStepFromLighting(): void
     {
         $this->form->init();
         $checked = 0;
@@ -65,8 +65,8 @@ class ConfigFormTest extends TestCase
                 continue;
             }
             $this->assertSame(
-                Lighting::range($key),
-                [$element->getAttribute('min'), $element->getAttribute('max')],
+                array_merge(Lighting::range($key), [Lighting::step($key)]),
+                [$element->getAttribute('min'), $element->getAttribute('max'), $element->getAttribute('step')],
                 $key
             );
             $checked++;

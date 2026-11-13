@@ -211,7 +211,7 @@ class LightingTest extends TestCase
         $this->assertSame(0.4, $rig['lights'][1]['strength'], 'A blank site field takes the default, not the module');
     }
 
-    public function testRangeGivesEachNumbersMinAndMaxFromItsKeyOrTheEndOfIt(): void
+    public function testRangeGivesEachNumbersMinAndMaxFromItsKeyOrTheNameOfItsRange(): void
     {
         $this->assertSame([0, 3], Lighting::range('threedviewer_light_brightness'));
         $this->assertSame([0, 3], Lighting::range('threedviewer_light_ambient_strength'));
@@ -220,20 +220,53 @@ class LightingTest extends TestCase
         $this->assertSame([-90, 90], Lighting::range('threedviewer_light_4_elevation'));
         $this->assertSame([0, 1], Lighting::range('threedviewer_model_viewer_shadow_intensity'));
         $this->assertSame([0, 1], Lighting::range('threedviewer_model_viewer_shadow_softness'));
-        $this->assertSame([0, 3], Lighting::range('strength'), 'The end of a key');
-        $this->assertSame([-90, 90], Lighting::range('elevation'), 'The end of a key');
+        $this->assertSame([0, 3], Lighting::range('strength'), 'The name of a range');
+        $this->assertSame([-90, 90], Lighting::range('elevation'), 'The name of a range');
+    }
+
+    public function testStepIsOneForWholeNumbersAndAFifthOfATenthOtherwise(): void
+    {
+        $this->assertSame(1, Lighting::step('threedviewer_light_count'));
+        $this->assertSame(1, Lighting::step('threedviewer_light_3_azimuth'));
+        $this->assertSame(1, Lighting::step('elevation'));
+        $this->assertSame(0.05, Lighting::step('threedviewer_light_brightness'));
+        $this->assertSame(0.05, Lighting::step('threedviewer_light_1_strength'));
+        $this->assertSame(0.05, Lighting::step('threedviewer_model_viewer_shadow_softness'));
+        $this->assertSame(0.05, Lighting::step('strength'));
     }
 
     public function testRangeIsTheOneNormaliseClampsTo(): void
     {
-        foreach (Lighting::keys() as $key) {
-            try {
-                [$min, $max] = Lighting::range($key);
-            } catch (\InvalidArgumentException $e) {
-                continue;
+        $numbers = [
+            'threedviewer_light_brightness',
+            'threedviewer_light_ambient_strength',
+            'threedviewer_light_count',
+            'threedviewer_model_viewer_shadow_intensity',
+            'threedviewer_model_viewer_shadow_softness',
+        ];
+        for ($n = 1; $n <= Lighting::MAX_LIGHTS; $n++) {
+            foreach (['strength', 'azimuth', 'elevation'] as $property) {
+                $numbers[] = "threedviewer_light_{$n}_{$property}";
             }
-            $this->assertEquals($min, Lighting::normalise([$key => $min - 100])[$key], $key);
-            $this->assertEquals($max, Lighting::normalise([$key => $max + 100])[$key], $key);
+        }
+        $ranged = array_values(array_filter(Lighting::keys(), function (string $key): bool {
+            try {
+                Lighting::range($key);
+                return true;
+            } catch (\InvalidArgumentException $e) {
+                return false;
+            }
+        }));
+        sort($numbers);
+        sort($ranged);
+        $this->assertSame($numbers, $ranged, 'Every lighting number has a range, and nothing else');
+
+        foreach ($numbers as $key) {
+            [$min, $max] = Lighting::range($key);
+            // Whole numbers come back as integers, the others as floats
+            $type = is_int(Lighting::step($key)) ? 'intval' : 'floatval';
+            $this->assertSame($type($min), Lighting::normalise([$key => $min - 100])[$key], $key);
+            $this->assertSame($type($max), Lighting::normalise([$key => $max + 100])[$key], $key);
         }
     }
 
@@ -246,6 +279,15 @@ class LightingTest extends TestCase
         Lighting::range($name);
     }
 
+    /**
+     * @dataProvider notANumber
+     */
+    public function testStepRejectsANameThatIsNotALightingNumber(string $name): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        Lighting::step($name);
+    }
+
     public function notANumber(): array
     {
         return [
@@ -253,6 +295,10 @@ class LightingTest extends TestCase
             'a select' => ['threedviewer_lighting_mode'],
             'unknown' => ['height'],
             'empty' => [''],
+            'ends like a range' => ['discount'],
+            'ends like a range, not a lighting key' => ['threedviewer_babylon_shadow_intensity'],
+            'a light beyond the last' => ['threedviewer_light_' . (Lighting::MAX_LIGHTS + 1) . '_elevation'],
+            'part of a key' => ['light_1_elevation'],
         ];
     }
 

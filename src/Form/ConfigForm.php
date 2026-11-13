@@ -275,7 +275,7 @@ class ConfigForm extends Form
                 'label' => 'Brightness', // @translate
                 'info' => 'Multiplies the strength of every light. 1 leaves the lighting as it is.', // @translate
             ],
-            'attributes' => self::rangeAttributes('threedviewer_light_brightness', 0.05),
+            'attributes' => self::rangeAttributes('threedviewer_light_brightness'),
         ]);
 
         $this->add([
@@ -318,19 +318,17 @@ class ConfigForm extends Form
             'options' => [
                 'label' => 'Ambient light strength', // @translate
             ],
-            'attributes' => self::rangeAttributes('threedviewer_light_ambient_strength', 0.05),
+            'attributes' => self::rangeAttributes('threedviewer_light_ambient_strength'),
         ]);
 
+        $counts = range(...Lighting::range('threedviewer_light_count'));
         $this->add([
             'name' => 'threedviewer_light_count',
             'type' => Element\Select::class,
             'options' => [
                 'label' => 'Number of lights', // @translate
                 'info' => 'Lights above this number keep their settings but are not used.', // @translate
-                'value_options' => array_combine(
-                    range(1, Lighting::MAX_LIGHTS),
-                    array_map('strval', range(1, Lighting::MAX_LIGHTS))
-                ),
+                'value_options' => array_combine($counts, array_map('strval', $counts)),
             ],
         ]);
 
@@ -369,7 +367,7 @@ class ConfigForm extends Form
                 'label' => 'model-viewer shadow strength', // @translate
                 'info' => 'The shadow under GLB/glTF models. 0 shows none.', // @translate
             ],
-            'attributes' => self::rangeAttributes('threedviewer_model_viewer_shadow_intensity', 0.05),
+            'attributes' => self::rangeAttributes('threedviewer_model_viewer_shadow_intensity'),
         ]);
 
         $this->add([
@@ -378,7 +376,7 @@ class ConfigForm extends Form
             'options' => [
                 'label' => 'model-viewer shadow softness', // @translate
             ],
-            'attributes' => self::rangeAttributes('threedviewer_model_viewer_shadow_softness', 0.05),
+            'attributes' => self::rangeAttributes('threedviewer_model_viewer_shadow_softness'),
         ]);
     }
 
@@ -402,7 +400,7 @@ class ConfigForm extends Form
             'name' => "threedviewer_light_{$n}_strength",
             'type' => Element\Number::class,
             'options' => ['label' => $strength],
-            'attributes' => self::rangeAttributes("threedviewer_light_{$n}_strength", 0.05),
+            'attributes' => self::rangeAttributes("threedviewer_light_{$n}_strength"),
         ]);
 
         $this->add([
@@ -412,7 +410,7 @@ class ConfigForm extends Form
                 'label' => $azimuth,
                 'info' => '0 is from the viewer’s side of the model, 90 from the right, 180 from behind.', // @translate
             ],
-            'attributes' => self::rangeAttributes("threedviewer_light_{$n}_azimuth", 1),
+            'attributes' => self::rangeAttributes("threedviewer_light_{$n}_azimuth"),
         ]);
 
         $this->add([
@@ -422,20 +420,19 @@ class ConfigForm extends Form
                 'label' => $elevation,
                 'info' => '0 is level with the model, 90 is overhead, -90 is from below.', // @translate
             ],
-            'attributes' => self::rangeAttributes("threedviewer_light_{$n}_elevation", 1),
+            'attributes' => self::rangeAttributes("threedviewer_light_{$n}_elevation"),
         ]);
     }
 
     /**
-     * The min, max and step attributes of a lighting number's field, its range from Lighting.
+     * The min, max and step attributes of a lighting number's field, from Lighting.
      *
-     * @param int|float $step
      * @return array<string,int|float>
      */
-    private static function rangeAttributes(string $key, $step): array
+    private static function rangeAttributes(string $key): array
     {
         [$min, $max] = Lighting::range($key);
-        return ['min' => $min, 'max' => $max, 'step' => $step];
+        return ['min' => $min, 'max' => $max, 'step' => Lighting::step($key)];
     }
 
     /**

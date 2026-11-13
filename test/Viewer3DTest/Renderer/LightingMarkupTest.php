@@ -7,6 +7,7 @@ namespace Viewer3DTest\Renderer;
 use PHPUnit\Framework\TestCase;
 use Viewer3DTest\Doubles\DummyPhpRenderer;
 use ThreeDViewer\Media\FileRenderer\Viewer3DRenderer;
+use ThreeDViewer\Settings\Lighting;
 use Omeka\Api\Representation\MediaRepresentation;
 
 class LightingMarkupTest extends TestCase
@@ -225,6 +226,31 @@ class LightingMarkupTest extends TestCase
         $this->assertContains('/modules/ThreeDViewer/js/lighting-controls.js', $files);
         $this->assertContains('/modules/ThreeDViewer/js/lighting-rig.js', $files);
         $this->assertContains('/modules/ThreeDViewer/css/lighting-controls.css', $view->headLink()->files);
+    }
+
+    /**
+     * @dataProvider viewers
+     */
+    public function testControlsSlidersTakeTheirRangesFromLighting(string $file, string $library): void
+    {
+        [$html] = $this->render($file, [
+            'threedviewer_default_library' => $library,
+            'threedviewer_lighting_controls' => true,
+        ]);
+        foreach (['strength', 'azimuth', 'elevation'] as $property) {
+            [$min, $max] = Lighting::range($property);
+            $this->assertSame(
+                1,
+                preg_match('/<input type="range" min="([^"]*)" max="([^"]*)" step="([^"]*)" data-property="'
+                    . $property . '"/', $html, $slider),
+                $property
+            );
+            $this->assertSame(
+                [(string) $min, (string) $max, (string) Lighting::step($property)],
+                array_slice($slider, 1),
+                $property
+            );
+        }
     }
 
     public function viewersWithIds(): array
