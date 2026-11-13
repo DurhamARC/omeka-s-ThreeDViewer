@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 10:40+0000\n"
+"POT-Creation-Date: 2026-11-13 10:44+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -342,96 +342,99 @@ msgstr ""
 msgid "Lights"
 msgstr ""
 
-#: src/Form/ConfigForm.php:298
-msgid "Custom builds the lights below in every viewer, in place of their own."
+#: src/Form/ConfigForm.php:300
+msgid ""
+"Custom builds the lights below in every viewer, in place of their own. If "
+"every light is under the model, set the model-viewer shadow strength to 0."
 msgstr ""
 
-#: src/Form/ConfigForm.php:300
+#: src/Form/ConfigForm.php:302
 msgid "Viewer default"
 msgstr ""
 
-#: src/Form/ConfigForm.php:301
+#: src/Form/ConfigForm.php:303
 msgid "Custom"
 msgstr ""
 
-#: src/Form/ConfigForm.php:310
+#: src/Form/ConfigForm.php:312
 msgid "Ambient light colour"
 msgstr ""
 
-#: src/Form/ConfigForm.php:311
+#: src/Form/ConfigForm.php:313
 msgid "Light from every side. Used only when Lights is Custom."
 msgstr ""
 
-#: src/Form/ConfigForm.php:319
+#: src/Form/ConfigForm.php:321
 msgid "Ambient light strength"
 msgstr ""
 
-#: src/Form/ConfigForm.php:328
+#: src/Form/ConfigForm.php:330
 msgid "Number of lights"
 msgstr ""
 
-#: src/Form/ConfigForm.php:329
+#: src/Form/ConfigForm.php:331
 msgid "Lights above this number keep their settings but are not used."
 msgstr ""
 
-#: src/Form/ConfigForm.php:345
+#: src/Form/ConfigForm.php:347
 msgid "model-viewer environment"
 msgstr ""
 
-#: src/Form/ConfigForm.php:346
+#: src/Form/ConfigForm.php:348
 msgid "The image that lights GLB/glTF models when Lights is Viewer default."
 msgstr ""
 
-#: src/Form/ConfigForm.php:348
+#: src/Form/ConfigForm.php:350
 msgid "model-viewer default"
 msgstr ""
 
-#: src/Form/ConfigForm.php:349
+#: src/Form/ConfigForm.php:351
 msgid "Neutral"
 msgstr ""
 
-#: src/Form/ConfigForm.php:350
+#: src/Form/ConfigForm.php:352
 msgid "Legacy"
 msgstr ""
 
-#: src/Form/ConfigForm.php:351
+#: src/Form/ConfigForm.php:353
 msgid "Custom image"
 msgstr ""
 
-#: src/Form/ConfigForm.php:360
+#: src/Form/ConfigForm.php:362
 msgid "Custom environment image"
 msgstr ""
 
-#: src/Form/ConfigForm.php:361
+#: src/Form/ConfigForm.php:363
 msgid "URL of an HDR, JPEG or PNG image, from http(s):// or the site root (/)."
 msgstr ""
 
-#: src/Form/ConfigForm.php:369
+#: src/Form/ConfigForm.php:371
 msgid "model-viewer shadow strength"
 msgstr ""
 
-#: src/Form/ConfigForm.php:370
-msgid "The shadow under GLB/glTF models, even when lit from below. 0 shows none."
+#: src/Form/ConfigForm.php:372
+msgid ""
+"The shadow under GLB/glTF models, even when lit from below. 0 shows none."
 msgstr ""
 
-#: src/Form/ConfigForm.php:379
+#: src/Form/ConfigForm.php:381
 msgid "model-viewer shadow softness"
 msgstr ""
 
-#: src/Form/ConfigForm.php:392
+#: src/Form/ConfigForm.php:394
 msgid "Direction (degrees round)"
 msgstr ""
 
-#: src/Form/ConfigForm.php:393
+#: src/Form/ConfigForm.php:395
 msgid "Height (degrees)"
 msgstr ""
 
-#: src/Form/ConfigForm.php:413
+#: src/Form/ConfigForm.php:415
 msgid ""
 "0 is from the viewer’s side of the model, 90 from the right, 180 from behind."
 msgstr ""
 
-#: src/Form/ConfigForm.php:423
+#: src/Form/ConfigForm.php:425
 msgid "0 is level with the model, 90 is overhead, -90 is from below."
 msgstr ""
 
