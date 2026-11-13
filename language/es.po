@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ThreeDViewer\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 11:02+0000\n"
+"POT-Creation-Date: 2026-11-12 10:49+0100\n"
 "PO-Revision-Date: 2023-11-15 12:00+0000\n"
 "Last-Translator: Área de Tecnología Educativa <ate@gobiernodecanarias.org>\n"
 "Language-Team: Spanish\n"
@@ -352,112 +352,105 @@ msgstr ""
 msgid "Lights"
 msgstr "Luces"
 
-#: src/Form/ConfigForm.php:300
-msgid ""
-"Custom builds the lights that follow in every viewer, in place of their own. "
-"With model-viewer, if every light’s height is below 0, set the model-viewer "
-"shadow strength to 0."
+#: src/Form/ConfigForm.php:298
+msgid "Custom builds the lights below in every viewer, in place of their own."
 msgstr ""
 "Personalizadas crea las luces siguientes en todos los visores, en lugar de "
-"las suyas propias. Con model-viewer, si la altura de todas las luces es "
-"menor que 0, ponga a 0 la intensidad de la sombra de model-viewer."
+"las suyas propias."
 
-#: src/Form/ConfigForm.php:302
+#: src/Form/ConfigForm.php:300
 msgid "Viewer default"
 msgstr "Predeterminadas del visor"
 
-#: src/Form/ConfigForm.php:303
+#: src/Form/ConfigForm.php:301
 msgid "Custom"
 msgstr "Personalizadas"
 
-#: src/Form/ConfigForm.php:312
+#: src/Form/ConfigForm.php:310
 msgid "Ambient light colour"
 msgstr "Color de la luz ambiental"
 
-#: src/Form/ConfigForm.php:313
+#: src/Form/ConfigForm.php:311
 msgid "Light from every side. Used only when Lights is Custom."
 msgstr "Luz desde todos los lados. Solo se usa cuando Luces es Personalizadas."
 
-#: src/Form/ConfigForm.php:321
+#: src/Form/ConfigForm.php:319
 msgid "Ambient light strength"
 msgstr "Intensidad de la luz ambiental"
 
-#: src/Form/ConfigForm.php:330
+#: src/Form/ConfigForm.php:328
 msgid "Number of lights"
 msgstr "Número de luces"
 
-#: src/Form/ConfigForm.php:331
+#: src/Form/ConfigForm.php:329
 msgid "Lights above this number keep their settings but are not used."
 msgstr ""
 "Las luces por encima de este número conservan sus ajustes, pero no se usan."
 
-#: src/Form/ConfigForm.php:347
+#: src/Form/ConfigForm.php:345
 msgid "model-viewer environment"
 msgstr "Entorno de model-viewer"
 
-#: src/Form/ConfigForm.php:348
+#: src/Form/ConfigForm.php:346
 msgid "The image that lights GLB/glTF models when Lights is Viewer default."
 msgstr ""
 "La imagen que ilumina los modelos GLB/glTF cuando Luces es Predeterminadas "
 "del visor."
 
-#: src/Form/ConfigForm.php:350
+#: src/Form/ConfigForm.php:348
 msgid "model-viewer default"
 msgstr "Predeterminado de model-viewer"
 
-#: src/Form/ConfigForm.php:351
+#: src/Form/ConfigForm.php:349
 msgid "Neutral"
 msgstr "Neutro"
 
-#: src/Form/ConfigForm.php:352
+#: src/Form/ConfigForm.php:350
 msgid "Legacy"
 msgstr "Clásico"
 
-#: src/Form/ConfigForm.php:353
+#: src/Form/ConfigForm.php:351
 msgid "Custom image"
 msgstr "Imagen personalizada"
 
-#: src/Form/ConfigForm.php:362
+#: src/Form/ConfigForm.php:360
 msgid "Custom environment image"
 msgstr "Imagen de entorno personalizada"
 
-#: src/Form/ConfigForm.php:363
+#: src/Form/ConfigForm.php:361
 msgid "URL of an HDR, JPEG or PNG image, from http(s):// or the site root (/)."
 msgstr ""
 "URL de una imagen HDR, JPEG o PNG, que empiece por http(s):// o por la raíz "
 "del sitio (/)."
 
-#: src/Form/ConfigForm.php:371
+#: src/Form/ConfigForm.php:369
 msgid "model-viewer shadow strength"
 msgstr "Intensidad de la sombra de model-viewer"
 
-#: src/Form/ConfigForm.php:372
-msgid ""
-"The shadow under GLB/glTF models, even when lit from below. 0 shows none."
-msgstr ""
-"La sombra bajo los modelos GLB/glTF, aunque la luz venga de abajo. Con 0 no "
-"se muestra."
+#: src/Form/ConfigForm.php:370
+msgid "The shadow under GLB/glTF models. 0 shows none."
+msgstr "La sombra bajo los modelos GLB/glTF. Con 0 no se muestra."
 
-#: src/Form/ConfigForm.php:381
+#: src/Form/ConfigForm.php:379
 msgid "model-viewer shadow softness"
 msgstr "Suavidad de la sombra de model-viewer"
 
-#: src/Form/ConfigForm.php:394
+#: src/Form/ConfigForm.php:392
 msgid "Direction (degrees round)"
 msgstr "Dirección (grados alrededor)"
 
-#: src/Form/ConfigForm.php:395
+#: src/Form/ConfigForm.php:393
 msgid "Height (degrees)"
 msgstr "Altura (grados)"
 
-#: src/Form/ConfigForm.php:415
+#: src/Form/ConfigForm.php:413
 msgid ""
 "0 is from the viewer’s side of the model, 90 from the right, 180 from behind."
 msgstr ""
 "0 es desde el lado del modelo que ve el espectador, 90 desde la derecha, 180 "
 "desde detrás."
 
-#: src/Form/ConfigForm.php:425
+#: src/Form/ConfigForm.php:423
 msgid "0 is level with the model, 90 is overhead, -90 is from below."
 msgstr "0 es a la altura del modelo, 90 es desde arriba, -90 es desde abajo."
 

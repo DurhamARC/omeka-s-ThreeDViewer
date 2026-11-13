@@ -696,3 +696,30 @@ test('model-viewer: with the panel open, the directions shown follow the model r
     assert.equal(turned.detail.lights[0].azimuth, 40, 'the light has turned 40 degrees to the right with the model');
     assert.equal(turned.detail.lights[0].elevation, 30);
 });
+
+test('litFromAbove: a light with some strength pointing upwards, not level and not below', () => {
+    const front = { x: 0, z: 1 };
+    const light = (elevation, strength = 1) => ({ strength, direction: lighting.direction(30, elevation, front, false) });
+    assert.equal(lighting.litFromAbove([light(45)]), true);
+    assert.equal(lighting.litFromAbove([light(-30), light(-60)]), false, 'every light below');
+    assert.equal(lighting.litFromAbove([light(0), light(-10)]), false, 'level does not count');
+    assert.equal(lighting.litFromAbove([light(1)]), true, 'just above');
+    assert.equal(lighting.litFromAbove([light(60, 0), light(-20)]), false, 'the light above has no strength');
+    assert.equal(lighting.litFromAbove([light(-30), light(10)]), true, 'one of two above');
+    assert.equal(lighting.litFromAbove([{ strength: 1 }, light(-30)]), false, 'the ambient light has no direction');
+    assert.equal(lighting.litFromAbove([]), false);
+});
+
+test('litFromAbove: once turned, a light above can end up below and one below above', () => {
+    // A light 20 degrees up, in front, seen from a camera tipped 50 degrees to look down: turned the same
+    // way, it now points below level. The other way round, a light 30 degrees below rises above.
+    const front = { x: 0, z: 1 };
+    const tip = (v, degrees) => {
+        const a = degrees * Math.PI / 180;
+        return { x: v.x, y: v.y * Math.cos(a) - v.z * Math.sin(a), z: v.y * Math.sin(a) + v.z * Math.cos(a) };
+    };
+    const up = lighting.direction(0, 20, front, false);
+    const down = lighting.direction(0, -30, front, false);
+    assert.equal(lighting.litFromAbove([{ strength: 1, direction: tip(up, 50) }]), false);
+    assert.equal(lighting.litFromAbove([{ strength: 1, direction: tip(down, -50) }]), true);
+});

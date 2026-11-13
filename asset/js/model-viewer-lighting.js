@@ -27,6 +27,30 @@
   const ENVIRONMENT_POLL = 250;
 
   /**
+   * The shadow strength configured for a viewer: from data-shadow-intensity where GlbRenderer left
+   * the shadow out, as no light was above the model, or else from shadow-intensity; 0 for none.
+   */
+  function configuredShadow(viewer) {
+    const value = Number(viewer.dataset.shadowIntensity !== undefined
+      ? viewer.dataset.shadowIntensity
+      : viewer.getAttribute('shadow-intensity'));
+    return isFinite(value) && value > 0 ? value : 0;
+  }
+
+  /**
+   * Show the configured shadow while any light shines from above the model, and none otherwise:
+   * model-viewer draws its shadow whatever the lights.
+   *
+   * @param {Object[]} lights - { strength, direction }, the directions in the scene, y up
+   */
+  function showShadow(viewer, shadow, lights) {
+    const intensity = window.ThreeDViewerLighting.litFromAbove(lights) ? shadow : 0;
+    if (viewer.shadowIntensity !== intensity) {
+      viewer.shadowIntensity = intensity;
+    }
+  }
+
+  /**
    * model-viewer has no public accessor for its three.js scene, but hands it to an effect composer
    * on registration. Unregister straight away so model-viewer keeps rendering as normal.
    */
@@ -217,10 +241,14 @@
    * the model, the lights turn with it; fixed to the viewer, the frame turns back as the model turns,
    * and the lights stay put. The turntable is watched each frame, as nothing announces its turns.
    *
+   * With a rig and a shadow, the shadow is shown only while a light, turned by the frame, shines from
+   * above the model. The model's turn is about the vertical, so it raises or lowers no light.
+   *
    * @param {Object|null} rig - The rig as painted, its strengths already multiplied by brightness
    * @param {{x: number, z: number}} side - The side of the model the default view looks from
+   * @param {number} shadow - The configured shadow strength, 0 for none
    */
-  function setUpLighting(viewer, rig, side) {
+  function setUpLighting(viewer, rig, side, shadow) {
     const lighting = window.ThreeDViewerLighting;
     const scene = getScene(viewer);
     // model-viewer's three.js classes, which its bundle does not export, from the scene's own objects.
@@ -368,6 +396,13 @@
         }
         changed = false;
         orient(all, frame);
+        if (rig && shadow) {
+          showShadow(viewer, shadow, all.map(function (light) {
+            const d = light.direction;
+            const turned = d && frame ? new Vector3(d.x, d.y, d.z).applyQuaternion(frame) : d;
+            return { strength: light.strength, direction: turned };
+          }));
+        }
       }
     });
 
@@ -412,17 +447,27 @@
       viewer.exposure = 1;
     }
     const side = viewSide(viewer);
+    const shadow = rig ? configuredShadow(viewer) : 0;
     if (rig) {
       applyRig(viewer, rig, side);
+      if (shadow) {
+        // As GlbRenderer decided for the default view, until the lighting is set up
+        showShadow(viewer, shadow, rig.lights.map(function (light) {
+          return {
+            strength: light.strength,
+            direction: lighting.direction(light.azimuth, light.elevation, side, false)
+          };
+        }));
+      }
     }
 
     // A rig also needs turning with the model, as auto-rotate turns it
     if (lighting && (controls || rig || viewer.dataset.lightingMode === 'viewer')) {
       if (viewer.loaded) {
-        setUpLighting(viewer, rig, side);
+        setUpLighting(viewer, rig, side, shadow);
       } else {
         viewer.addEventListener('load', function () {
-          setUpLighting(viewer, rig, side);
+          setUpLighting(viewer, rig, side, shadow);
         }, { once: true });
       }
     }

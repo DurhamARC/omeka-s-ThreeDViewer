@@ -127,6 +127,63 @@ class LightingMarkupTest extends TestCase
         $this->assertContains('/modules/ThreeDViewer/js/model-viewer-lighting.js', $view->headScript()->files);
     }
 
+    public function shadowCases(): array
+    {
+        $below = ['threedviewer_light_1_elevation' => -30, 'threedviewer_light_2_elevation' => -60];
+        return [
+            'a light above' => [[], true],
+            'every light below' => [$below, false],
+            'every light level' => [
+                ['threedviewer_light_1_elevation' => 0, 'threedviewer_light_2_elevation' => 0],
+                false,
+            ],
+            'the light above has no strength' => [
+                ['threedviewer_light_1_strength' => 0, 'threedviewer_light_2_elevation' => -10],
+                false,
+            ],
+            'a light above, beyond the number of lights' => [$below + ['threedviewer_light_3_elevation' => 60], false],
+            'one of two above' => [['threedviewer_light_1_elevation' => -30], true],
+        ];
+    }
+
+    /**
+     * model-viewer draws its shadow whatever the lights, so with no light above the model the shadow is
+     * left out, its strength kept for model-viewer-lighting.js to restore if a light rises above.
+     *
+     * @dataProvider shadowCases
+     */
+    public function testModelViewerShadowOnlyWithALightAbove(array $rig, bool $shown): void
+    {
+        [$html, $view] = $this->render('model.glb', $rig + self::RIG + [
+            'threedviewer_model_viewer_shadow_intensity' => '0.6',
+            'threedviewer_model_viewer_shadow_softness' => '0.3',
+        ]);
+        $this->assertSame($shown ? 1 : 0, preg_match('/ shadow-intensity="0.6"/', $html), 'shadow-intensity');
+        $this->assertSame($shown ? 0 : 1, preg_match('/ data-shadow-intensity="0.6"/', $html), 'kept to restore');
+        $this->assertStringContainsString(' shadow-softness="0.3"', $html);
+        $this->assertContains('/modules/ThreeDViewer/js/model-viewer-lighting.js', $view->headScript()->files);
+    }
+
+    public function testModelViewerWithoutAShadowGetsNoShadowAttribute(): void
+    {
+        [$html] = $this->render('model.glb', self::RIG + [
+            'threedviewer_light_1_elevation' => -30,
+            'threedviewer_light_2_elevation' => -60,
+        ]);
+        $this->assertStringNotContainsString('shadow-intensity', $html);
+    }
+
+    public function testModelViewerKeepsItsShadowWithoutARig(): void
+    {
+        // Its own environment lights from above; the shadow stays as it is
+        [$html] = $this->render('model.glb', [
+            'threedviewer_lighting_mode' => 'viewer',
+            'threedviewer_model_viewer_shadow_intensity' => '0.6',
+        ]);
+        $this->assertStringContainsString(' shadow-intensity="0.6"', $html);
+        $this->assertStringNotContainsString('data-shadow-intensity', $html);
+    }
+
     public function testStlAndBabylonGetBrightness(): void
     {
         foreach ($this->viewers() as $name => [$file, $library]) {

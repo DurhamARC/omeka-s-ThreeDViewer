@@ -167,6 +167,20 @@
         return !!(element && element.dataset && element.dataset.lightingControls === 'true');
     }
 
+    /**
+     * Whether any light with some strength shines from above the model: its direction, in the scene
+     * with y up, points upwards. A light level with the model does not count. model-viewer draws its
+     * shadow whatever the lights, so it is shown only while this holds (GlbRenderer decides the same
+     * for the first frame).
+     *
+     * @param {Object[]} lights - { strength, direction: {x, y, z} }; any without a direction are ignored
+     */
+    function litFromAbove(lights) {
+        return lights.some(function (light) {
+            return light.strength > 0 && !!light.direction && light.direction.y > 1e-6;
+        });
+    }
+
     /** The values of a light that the lighting controls show, besides its direction */
     const SHOWN = ['color', 'groundColor', 'strength'];
 
@@ -506,6 +520,7 @@
         ready: ready,
         onChange: onChange,
         hasControls: hasControls,
+        litFromAbove: litFromAbove,
         controller: controller,
         environment: environment,
         rgbe: rgbe

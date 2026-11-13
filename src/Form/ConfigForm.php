@@ -295,9 +295,7 @@ class ConfigForm extends Form
             'type' => Element\Select::class,
             'options' => [
                 'label' => 'Lights', // @translate
-                // One string for the translation extractor, which reads only the literal before the comment
-                // phpcs:ignore Generic.Files.LineLength.TooLong
-                'info' => 'Custom builds the lights that follow in every viewer, in place of their own. With model-viewer, if every light’s height is below 0, set the model-viewer shadow strength to 0.', // @translate
+                'info' => 'Custom builds the lights below in every viewer, in place of their own.', // @translate
                 'value_options' => [
                     'default' => 'Viewer default', // @translate
                     'custom' => 'Custom', // @translate
@@ -369,7 +367,7 @@ class ConfigForm extends Form
             'type' => Element\Number::class,
             'options' => [
                 'label' => 'model-viewer shadow strength', // @translate
-                'info' => 'The shadow under GLB/glTF models, even when lit from below. 0 shows none.', // @translate
+                'info' => 'The shadow under GLB/glTF models. 0 shows none.', // @translate
             ],
             'attributes' => ['min' => 0, 'max' => 1, 'step' => 0.05],
         ]);

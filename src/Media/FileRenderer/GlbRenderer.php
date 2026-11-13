@@ -83,7 +83,11 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
             $attributes[] = 'environment-image="' . $view->escapeHtmlAttr($image) . '"';
         }
         if ($lighting['threedviewer_model_viewer_shadow_intensity'] != 0) {
-            $attributes[] = 'shadow-intensity="'
+            // model-viewer draws its shadow whatever the lights: with none above the model, the shadow is
+            // left out, and model-viewer-lighting.js restores it from data-shadow-intensity if one rises
+            $shadow = $config['rig'] === null || self::litFromAbove($config['rig'])
+                ? 'shadow-intensity' : 'data-shadow-intensity';
+            $attributes[] = $shadow . '="'
                 . $this->formatNumber($lighting['threedviewer_model_viewer_shadow_intensity']) . '"';
         }
         if ($lighting['threedviewer_model_viewer_shadow_softness'] != 1) {
@@ -93,5 +97,22 @@ class GlbRenderer extends Abstract3DRenderer implements RendererInterface
         $html = $attributes ? implode(' ', $attributes) . ' ' : '';
         $rig = $this->renderLightingAttributes($view, $config, false);
         return $html . ($rig !== '' ? ltrim($rig) . ' ' : '');
+    }
+
+    /**
+     * Whether any light of a rig, with some strength, shines from above the model in the default view,
+     * as litFromAbove() in lighting-rig.js decides once the lights turn. A light level with the model
+     * does not count: model-viewer would still draw the shadow as if lit from overhead.
+     *
+     * @param array<string,mixed> $rig From Lighting::rig(): only the lights in use
+     */
+    private static function litFromAbove(array $rig): bool
+    {
+        foreach ($rig['lights'] as $light) {
+            if ($light['strength'] > 0 && $light['elevation'] > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 }
