@@ -297,7 +297,7 @@ class ConfigForm extends Form
                 'label' => 'Lights', // @translate
                 // One string for the translation extractor, which reads only the literal before the comment
                 // phpcs:ignore Generic.Files.LineLength.TooLong
-                'info' => 'Custom builds the lights below in every viewer, in place of their own. If every light is under the model, set the model-viewer shadow strength to 0.', // @translate
+                'info' => 'Custom builds the lights that follow in every viewer, in place of their own. With model-viewer, if every light’s height is below 0, set the model-viewer shadow strength to 0.', // @translate
                 'value_options' => [
                     'default' => 'Viewer default', // @translate
                     'custom' => 'Custom', // @translate

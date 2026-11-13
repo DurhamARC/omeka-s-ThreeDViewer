@@ -64,7 +64,7 @@ See general end user documentation for [Installing a module](http://omeka.org/s/
      an ambient light and 1–4 lights, each with a colour, a strength, a direction (degrees round the model from the
      viewer's side, positive to the right) and a height (degrees from level, -90 underneath to 90 overhead).
      model-viewer has no lamps, so there the rig is painted into the environment image that lights the model.
-     model-viewer's shadow is drawn under the model wherever the lights are: with every light below the model, set
+     model-viewer's shadow is drawn under the model wherever the lights are: with every light's height below 0, set
      *model-viewer shadow strength* to 0.
    - **model-viewer environment** (with *Viewer default*): model-viewer's own, `neutral`, `legacy`, or an image URL.
    - **model-viewer shadow strength** and **softness** (with either *Lights* setting): the shadow under GLB/glTF

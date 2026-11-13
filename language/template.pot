@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 10:44+0000\n"
+"POT-Creation-Date: 2026-11-13 11:02+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -344,8 +344,9 @@ msgstr ""
 
 #: src/Form/ConfigForm.php:300
 msgid ""
-"Custom builds the lights below in every viewer, in place of their own. If "
-"every light is under the model, set the model-viewer shadow strength to 0."
+"Custom builds the lights that follow in every viewer, in place of their own. "
+"With model-viewer, if every light’s height is below 0, set the model-viewer "
+"shadow strength to 0."
 msgstr ""
 
 #: src/Form/ConfigForm.php:302
