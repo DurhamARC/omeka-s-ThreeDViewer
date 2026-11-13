@@ -367,7 +367,7 @@ class ConfigForm extends Form
             'type' => Element\Number::class,
             'options' => [
                 'label' => 'model-viewer shadow strength', // @translate
-                'info' => 'Drawn under GLB/glTF models even when lit from below. 0 shows none.', // @translate
+                'info' => 'The shadow under GLB/glTF models, even when lit from below. 0 shows none.', // @translate
             ],
             'attributes' => ['min' => 0, 'max' => 1, 'step' => 0.05],
         ]);

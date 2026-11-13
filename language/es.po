@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ThreeDViewer\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-12 10:49+0100\n"
+"POT-Creation-Date: 2026-11-13 10:40+0000\n"
 "PO-Revision-Date: 2023-11-15 12:00+0000\n"
 "Last-Translator: Área de Tecnología Educativa <ate@gobiernodecanarias.org>\n"
 "Language-Team: Spanish\n"
@@ -428,9 +428,10 @@ msgid "model-viewer shadow strength"
 msgstr "Intensidad de la sombra de model-viewer"
 
 #: src/Form/ConfigForm.php:370
-msgid "Drawn under GLB/glTF models even when lit from below. 0 shows none."
+msgid ""
+"The shadow under GLB/glTF models, even when lit from below. 0 shows none."
 msgstr ""
-"Se dibuja bajo los modelos GLB/glTF aunque la luz venga de abajo. Con 0 no "
+"La sombra bajo los modelos GLB/glTF, aunque la luz venga de abajo. Con 0 no "
 "se muestra."
 
 #: src/Form/ConfigForm.php:379
